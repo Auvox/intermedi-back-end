@@ -1,11 +1,13 @@
 import { createServer } from "node:http";
 import { Router } from "./router.mjs";
 
-import remedioRoutes from './routes/remedio.routes.mjs'
+import remedioRoutes from "./routes/remedio.routes.mjs";
+import farmaciaRoutes from "./routes/farmacia.routes.mjs";
 
 const router = new Router();
 
-remedioRoutes(router)
+remedioRoutes(router);
+farmaciaRoutes(router);
 
 const server = createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -28,10 +30,12 @@ const server = createServer(async (req, res) => {
     await handle(req, res);
   } else {
     res.statusCode = 404;
-     res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({
-      error: "Nao encontrado"
-    }));
+    res.setHeader("Content-Type", "application/json");
+    res.end(
+      JSON.stringify({
+        error: "Nao encontrado",
+      }),
+    );
   }
 });
 
