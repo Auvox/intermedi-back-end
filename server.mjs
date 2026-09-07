@@ -5,6 +5,7 @@ import remedioRoutes from "./routes/remedio.routes.mjs";
 import farmaciaRoutes from "./routes/farmacia.routes.mjs";
 import funcionarioRoutes from "./routes/funcionario.routes.mjs";
 import gerenteRoutes from "./routes/gerente.routes.mjs";
+import pacienteRoutes from "./routes/paciente.routes.mjs";
 
 const router = new Router();
 
@@ -12,6 +13,7 @@ remedioRoutes(router);
 farmaciaRoutes(router);
 funcionarioRoutes(router);
 gerenteRoutes(router);
+pacienteRoutes(router);
 
 const server = createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
