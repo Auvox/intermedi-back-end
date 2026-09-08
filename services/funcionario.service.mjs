@@ -6,24 +6,26 @@ export function cadastrar(data) {
     nomeFuncionario,
     cpfFuncionario,
     emailFuncionario,
-    senhaFuncionario,
+    matriculaFuncionario,
     telFuncionario,
     cargoFuncionario,
+    turnoFuncionario
   } = data;
   const stmt = db.prepare(/*sql*/ `
     INSERT OR IGNORE INTO "tbFuncionario" 
-        ("nomeFuncionario", "cpfFuncionario", "emailFuncionario", "senhaFuncionario", "telFuncionario", "cargoFuncionario")
+        ("nomeFuncionario", "cpfFuncionario", "emailFuncionario", "matriculaFuncionario", "telFuncionario", "cargoFuncionario", "turnoFuncionario")
     VALUES 
-        (?, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, ?, ?)
     `);
 
   const result = stmt.run(
     nomeFuncionario,
     cpfFuncionario,
     emailFuncionario,
-    senhaFuncionario,
+    matriculaFuncionario,
     telFuncionario,
     cargoFuncionario,
+    turnoFuncionario
   );
 
   return {
@@ -60,9 +62,10 @@ export function editar(id, data) {
       nomeFuncionario = ?,
       cpfFuncionario = ?,
       emailFuncionario = ?,
-      senhaFuncionario = ?,
+      matriculaFuncionario = ?,
       telFuncionario= ?, 
-      cargoFuncionario = ?
+      cargoFuncionario = ?, 
+      turnoFuncionario = ?
     WHERE idFuncionario = ?
   `);
 
@@ -70,10 +73,11 @@ export function editar(id, data) {
     data.nomeFuncionario,
     data.cpfFuncionario,
     data.emailFuncionario,
-    data.senhaFuncionario,
+    data.matriculaFuncionario,
     data.telFuncionario,
     data.cargoFuncionario,
-    id,
+    data.turnoFuncionario,
+    id
   );
 }
 

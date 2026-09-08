@@ -1,7 +1,9 @@
 import * as serviceFuncionario from "../services/funcionario.service.mjs";
 
-// cadastrar remedio
+// cadastrar funcionario
 export async function cadastrarFuncionario(req, res) {
+  let data;
+
   try {
     const chunks = [];
 
@@ -11,12 +13,23 @@ export async function cadastrarFuncionario(req, res) {
 
     const body = Buffer.concat(chunks).toString("utf-8");
 
-    const data = JSON.parse(body);
+    data = JSON.parse(body);
+  } catch {
+    res.statusCode = 400;
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
 
+    return res.end(
+      JSON.stringify({
+        error: "O corpo da requisição deve ser um JSON válido.",
+      }),
+    );
+  }
+
+  try {
     const funcionario = serviceFuncionario.cadastrar(data);
 
     res.statusCode = 201;
-    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
 
     res.end(
       JSON.stringify({
@@ -25,12 +38,14 @@ export async function cadastrarFuncionario(req, res) {
       }),
     );
   } catch (error) {
-    res.statusCode = 400;
-    res.setHeader("Content-Type", "application/json");
+    console.error("Erro ao cadastrar funcionário:", error);
+
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
 
     res.end(
       JSON.stringify({
-        error: "JSON inválido",
+        error: "Não foi possível cadastrar o funcionário.",
       }),
     );
   }
