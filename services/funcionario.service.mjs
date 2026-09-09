@@ -1,12 +1,32 @@
 import db from "../database/database.mjs";
 
+// gera uma matricula de 6 digitos que ainda nao existe no banco
+function gerarMatriculaUnica() {
+  const stmt = db.prepare(/*sql*/ `
+    SELECT 1 FROM "tbFuncionario"
+    WHERE matriculaFuncionario = ?
+  `);
+
+  for (let i = 0; i < 10; i++) {
+    const matricula = String(Math.floor(Math.random() * 1000000)).padStart(
+      6,
+      "0",
+    );
+
+    if (!stmt.get(matricula)) {
+      return matricula;
+    }
+  }
+
+  throw new Error("Nao foi possivel gerar uma matricula unica.");
+}
+
 // cadastrar
 export function cadastrar(data) {
   const {
     nomeFuncionario,
     cpfFuncionario,
     emailFuncionario,
-    matriculaFuncionario,
     telFuncionario,
     cargoFuncionario,
     turnoFuncionario,
@@ -15,21 +35,22 @@ export function cadastrar(data) {
   const existente = db
     .prepare(
       /*sql*/ `
-    SELECT cpfFuncionario, emailFuncionario, matriculaFuncionario
+    SELECT cpfFuncionario, emailFuncionario
     FROM "tbFuncionario"
-    WHERE cpfFuncionario = ? OR emailFuncionario = ? OR matriculaFuncionario = ?
+    WHERE cpfFuncionario = ? OR emailFuncionario = ?
   `,
     )
-    .get(cpfFuncionario, emailFuncionario, matriculaFuncionario);
+    .get(cpfFuncionario, emailFuncionario);
 
   if (existente) {
     if (existente.cpfFuncionario === cpfFuncionario)
       throw new Error("CPF já cadastrado.");
     if (existente.emailFuncionario === emailFuncionario)
       throw new Error("E-mail já cadastrado.");
-    if (existente.matriculaFuncionario === matriculaFuncionario)
-      throw new Error("Matrícula já cadastrada.");
   }
+
+  // matricula gerada aqui no back e adicionada aos dados da requisicao
+  const matriculaFuncionario = gerarMatriculaUnica();
 
   const stmt = db.prepare(/*sql*/ `
     INSERT INTO "tbFuncionario" 
@@ -47,7 +68,10 @@ export function cadastrar(data) {
     turnoFuncionario,
   );
 
-  return { idFuncionario: Number(result.lastInsertRowid) };
+  return {
+    idFuncionario: Number(result.lastInsertRowid),
+    matriculaFuncionario,
+  };
 }
 
 //listar

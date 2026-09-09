@@ -26,14 +26,14 @@ export async function cadastrarFuncionario(req, res) {
 
   try {
     const funcionario = serviceFuncionario.cadastrar(data);
-    console.log("data" + funcionario);
+
     res.statusCode = 201;
     res.setHeader("Content-Type", "application/json; charset=utf-8");
 
     res.end(
       JSON.stringify({
         status: "CADASTRADO COM SUCESSO - POST",
-        recebido: funcionario,
+        matricula: funcionario.matriculaFuncionario,
       }),
     );
   } catch (error) {
