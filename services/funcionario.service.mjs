@@ -6,29 +6,48 @@ export function cadastrar(data) {
     nomeFuncionario,
     cpfFuncionario,
     emailFuncionario,
-    senhaFuncionario,
+    matriculaFuncionario,
     telFuncionario,
     cargoFuncionario,
+    turnoFuncionario,
   } = data;
+
+  const existente = db
+    .prepare(
+      /*sql*/ `
+    SELECT cpfFuncionario, emailFuncionario, matriculaFuncionario
+    FROM "tbFuncionario"
+    WHERE cpfFuncionario = ? OR emailFuncionario = ? OR matriculaFuncionario = ?
+  `,
+    )
+    .get(cpfFuncionario, emailFuncionario, matriculaFuncionario);
+
+  if (existente) {
+    if (existente.cpfFuncionario === cpfFuncionario)
+      throw new Error("CPF já cadastrado.");
+    if (existente.emailFuncionario === emailFuncionario)
+      throw new Error("E-mail já cadastrado.");
+    if (existente.matriculaFuncionario === matriculaFuncionario)
+      throw new Error("Matrícula já cadastrada.");
+  }
+
   const stmt = db.prepare(/*sql*/ `
-    INSERT OR IGNORE INTO "tbFuncionario" 
-        ("nomeFuncionario", "cpfFuncionario", "emailFuncionario", "senhaFuncionario", "telFuncionario", "cargoFuncionario")
-    VALUES 
-        (?, ?, ?, ?, ?, ?)
-    `);
+    INSERT INTO "tbFuncionario" 
+        ("nomeFuncionario", "cpfFuncionario", "emailFuncionario", "matriculaFuncionario", "telFuncionario", "cargoFuncionario", "turnoFuncionario")
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
 
   const result = stmt.run(
     nomeFuncionario,
     cpfFuncionario,
     emailFuncionario,
-    senhaFuncionario,
+    matriculaFuncionario,
     telFuncionario,
     cargoFuncionario,
+    turnoFuncionario,
   );
 
-  return {
-    idFuncionario: Number(result.lastInsertRowid),
-  };
+  return { idFuncionario: Number(result.lastInsertRowid) };
 }
 
 //listar
@@ -60,9 +79,10 @@ export function editar(id, data) {
       nomeFuncionario = ?,
       cpfFuncionario = ?,
       emailFuncionario = ?,
-      senhaFuncionario = ?,
+      matriculaFuncionario = ?,
       telFuncionario= ?, 
-      cargoFuncionario = ?
+      cargoFuncionario = ?, 
+      turnoFuncionario = ?
     WHERE idFuncionario = ?
   `);
 
@@ -70,9 +90,10 @@ export function editar(id, data) {
     data.nomeFuncionario,
     data.cpfFuncionario,
     data.emailFuncionario,
-    data.senhaFuncionario,
+    data.matriculaFuncionario,
     data.telFuncionario,
     data.cargoFuncionario,
+    data.turnoFuncionario,
     id,
   );
 }
