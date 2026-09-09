@@ -1,20 +1,56 @@
 import db from "../database/database.mjs";
 
-// cadastrar
+// Cadastrar
 export function cadastrar(data) {
-  const { nomePaciente, cpfPaciente, telPaciente, dataNasciPaciente } = data;
-  const stmt = db.prepare(/*sql*/ `
-    INSERT OR IGNORE INTO "tbPaciente" 
-        ("nomePaciente", "cpfPaciente", "telPaciente", "dataNasciPaciente")
-    VALUES 
-        (?, ?, ?, ?)
-    `);
+  const {
+    nomePaciente,
+    cpfPaciente,
+    telPaciente,
+    emailPaciente,
+    senhaPaciente,
+    medicamentoFrequentePaciente,
+    cepPaciente,
+    ruaPaciente,
+    numeroPaciente,
+    bairroPaciente,
+    cidadePaciente,
+    estadoPaciente,
+    complementoPaciente,
+  } = data;
+
+  const stmt = db.prepare(/* sql */ `
+    INSERT OR IGNORE INTO tbPaciente (
+      nomePaciente,
+      cpfPaciente,
+      telPaciente,
+      emailPaciente,
+      senhaPaciente,
+      medicamentoFrequentePaciente,
+      cepPaciente,
+      ruaPaciente,
+      numeroPaciente,
+      bairroPaciente,
+      cidadePaciente,
+      estadoPaciente,
+      complementoPaciente
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
 
   const result = stmt.run(
     nomePaciente,
     cpfPaciente,
     telPaciente,
-    dataNasciPaciente,
+    emailPaciente,
+    senhaPaciente,
+    medicamentoFrequentePaciente,
+    cepPaciente,
+    ruaPaciente,
+    numeroPaciente,
+    bairroPaciente,
+    cidadePaciente,
+    estadoPaciente,
+    complementoPaciente,
   );
 
   return {
@@ -22,52 +58,69 @@ export function cadastrar(data) {
   };
 }
 
-//listar
+// Listar
 export function listar() {
-  const stmt = db.prepare(/*sql*/ `
-    SELECT * FROM "tbPaciente"
-    `);
+  const stmt = db.prepare(/* sql */ `
+    SELECT *
+    FROM tbPaciente
+  `);
 
   return stmt.all();
 }
 
-//busca individual
+// Buscar individual
 export function buscarPorId(id) {
-  const stmt = db.prepare(/*sql*/ `
+  const stmt = db.prepare(/* sql */ `
     SELECT *
-        FROM tbPaciente
-    WHERE 
-        idPaciente = ?
-    `);
+    FROM tbPaciente
+    WHERE idPaciente = ?
+  `);
 
   return stmt.get(id);
 }
 
-//editar update
+// Editar
 export function editar(id, data) {
-  const stmt = db.prepare(/*sql*/ `
+  const stmt = db.prepare(/* sql */ `
     UPDATE tbPaciente
     SET
       nomePaciente = ?,
       cpfPaciente = ?,
       telPaciente = ?,
-      dataNasciPaciente = ?
-    WHERE 
-        idPaciente = ?
+      emailPaciente = ?,
+      senhaPaciente = ?,
+      medicamentoFrequentePaciente = ?,
+      cepPaciente = ?,
+      ruaPaciente = ?,
+      numeroPaciente = ?,
+      bairroPaciente = ?,
+      cidadePaciente = ?,
+      estadoPaciente = ?,
+      complementoPaciente = ?
+    WHERE idPaciente = ?
   `);
 
   return stmt.run(
     data.nomePaciente,
     data.cpfPaciente,
     data.telPaciente,
-    data.dataNasciPaciente,
+    data.emailPaciente,
+    data.senhaPaciente,
+    data.medicamentoFrequentePaciente,
+    data.cepPaciente,
+    data.ruaPaciente,
+    data.numeroPaciente,
+    data.bairroPaciente,
+    data.cidadePaciente,
+    data.estadoPaciente,
+    data.complementoPaciente,
     id,
   );
 }
 
-//deletar
+// Deletar
 export function deletar(id) {
-  const stmt = db.prepare(/*sql*/ `
+  const stmt = db.prepare(/* sql */ `
     DELETE FROM tbPaciente
     WHERE idPaciente = ?
   `);
