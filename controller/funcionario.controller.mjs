@@ -12,7 +12,6 @@ export async function cadastrarFuncionario(req, res) {
     }
 
     const body = Buffer.concat(chunks).toString("utf-8");
-
     data = JSON.parse(body);
   } catch {
     res.statusCode = 400;
@@ -27,7 +26,7 @@ export async function cadastrarFuncionario(req, res) {
 
   try {
     const funcionario = serviceFuncionario.cadastrar(data);
-
+    console.log("data" + funcionario);
     res.statusCode = 201;
     res.setHeader("Content-Type", "application/json; charset=utf-8");
 

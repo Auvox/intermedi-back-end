@@ -9,14 +9,33 @@ export function cadastrar(data) {
     matriculaFuncionario,
     telFuncionario,
     cargoFuncionario,
-    turnoFuncionario
+    turnoFuncionario,
   } = data;
+
+  const existente = db
+    .prepare(
+      /*sql*/ `
+    SELECT cpfFuncionario, emailFuncionario, matriculaFuncionario
+    FROM "tbFuncionario"
+    WHERE cpfFuncionario = ? OR emailFuncionario = ? OR matriculaFuncionario = ?
+  `,
+    )
+    .get(cpfFuncionario, emailFuncionario, matriculaFuncionario);
+
+  if (existente) {
+    if (existente.cpfFuncionario === cpfFuncionario)
+      throw new Error("CPF já cadastrado.");
+    if (existente.emailFuncionario === emailFuncionario)
+      throw new Error("E-mail já cadastrado.");
+    if (existente.matriculaFuncionario === matriculaFuncionario)
+      throw new Error("Matrícula já cadastrada.");
+  }
+
   const stmt = db.prepare(/*sql*/ `
-    INSERT OR IGNORE INTO "tbFuncionario" 
+    INSERT INTO "tbFuncionario" 
         ("nomeFuncionario", "cpfFuncionario", "emailFuncionario", "matriculaFuncionario", "telFuncionario", "cargoFuncionario", "turnoFuncionario")
-    VALUES 
-        (?, ?, ?, ?, ?, ?, ?)
-    `);
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
 
   const result = stmt.run(
     nomeFuncionario,
@@ -25,12 +44,10 @@ export function cadastrar(data) {
     matriculaFuncionario,
     telFuncionario,
     cargoFuncionario,
-    turnoFuncionario
+    turnoFuncionario,
   );
 
-  return {
-    idFuncionario: Number(result.lastInsertRowid),
-  };
+  return { idFuncionario: Number(result.lastInsertRowid) };
 }
 
 //listar
@@ -77,7 +94,7 @@ export function editar(id, data) {
     data.telFuncionario,
     data.cargoFuncionario,
     data.turnoFuncionario,
-    id
+    id,
   );
 }
 
