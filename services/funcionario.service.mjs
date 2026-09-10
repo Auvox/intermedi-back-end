@@ -30,6 +30,7 @@ export function cadastrar(data) {
     telFuncionario,
     cargoFuncionario,
     turnoFuncionario,
+    fkIdFarmacia,
   } = data;
 
   const existente = db
@@ -54,8 +55,8 @@ export function cadastrar(data) {
 
   const stmt = db.prepare(/*sql*/ `
     INSERT INTO "tbFuncionario" 
-        ("nomeFuncionario", "cpfFuncionario", "emailFuncionario", "matriculaFuncionario", "telFuncionario", "cargoFuncionario", "turnoFuncionario")
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+        ("nomeFuncionario", "cpfFuncionario", "emailFuncionario", "matriculaFuncionario", "telFuncionario", "cargoFuncionario", "turnoFuncionario", "fkIdFarmacia")
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = stmt.run(
@@ -66,6 +67,7 @@ export function cadastrar(data) {
     telFuncionario,
     cargoFuncionario,
     turnoFuncionario,
+    fkIdFarmacia ?? null,
   );
 
   return {
@@ -106,7 +108,8 @@ export function editar(id, data) {
       matriculaFuncionario = ?,
       telFuncionario= ?, 
       cargoFuncionario = ?, 
-      turnoFuncionario = ?
+      turnoFuncionario = ?,
+      fkIdFarmacia = ?
     WHERE idFuncionario = ?
   `);
 
@@ -118,6 +121,7 @@ export function editar(id, data) {
     data.telFuncionario,
     data.cargoFuncionario,
     data.turnoFuncionario,
+    data.fkIdFarmacia ?? null,
     id,
   );
 }

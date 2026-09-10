@@ -30,7 +30,7 @@ export async function cadastrarFarmacia(req, res) {
 
     res.end(
       JSON.stringify({
-        error: "JSON inválido",
+        error,
       }),
     );
   }

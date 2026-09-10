@@ -2,62 +2,122 @@ import db from "../database/database.mjs";
 
 // cadastrar
 export function cadastrar(data) {
-  const { nomeFarmacia, cnesFarmacia, telFarmacia } = data;
-  const stmt = db.prepare(/*sql*/ `
-    INSERT OR IGNORE INTO "tbFarmacia" 
-      ("nomeFarmacia", "cnesFarmacia", "telFarmacia")
-    VALUES 
-        (?, ?, ?)
-    `);
+  const {
+    nomeFarmacia,
+    emailFarmacia,
+    telFarmacia,
+    cnesFarmacia,
+    senhaFarmacia,
+    idGerente,
+    cepFarmacia,
+    enderecoFarmacia,
+    numeroFarmacia,
+    complementoFarmacia,
+    bairroFarmacia,
+    cidadeFarmacia,
+  } = data;
 
-  const result = stmt.run(nomeFarmacia, cnesFarmacia, telFarmacia);
+  const stmt = db.prepare(/*sql*/ `
+    INSERT OR IGNORE INTO "tbFarmacia" (
+      "nomeFarmacia",
+      "emailFarmacia",
+      "telFarmacia",
+      "cnesFarmacia",
+      "senhaFarmacia",
+      "idGerente",
+      "cepFarmacia",
+      "enderecoFarmacia",
+      "numeroFarmacia",
+      "complementoFarmacia",
+      "bairroFarmacia",
+      "cidadeFarmacia"
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const result = stmt.run(
+    nomeFarmacia,
+    emailFarmacia,
+    telFarmacia,
+    cnesFarmacia,
+    senhaFarmacia,
+    idGerente,
+    cepFarmacia,
+    enderecoFarmacia,
+    numeroFarmacia,
+    complementoFarmacia ?? null,
+    bairroFarmacia,
+    cidadeFarmacia,
+  );
 
   return {
     idFarmacia: Number(result.lastInsertRowid),
   };
 }
 
-//listar
+// listar
 export function listar() {
   const stmt = db.prepare(/*sql*/ `
     SELECT * FROM "tbFarmacia"
-    `);
+  `);
+
   return stmt.all();
 }
 
-//busca individual
+// busca individual
 export function buscarPorId(id) {
   const stmt = db.prepare(/*sql*/ `
     SELECT *
-        FROM tbFarmacia
-    WHERE 
-        idFarmacia = ?
-    `);
+    FROM "tbFarmacia"
+    WHERE "idFarmacia" = ?
+  `);
 
   return stmt.get(id);
 }
 
-//editar update
+// editar
 export function editar(id, data) {
   const stmt = db.prepare(/*sql*/ `
-    UPDATE tbFarmacia
+    UPDATE "tbFarmacia"
     SET
-      nomeFarmacia = ?,
-      cnesFarmacia = ?,
-      telFarmacia = ? 
-    WHERE 
-      idFarmacia = ?
+      "nomeFarmacia" = ?,
+      "emailFarmacia" = ?,
+      "telFarmacia" = ?,
+      "cnesFarmacia" = ?,
+      "senhaFarmacia" = ?,
+      "idGerente" = ?,
+      "cepFarmacia" = ?,
+      "enderecoFarmacia" = ?,
+      "numeroFarmacia" = ?,
+      "complementoFarmacia" = ?,
+      "bairroFarmacia" = ?,
+      "cidadeFarmacia" = ?
+    WHERE "idFarmacia" = ?
   `);
 
-  return stmt.run(data.nomeFarmacia, data.cnesFarmacia, data.telFarmacia, id);
+  return stmt.run(
+    data.nomeFarmacia,
+    data.emailFarmacia,
+    data.telFarmacia,
+    data.cnesFarmacia,
+    data.senhaFarmacia,
+    data.idGerente,
+    data.cepFarmacia,
+    data.enderecoFarmacia,
+    data.numeroFarmacia,
+    data.complementoFarmacia ?? null,
+    data.bairroFarmacia,
+    data.cidadeFarmacia,
+    id,
+  );
 }
 
-//deletar
+// deletar
 export function deletar(id) {
   const stmt = db.prepare(/*sql*/ `
-    DELETE FROM tbFarmacia
-    WHERE idFarmacia = ?
+    DELETE FROM "tbFarmacia"
+    WHERE "idFarmacia" = ?
   `);
 
   return stmt.run(id);
-} //é apenas um teste
+}
