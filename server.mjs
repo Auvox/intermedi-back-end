@@ -6,6 +6,7 @@ import farmaciaRoutes from "./routes/farmacia.routes.mjs";
 import funcionarioRoutes from "./routes/funcionario.routes.mjs";
 import gerenteRoutes from "./routes/gerente.routes.mjs";
 import pacienteRoutes from "./routes/paciente.routes.mjs";
+import appRoutes from "./routes/app.routes.mjs";
 
 const router = new Router();
 
@@ -14,6 +15,7 @@ farmaciaRoutes(router);
 funcionarioRoutes(router);
 gerenteRoutes(router);
 pacienteRoutes(router);
+appRoutes(router);
 
 const server = createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -45,6 +47,7 @@ const server = createServer(async (req, res) => {
   }
 });
 
-server.listen(3000, () => {
-  console.log("Servidor: http://localhost:3000");
+const port = Number(process.env.PORT || 3000);
+server.listen(port, process.env.HOST || '0.0.0.0', () => {
+  console.log(`Servidor: http://localhost:${server.address().port}`);
 });
