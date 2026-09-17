@@ -1,38 +1,18 @@
 import * as servicePaciente from "../services/paciente.service.mjs";
+import { enviarErro, enviarJson, erro, idDaUrl, lerJson } from "../utils/http.mjs";
 
 // cadastrar paciente
 export async function cadastrarPaciente(req, res) {
   try {
-    const chunks = [];
-
-    for await (const chunk of req) {
-      chunks.push(chunk);
-    }
-
-    const body = Buffer.concat(chunks).toString("utf-8");
-
-    const data = JSON.parse(body);
-
+    const data = await lerJson(req);
     const paciente = servicePaciente.cadastrar(data);
 
-    res.statusCode = 201;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        status: "CADASTRADO COM SUCESSO - POST",
-        recebido: paciente,
-      }),
-    );
+    enviarJson(res, 201, {
+      status: "CADASTRADO COM SUCESSO - POST",
+      recebido: paciente,
+    });
   } catch (error) {
-    res.statusCode = 400;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        error: error.message,
-      }),
-    );
+    enviarErro(res, error);
   }
 }
 
@@ -40,127 +20,60 @@ export async function cadastrarPaciente(req, res) {
 export async function consultarPaciente(req, res) {
   try {
     const paciente = servicePaciente.listar();
-
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        mensagem: "TODOS OS PACIENTES CADASTRADOS - GET",
-        paciente,
-      }),
-    );
+    enviarJson(res, 200, {
+      mensagem: "TODOS OS PACIENTES CADASTRADOS - GET",
+      paciente,
+    });
   } catch (error) {
-    res.statusCode = 400;
-
-    setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        error: "JSON inválido",
-      }),
-    );
+    enviarErro(res, error);
   }
 }
 
 // buscar paciente por id
 export async function buscarPaciente(req, res) {
   try {
-    const id = req.params.id;
+    const id = idDaUrl(req, "Paciente");
     const paciente = servicePaciente.buscarPorId(id);
+    if (!paciente) throw erro(404, "paciente nao encontrado");
 
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        status: "paciente encontrado",
-        resultado: paciente,
-      }),
-    );
-  } catch {
-    res.statusCode = 404;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        error: "paciente nao encontrado",
-      }),
-    );
+    enviarJson(res, 200, {
+      status: "paciente encontrado",
+      resultado: paciente,
+    });
+  } catch (error) {
+    enviarErro(res, error);
   }
 }
 
 // editar paciente
 export async function editarPaciente(req, res) {
-  const id = req.params.id;
   try {
-    const chunks = [];
+    const id = idDaUrl(req, "Paciente");
+    const data = await lerJson(req);
+    const paciente = servicePaciente.editar(id, data);
+    if (paciente.changes === 0) throw erro(404, "Paciente não encontrado");
 
-    for await (const chunk of req) {
-      chunks.push(chunk);
-    }
-
-    const body = Buffer.concat(chunks).toString("utf-8");
-    console.log("BODY", body);
-    const dataPaciente = JSON.parse(body);
-
-    const paciente = servicePaciente.editar(id, dataPaciente);
-
-    res.statusCode = 201;
-    res.setHeader("ContentType", "application/json");
-
-    res.end(
-      JSON.stringify({
-        status: "paciente atualizado",
-        alterados: paciente.changes,
-      }),
-    );
+    enviarJson(res, 201, {
+      status: "paciente atualizado",
+      alterados: paciente.changes,
+    });
   } catch (error) {
-    res.statusCode = 500;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        error: error.message,
-      }),
-    );
+    enviarErro(res, error);
   }
 }
 
 // deletar paciente
 export async function deletarPaciente(req, res) {
-  const id = Number(req.params.id);
-
   try {
-    const deletePaciente = servicePaciente.deletar(id);
+    const id = idDaUrl(req, "Paciente");
+    const deletado = servicePaciente.deletar(id);
+    if (deletado.changes === 0) throw erro(404, "Paciente não encontrado");
 
-    // se o paciente nao existir
-    if (deletePaciente.changes === 0) {
-      res.statusCode = 404;
-
-      return res.end(
-        JSON.stringify({
-          error: "Paciente não encontrado",
-        }),
-      );
-    }
-
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        mensagem: "paciente Deletado!",
-        deletado: deletePaciente,
-      }),
-    );
+    enviarJson(res, 200, {
+      mensagem: "Paciente Deletado!",
+      deletado,
+    });
   } catch (error) {
-    res.statusCode = 500;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        error: "Erro ao deletar paciente",
-      }),
-    );
+    enviarErro(res, error);
   }
 }

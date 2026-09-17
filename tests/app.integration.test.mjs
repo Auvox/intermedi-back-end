@@ -1,5 +1,5 @@
 //pedi para a IA criar um tipo de teste que Cria 
-// um banco temporário com dados fictícios
+// um banco temporário (vazio, com as tabelas do database/schema.sql)
 //Inicia um servidor de teste em uma porta livre
 ///Testa cadastro, login, edição, foto, exclusão e compatibilidade com as rotas do site
 //Mostra quais testes passaram ou falharam
@@ -9,8 +9,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DatabaseSync } from 'node:sqlite';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -19,10 +18,8 @@ import { fileURLToPath } from 'node:url';
 
 test('backend unificado: app e contratos do site no mesmo banco isolado', async (t) => {
   const temp = await mkdtemp(path.join(tmpdir(), 'intermedi-test-'));
-  const dbPath = path.join(temp, 'test.sqlite');
-  const fixture = new DatabaseSync(dbPath);
-  fixture.exec(await readFile(new URL('./schema.fixture.sql', import.meta.url), 'utf8'));
-  fixture.close();
+  // o servidor cria as tabelas sozinho ao subir (database/database.mjs)
+  const dbPath = path.join(temp, 'test.db');
   const env = { ...process.env, INTERMEDI_DB_PATH: dbPath, INTERMEDI_UPLOAD_DIR: path.join(temp, 'uploads'), PORT: '0', HOST: '127.0.0.1' };
   let child;
   async function start() {
@@ -70,7 +67,9 @@ test('backend unificado: app e contratos do site no mesmo banco isolado', async 
   const fromSite = (await request(`/paciente/${id}`)).data.resultado;
   assert.equal(fromSite.nomePaciente, 'Editado pelo app');
   assert.equal(fromSite.ruaPaciente, payload.ruaPaciente);
-  assert.equal(fromSite.senhaPaciente, payload.senhaPaciente);
+  // a senha nunca sai do back-end (nem em texto, nem o hash)
+  assert.equal(fromSite.senhaPaciente, undefined);
+  assert.equal(JSON.stringify(fromSite).includes('scrypt'), false);
   assert.equal((await request('/api/pacientes/me', 'PUT', { nomePaciente: '' }, token)).status, 400);
   assert.equal((await request('/api/auth/register', 'POST', payload)).status, 409);
   assert.equal((await request('/api/auth/register', 'POST', { ...payload, cpfPaciente: '12345678900', emailPaciente: 'other@example.com' })).status, 409);
@@ -116,11 +115,4 @@ test('backend unificado: app e contratos do site no mesmo banco isolado', async 
   assert.equal((await request(`/paciente/${secondId}`, 'DELETE')).status, 200);
   assert.equal((await request('/api/pacientes/me', 'GET', undefined, beforeSiteDelete)).status, 401);
   assert.equal((await request('/paciente')).data.paciente.length, 0);
-  // Teste já existente do site também usa o banco temporário.
-  const legacy = spawn(process.execPath, ['--test', fileURLToPath(new URL('./funcionario_fk_farmacia.test.mjs', import.meta.url))], { env, cwd: temp });
-  let legacyOutput = '';
-  legacy.stdout.on('data', chunk => { legacyOutput += chunk; });
-  legacy.stderr.on('data', chunk => { legacyOutput += chunk; });
-  const [code] = await once(legacy, 'exit');
-  assert.equal(code, 0, legacyOutput);
 });

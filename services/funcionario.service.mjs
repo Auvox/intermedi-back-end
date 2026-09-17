@@ -1,137 +1,193 @@
-import db from "../database/database.mjs";
+import db, { emTransacao } from "../database/database.mjs";
+import { erro } from "../utils/http.mjs";
+import { idOuNull, mesclar, texto, textoOuNull } from "../utils/dados.mjs";
+import { gerarHashSenha, gerarSenhaProvisoria } from "../utils/senha.mjs";
+import { colunasEndereco, lerEndereco, salvarEndereco } from "./endereco.service.mjs";
+import { gerarMatriculaUnica } from "./matricula.service.mjs";
 
-// gera uma matricula de 6 digitos que ainda nao existe no banco
-function gerarMatriculaUnica() {
-  const stmt = db.prepare(/*sql*/ `
-    SELECT 1 FROM "tbFuncionario"
-    WHERE matriculaFuncionario = ?
-  `);
+const CAMPOS_ENDERECO = {
+  logradouro: "enderecoFuncionario",
+  numero: "numeroFuncionario",
+  complemento: "complementoFuncionario",
+  bairro: "bairroFuncionario",
+  cidade: "cidadeFuncionario",
+  uf: ["estadoFuncionario", "ufFuncionario"],
+  cep: "cepFuncionario",
+};
 
-  for (let i = 0; i < 10; i++) {
-    const matricula = String(Math.floor(Math.random() * 1000000)).padStart(
-      6,
-      "0",
-    );
+const SELECT_FUNCIONARIO = /*sql*/ `
+  SELECT
+      fu.id_funcionario      AS idFuncionario,
+      fu.nome                AS nomeFuncionario,
+      fu.cpf                 AS cpfFuncionario,
+      fu.email               AS emailFuncionario,
+      fu.matricula           AS matriculaFuncionario,
+      fu.telefone            AS telFuncionario,
+      fu.cargo               AS cargoFuncionario,
+      fu.turno               AS turnoFuncionario,
+      fu.id_farmacia         AS fkIdFarmacia,
+      f.nome                 AS nomeFarmacia,
+      fu.id_gerente_cadastro AS idGerenteCadastro,
+      fu.created_at          AS createdAtFuncionario,
+      fu.id_endereco         AS idEndereco,
+      ${colunasEndereco({
+        cep: "cepFuncionario", logradouro: "enderecoFuncionario", numero: "numeroFuncionario",
+        complemento: "complementoFuncionario", bairro: "bairroFuncionario",
+        cidade: "cidadeFuncionario", uf: "ufFuncionario",
+      })}
+  FROM funcionario fu
+  INNER JOIN farmacia f ON f.id_farmacia = fu.id_farmacia
+  LEFT  JOIN endereco e ON e.id_endereco = fu.id_endereco
+`;
 
-    if (!stmt.get(matricula)) {
-      return matricula;
-    }
+// "Manhã", "MANHA", "manha" -> "manha"
+const TURNOS = ["manha", "tarde", "noite", "integral"];
+export function normalizarTurno(valor) {
+  const turno = texto(valor)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (!turno) return null;
+  if (!TURNOS.includes(turno)) {
+    throw erro(400, "Turno inválido. Use: manha, tarde, noite ou integral.");
   }
+  return turno;
+}
 
-  throw new Error("Nao foi possivel gerar uma matricula unica.");
+const farmaciaDoPayload = (data) => data.fkIdFarmacia ?? data.idFarmacia;
+
+function validar(dados, idFarmacia) {
+  const faltando = ["nomeFuncionario", "cpfFuncionario", "emailFuncionario"]
+    .filter((campo) => !texto(dados[campo]));
+  if (faltando.length) throw erro(400, `Campos obrigatórios: ${faltando.join(", ")}.`);
+
+  if (!idFarmacia) throw erro(400, "Informe fkIdFarmacia (a farmácia do funcionário).");
+  if (Number.isNaN(idFarmacia)) throw erro(400, "fkIdFarmacia inválido.");
+}
+
+function conferirDuplicado(cpf, email, idIgnorar = -1) {
+  const existente = db.prepare(/*sql*/ `
+    SELECT cpf, email FROM funcionario
+    WHERE id_funcionario <> ? AND (cpf = ? OR email = ?)
+  `).get(idIgnorar, cpf, email);
+
+  if (existente?.cpf === cpf) throw erro(409, "CPF já cadastrado.");
+  if (existente) throw erro(409, "E-mail já cadastrado.");
 }
 
 // cadastrar
 export function cadastrar(data) {
-  const {
-    nomeFuncionario,
-    cpfFuncionario,
-    emailFuncionario,
-    telFuncionario,
-    cargoFuncionario,
-    turnoFuncionario,
-    fkIdFarmacia,
-  } = data;
+  const idFarmacia = idOuNull(farmaciaDoPayload(data));
+  const idGerente = idOuNull(data.idGerenteCadastro);
+  validar(data, idFarmacia);
+  if (Number.isNaN(idGerente)) throw erro(400, "idGerenteCadastro inválido.");
 
-  const existente = db
-    .prepare(
-      /*sql*/ `
-    SELECT cpfFuncionario, emailFuncionario
-    FROM "tbFuncionario"
-    WHERE cpfFuncionario = ? OR emailFuncionario = ?
-  `,
-    )
-    .get(cpfFuncionario, emailFuncionario);
+  const cpf = texto(data.cpfFuncionario);
+  const email = texto(data.emailFuncionario);
+  conferirDuplicado(cpf, email);
 
-  if (existente) {
-    if (existente.cpfFuncionario === cpfFuncionario)
-      throw new Error("CPF já cadastrado.");
-    if (existente.emailFuncionario === emailFuncionario)
-      throw new Error("E-mail já cadastrado.");
-  }
+  const turno = normalizarTurno(data.turnoFuncionario);
+  const endereco = lerEndereco(data, CAMPOS_ENDERECO);
 
-  // matricula gerada aqui no back e adicionada aos dados da requisicao
-  const matriculaFuncionario = gerarMatriculaUnica();
+  // sem senha no cadastro -> gera uma provisória e devolve na resposta
+  const senhaInformada = texto(data.senhaFuncionario);
+  const senhaProvisoria = senhaInformada ? undefined : gerarSenhaProvisoria();
 
-  const stmt = db.prepare(/*sql*/ `
-    INSERT INTO "tbFuncionario" 
-        ("nomeFuncionario", "cpfFuncionario", "emailFuncionario", "matriculaFuncionario", "telFuncionario", "cargoFuncionario", "turnoFuncionario", "fkIdFarmacia")
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+  return emTransacao(() => {
+    const idEndereco = salvarEndereco(null, endereco);
+    // matrícula gerada aqui no back
+    const matriculaFuncionario = gerarMatriculaUnica("funcionario");
 
-  const result = stmt.run(
-    nomeFuncionario,
-    cpfFuncionario,
-    emailFuncionario,
-    matriculaFuncionario,
-    telFuncionario,
-    cargoFuncionario,
-    turnoFuncionario,
-    fkIdFarmacia ?? null,
-  );
+    const result = db.prepare(/*sql*/ `
+      INSERT INTO funcionario
+          (nome, cpf, email, senha_hash, matricula, telefone, cargo, turno,
+           id_farmacia, id_gerente_cadastro, id_endereco)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      texto(data.nomeFuncionario),
+      cpf,
+      email,
+      gerarHashSenha(senhaInformada || senhaProvisoria),
+      matriculaFuncionario,
+      textoOuNull(data.telFuncionario),
+      textoOuNull(data.cargoFuncionario),
+      turno,
+      idFarmacia,
+      idGerente,
+      idEndereco,
+    );
 
-  return {
-    idFuncionario: Number(result.lastInsertRowid),
-    matriculaFuncionario,
-  };
+    return {
+      idFuncionario: Number(result.lastInsertRowid),
+      matriculaFuncionario,
+      senhaProvisoria,
+    };
+  });
 }
 
-//listar
+// listar
 export function listar() {
-  const stmt = db.prepare(/*sql*/ `
-    SELECT * FROM "tbFuncionario"
-    `);
-
-  return stmt.all();
+  return db.prepare(`${SELECT_FUNCIONARIO} ORDER BY f.nome, fu.nome`).all();
 }
 
-//busca individual
+// busca individual
 export function buscarPorId(id) {
-  const stmt = db.prepare(/*sql*/ `
-    SELECT *
-        FROM tbFuncionario
-    WHERE 
-        idFuncionario = ?
-    `);
-
-  return stmt.get(id);
+  return db.prepare(`${SELECT_FUNCIONARIO} WHERE fu.id_funcionario = ?`).get(id);
 }
 
-//editar update
+// editar (campos não enviados continuam iguais; senha só muda se vier preenchida)
 export function editar(id, data) {
-  const stmt = db.prepare(/*sql*/ `
-    UPDATE tbFuncionario
-    SET
-      nomeFuncionario = ?,
-      cpfFuncionario = ?,
-      emailFuncionario = ?,
-      matriculaFuncionario = ?,
-      telFuncionario= ?, 
-      cargoFuncionario = ?, 
-      turnoFuncionario = ?,
-      fkIdFarmacia = ?
-    WHERE idFuncionario = ?
-  `);
+  const atual = buscarPorId(id);
+  if (!atual) return { changes: 0 };
 
-  return stmt.run(
-    data.nomeFuncionario,
-    data.cpfFuncionario,
-    data.emailFuncionario,
-    data.matriculaFuncionario,
-    data.telFuncionario,
-    data.cargoFuncionario,
-    data.turnoFuncionario,
-    data.fkIdFarmacia ?? null,
-    id,
-  );
+  const dados = mesclar(atual, data);
+  const idFarmacia = idOuNull(farmaciaDoPayload(data) ?? atual.fkIdFarmacia);
+  validar(dados, idFarmacia);
+
+  const cpf = texto(dados.cpfFuncionario);
+  const email = texto(dados.emailFuncionario);
+  conferirDuplicado(cpf, email, id);
+
+  const turno = normalizarTurno(dados.turnoFuncionario);
+  const endereco = lerEndereco(dados, CAMPOS_ENDERECO);
+  const novaSenha = texto(data.senhaFuncionario);
+
+  return emTransacao(() => {
+    const idEndereco = salvarEndereco(atual.idEndereco, endereco);
+
+    const result = db.prepare(/*sql*/ `
+      UPDATE funcionario
+      SET nome = ?, cpf = ?, email = ?, matricula = ?, telefone = ?,
+          cargo = ?, turno = ?, id_farmacia = ?, id_endereco = ?,
+          senha_hash = COALESCE(?, senha_hash)
+      WHERE id_funcionario = ?
+    `).run(
+      texto(dados.nomeFuncionario),
+      cpf,
+      email,
+      texto(dados.matriculaFuncionario),
+      textoOuNull(dados.telFuncionario),
+      textoOuNull(dados.cargoFuncionario),
+      turno,
+      idFarmacia,
+      idEndereco,
+      novaSenha ? gerarHashSenha(novaSenha) : null,
+      id,
+    );
+
+    return { changes: Number(result.changes) };
+  });
 }
 
-//deletar
+// deletar
 export function deletar(id) {
-  const stmt = db.prepare(/*sql*/ `
-    DELETE FROM tbFuncionario
-    WHERE idFuncionario = ?
-  `);
+  return emTransacao(() => {
+    const atual = db.prepare("SELECT id_endereco FROM funcionario WHERE id_funcionario = ?").get(id);
+    if (!atual) return { changes: 0 };
 
-  return stmt.run(id);
+    const result = db.prepare("DELETE FROM funcionario WHERE id_funcionario = ?").run(id);
+    if (atual.id_endereco) salvarEndereco(atual.id_endereco, null);
+
+    return { changes: Number(result.changes) };
+  });
 }

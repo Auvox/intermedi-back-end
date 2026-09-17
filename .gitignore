@@ -1,6 +1,20 @@
+# dependências (cada um instala com npm install)
 node_modules/
-uploads/
+
+# banco de dados local (cada um gera com npm run db:reset)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.sqlite-journal
 *.sqlite-wal
 *.sqlite-shm
 *.sqlite.backup*
+
+# arquivos enviados (fotos de perfil)
+uploads/
+
+# variáveis de ambiente locais
 .env

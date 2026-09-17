@@ -1,36 +1,24 @@
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import db from '../database/database.mjs';
+import db, { emTransacao } from '../database/database.mjs';
 import * as pacientes from '../services/paciente.service.mjs';
+import { traduzirErro } from '../utils/http.mjs';
+import { verificarSenha } from '../utils/senha.mjs';
 
 const uploads = process.env.INTERMEDI_UPLOAD_DIR || fileURLToPath(new URL('../uploads/perfis/', import.meta.url));
 const fields = ['nomePaciente', 'cpfPaciente', 'telPaciente', 'emailPaciente', 'senhaPaciente',
   'medicamentoFrequentePaciente', 'cepPaciente', 'ruaPaciente', 'numeroPaciente',
   'bairroPaciente', 'cidadePaciente', 'estadoPaciente', 'complementoPaciente'];
 const hash = (value) => createHash('sha256').update(String(value)).digest('hex');
+// Muda sempre que a senha muda -> sessões antigas deixam de valer
+const fingerprint = (idPaciente) => hash(pacientes.buscarSenhaHash(idPaciente) ?? '');
 const fail = (status, message) => Object.assign(new Error(message), { status });
 const json = (res, status, data) => {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
   res.end(JSON.stringify(data));
 };
-
-function migrate() {
-  db.exec('BEGIN');
-  try {
-    const columns = db.prepare('PRAGMA table_info(tbPaciente)').all();
-    if (!columns.length) throw new Error('Banco principal sem tbPaciente. Confira INTERMEDI_DB_PATH.');
-    if (!columns.some((c) => c.name === 'fotoPerfilPaciente')) {
-      db.exec('ALTER TABLE tbPaciente ADD COLUMN fotoPerfilPaciente TEXT');
-    }
-    db.exec(`CREATE TABLE IF NOT EXISTS appSessions (
-      tokenHash TEXT PRIMARY KEY, idPaciente INTEGER NOT NULL,
-      passwordFingerprint TEXT NOT NULL, expiresAt INTEGER NOT NULL
-    )`);
-    db.exec('COMMIT');
-  } catch (error) { db.exec('ROLLBACK'); throw error; }
-}
 
 function publicUser(p) {
   return { id: Number(p.idPaciente), nome: p.nomePaciente, email: p.emailPaciente,
@@ -60,9 +48,9 @@ async function readJson(req) {
 function authenticated(req) {
   const token = req.headers.authorization?.match(/^Bearer ([a-f0-9]{64})$/)?.[1];
   if (!token) throw fail(401, 'Faça login novamente.');
-  const session = db.prepare('SELECT * FROM appSessions WHERE tokenHash = ? AND expiresAt > ?').get(hash(token), Date.now());
-  const user = session && pacientes.buscarPorId(session.idPaciente);
-  if (!user || session.passwordFingerprint !== hash(user.senhaPaciente)) throw fail(401, 'Sua sessão expirou. Faça login novamente.');
+  const session = db.prepare('SELECT * FROM sessao_paciente WHERE token_hash = ? AND expira_em > ?').get(hash(token), Date.now());
+  const user = session && pacientes.buscarPorId(session.id_paciente);
+  if (!user || session.senha_fingerprint !== fingerprint(user.idPaciente)) throw fail(401, 'Sua sessão expirou. Faça login novamente.');
   if (req.params?.id && Number(req.params.id) !== Number(user.idPaciente)) throw fail(403, 'Acesso não permitido.');
   return user;
 }
@@ -80,19 +68,15 @@ function validate(data, partial = false) {
 }
 
 function duplicate(data, id = -1) {
-  if (db.prepare(`SELECT idPaciente FROM tbPaciente WHERE idPaciente != ? AND
-    (lower(trim(emailPaciente)) = lower(trim(?)) OR
-     replace(replace(cpfPaciente, '.', ''), '-', '') = replace(replace(?, '.', ''), '-', ''))`)
-    .get(id, data.emailPaciente, data.cpfPaciente)) throw fail(409, 'E-mail ou CPF já cadastrado.');
+  if (pacientes.existeDuplicado(data.emailPaciente, data.cpfPaciente, id)) throw fail(409, 'E-mail ou CPF já cadastrado.');
 }
 
 export default function appRoutes(router) {
-  migrate();
   const route = (method, url, fn) => router[method](url, async (req, res) => {
     try { await fn(req, res); }
     catch (error) {
-      if (!error.status) console.error('Erro na API do app:', error.code || error.name);
-      json(res, error.status || 500, { message: error.status ? error.message : 'Não foi possível concluir a operação.' });
+      const { status, mensagem } = traduzirErro(error);
+      json(res, status, { message: mensagem });
     }
   });
 
@@ -110,20 +94,21 @@ export default function appRoutes(router) {
   route('post', '/api/auth/login', async (req, res) => {
     const { email, senha } = await readJson(req);
     if (typeof email !== 'string' || typeof senha !== 'string' || !senha) throw fail(400, 'Informe e-mail e senha.');
-    const matches = db.prepare('SELECT * FROM tbPaciente WHERE lower(trim(emailPaciente)) = lower(trim(?))').all(email);
-    const user = matches.length === 1 ? matches[0] : null;
-    if (!user?.senhaPaciente || !timingSafeEqual(Buffer.from(hash(user.senhaPaciente)), Buffer.from(hash(senha)))) {
+    const credenciais = pacientes.buscarCredenciais(email);
+    if (!verificarSenha(senha, credenciais?.senhaHash)) {
       throw fail(401, 'E-mail ou senha incorretos.');
     }
+    const user = pacientes.buscarPorId(credenciais.idPaciente);
     const token = randomBytes(32).toString('hex');
-    db.prepare('DELETE FROM appSessions WHERE expiresAt <= ?').run(Date.now());
-    db.prepare('INSERT INTO appSessions VALUES (?, ?, ?, ?)').run(hash(token), user.idPaciente, hash(user.senhaPaciente), Date.now() + 7 * 86400000);
+    db.prepare('DELETE FROM sessao_paciente WHERE expira_em <= ?').run(Date.now());
+    db.prepare('INSERT INTO sessao_paciente (token_hash, id_paciente, senha_fingerprint, expira_em) VALUES (?, ?, ?, ?)')
+      .run(hash(token), user.idPaciente, fingerprint(user.idPaciente), Date.now() + 7 * 86400000);
     json(res, 200, { user: publicUser(user), token });
   });
 
   route('post', '/api/auth/logout', async (req, res) => {
     const token = req.headers.authorization?.replace(/^Bearer /, '') || '';
-    db.prepare('DELETE FROM appSessions WHERE tokenHash = ?').run(hash(token));
+    db.prepare('DELETE FROM sessao_paciente WHERE token_hash = ?').run(hash(token));
     json(res, 200, { message: 'Sessão encerrada.' });
   });
 
@@ -134,23 +119,20 @@ export default function appRoutes(router) {
     validate(data, true);
     const merged = Object.fromEntries(fields.map((name) => [name, data[name] ?? user[name] ?? '']));
     duplicate(merged, user.idPaciente);
-    pacientes.editar(user.idPaciente, merged);
     // Uma troca de senha revoga as sessões antigas; a sessão atual permanece válida.
-    if (data.senhaPaciente !== undefined) {
-      const current = hash(req.headers.authorization.slice(7));
-      db.prepare('DELETE FROM appSessions WHERE idPaciente = ? AND tokenHash != ?').run(user.idPaciente, current);
-      db.prepare('UPDATE appSessions SET passwordFingerprint = ? WHERE tokenHash = ?').run(hash(merged.senhaPaciente), current);
-    }
+    emTransacao(() => {
+      pacientes.editar(user.idPaciente, merged);
+      if (data.senhaPaciente !== undefined) {
+        const current = hash(req.headers.authorization.slice(7));
+        db.prepare('DELETE FROM sessao_paciente WHERE id_paciente = ? AND token_hash != ?').run(user.idPaciente, current);
+        db.prepare('UPDATE sessao_paciente SET senha_fingerprint = ? WHERE token_hash = ?').run(fingerprint(user.idPaciente), current);
+      }
+    });
     json(res, 200, { user: publicUser(pacientes.buscarPorId(user.idPaciente)) });
   });
   route('delete', '/api/pacientes/me', async (req, res) => {
     const user = authenticated(req);
-    db.exec('BEGIN');
-    try {
-      pacientes.deletar(user.idPaciente);
-      db.prepare('DELETE FROM appSessions WHERE idPaciente = ?').run(user.idPaciente);
-      db.exec('COMMIT');
-    } catch (error) { db.exec('ROLLBACK'); throw error; }
+    pacientes.deletar(user.idPaciente); // as sessões são apagadas junto (ON DELETE CASCADE)
     await removePhoto(user.fotoPerfilPaciente);
     json(res, 200, { message: 'Conta excluída.' });
   });
@@ -174,7 +156,7 @@ export default function appRoutes(router) {
     await mkdir(uploads, { recursive: true });
     await writeFile(path.join(uploads, name), buffer, { flag: 'wx' });
     const url = `/uploads/perfis/${name}`;
-    try { db.prepare('UPDATE tbPaciente SET fotoPerfilPaciente = ? WHERE idPaciente = ?').run(url, user.idPaciente); }
+    try { pacientes.atualizarFoto(user.idPaciente, url); }
     catch (error) { await unlink(path.join(uploads, name)); throw error; }
     await removePhoto(user.fotoPerfilPaciente);
     json(res, 200, { fotoPerfilPaciente: url });

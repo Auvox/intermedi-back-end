@@ -1,166 +1,79 @@
 import * as serviceFarmacia from "../services/farmacia.service.mjs";
+import { enviarErro, enviarJson, erro, idDaUrl, lerJson } from "../utils/http.mjs";
 
-// cadastrar remedio
+// cadastrar farmacia
 export async function cadastrarFarmacia(req, res) {
   try {
-    const chunks = [];
-
-    for await (const chunk of req) {
-      chunks.push(chunk);
-    }
-
-    const body = Buffer.concat(chunks).toString("utf-8");
-
-    const data = JSON.parse(body);
-
+    const data = await lerJson(req);
     const farmacia = serviceFarmacia.cadastrar(data);
 
-    res.statusCode = 201;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        status: "CADASTRADO COM SUCESSO - POST",
-        recebido: farmacia,
-      }),
-    );
+    enviarJson(res, 201, {
+      status: "CADASTRADO COM SUCESSO - POST",
+      recebido: farmacia,
+    });
   } catch (error) {
-    res.statusCode = 400;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        error,
-      }),
-    );
+    enviarErro(res, error);
   }
 }
 
-// listar farmacias
+// listar farmacia
 export async function consultarFarmacia(req, res) {
   try {
     const farmacia = serviceFarmacia.listar();
-
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        mensagem: "TODOS OS REMEDIO CADASTRADOS - GET",
-        farmacia,
-      }),
-    );
+    enviarJson(res, 200, {
+      mensagem: "TODAS AS FARMACIAS CADASTRADAS - GET",
+      farmacia,
+    });
   } catch (error) {
-    res.statusCode = 400;
-
-    setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        error: "JSON inválido",
-      }),
-    );
+    enviarErro(res, error);
   }
 }
 
 // buscar farmacia por id
 export async function buscarFarmacia(req, res) {
   try {
-    const id = req.params.id;
+    const id = idDaUrl(req, "Farmacia");
     const farmacia = serviceFarmacia.buscarPorId(id);
+    if (!farmacia) throw erro(404, "farmacia nao encontrado");
 
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        status: "farmacia encontrado",
-        resultado: farmacia,
-      }),
-    );
-  } catch {
-    res.statusCode = 404;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        error: "farmacia nao encontrado",
-      }),
-    );
+    enviarJson(res, 200, {
+      status: "farmacia encontrado",
+      resultado: farmacia,
+    });
+  } catch (error) {
+    enviarErro(res, error);
   }
 }
 
 // editar farmacia
 export async function editarFarmacia(req, res) {
-  const id = req.params.id;
   try {
-    const chunks = [];
+    const id = idDaUrl(req, "Farmacia");
+    const data = await lerJson(req);
+    const farmacia = serviceFarmacia.editar(id, data);
+    if (farmacia.changes === 0) throw erro(404, "Farmacia não encontrado");
 
-    for await (const chunk of req) {
-      chunks.push(chunk);
-    }
-
-    const body = Buffer.concat(chunks).toString("utf-8");
-    console.log("BODY", body);
-    const dataFarmacia = JSON.parse(body);
-
-    const farmacia = serviceFarmacia.editar(id, dataFarmacia);
-
-    res.statusCode = 201;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        status: "Farmacia atualizado",
-        alterados: farmacia.changes,
-      }),
-    );
+    enviarJson(res, 201, {
+      status: "farmacia atualizado",
+      alterados: farmacia.changes,
+    });
   } catch (error) {
-    res.statusCode = 500;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        error: error.message,
-      }),
-    );
+    enviarErro(res, error);
   }
 }
 
 // deletar farmacia
 export async function deletarFarmacia(req, res) {
-  const id = Number(req.params.id);
-
   try {
-    const deleteFarmacia = serviceFarmacia.deletar(id);
+    const id = idDaUrl(req, "Farmacia");
+    const deletado = serviceFarmacia.deletar(id);
+    if (deletado.changes === 0) throw erro(404, "Farmacia não encontrado");
 
-    // se o farmacia nao existir
-    if (deleteFarmacia.changes === 0) {
-      res.statusCode = 404;
-
-      return res.end(
-        JSON.stringify({
-          error: "Farmacia não encontrado",
-        }),
-      );
-    }
-
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        mensagem: "Farmacia Deletado!",
-        deletado: deleteFarmacia,
-      }),
-    );
+    enviarJson(res, 200, {
+      mensagem: "Farmacia Deletado!",
+      deletado,
+    });
   } catch (error) {
-    res.statusCode = 500;
-    res.setHeader("Content-Type", "application/json");
-
-    res.end(
-      JSON.stringify({
-        error: "Erro ao deletar farmacia",
-      }),
-    );
+    enviarErro(res, error);
   }
 }

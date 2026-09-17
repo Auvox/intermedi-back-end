@@ -1,123 +1,115 @@
-import db from "../database/database.mjs";
+import db, { emTransacao } from "../database/database.mjs";
+import { erro } from "../utils/http.mjs";
+import { mesclar, texto, textoOuNull } from "../utils/dados.mjs";
+import { colunasEndereco, lerEndereco, salvarEndereco } from "./endereco.service.mjs";
+
+// Nomes que o front usa para o endereço da farmácia
+const CAMPOS_ENDERECO = {
+  logradouro: "enderecoFarmacia",
+  numero: "numeroFarmacia",
+  complemento: "complementoFarmacia",
+  bairro: "bairroFarmacia",
+  cidade: "cidadeFarmacia",
+  uf: ["estadoFarmacia", "ufFarmacia"],
+  cep: "cepFarmacia",
+};
+
+// SELECT com apelidos no formato que o front já conhece
+const SELECT_FARMACIA = /*sql*/ `
+  SELECT
+      f.id_farmacia AS idFarmacia,
+      f.nome        AS nomeFarmacia,
+      f.email       AS emailFarmacia,
+      f.telefone    AS telFarmacia,
+      f.cnes        AS cnesFarmacia,
+      f.id_endereco AS idEndereco,
+      ${colunasEndereco({
+        cep: "cepFarmacia", logradouro: "enderecoFarmacia", numero: "numeroFarmacia",
+        complemento: "complementoFarmacia", bairro: "bairroFarmacia",
+        cidade: "cidadeFarmacia", uf: "ufFarmacia",
+      })}
+  FROM farmacia f
+  LEFT JOIN endereco e ON e.id_endereco = f.id_endereco
+`;
+
+function validar(dados) {
+  if (!texto(dados.nomeFarmacia) || !texto(dados.cnesFarmacia)) {
+    throw erro(400, "Informe nomeFarmacia e cnesFarmacia.");
+  }
+}
 
 // cadastrar
 export function cadastrar(data) {
-  const {
-    nomeFarmacia,
-    emailFarmacia,
-    telFarmacia,
-    cnesFarmacia,
-    senhaFarmacia,
-    idGerente,
-    cepFarmacia,
-    enderecoFarmacia,
-    numeroFarmacia,
-    complementoFarmacia,
-    bairroFarmacia,
-    cidadeFarmacia,
-  } = data;
+  validar(data);
+  const endereco = lerEndereco(data, CAMPOS_ENDERECO);
 
-  const stmt = db.prepare(/*sql*/ `
-    INSERT OR IGNORE INTO "tbFarmacia" (
-      "nomeFarmacia",
-      "emailFarmacia",
-      "telFarmacia",
-      "cnesFarmacia",
-      "senhaFarmacia",
-      "idGerente",
-      "cepFarmacia",
-      "enderecoFarmacia",
-      "numeroFarmacia",
-      "complementoFarmacia",
-      "bairroFarmacia",
-      "cidadeFarmacia"
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+  return emTransacao(() => {
+    const idEndereco = salvarEndereco(null, endereco);
 
-  const result = stmt.run(
-    nomeFarmacia,
-    emailFarmacia,
-    telFarmacia,
-    cnesFarmacia,
-    senhaFarmacia,
-    idGerente,
-    cepFarmacia,
-    enderecoFarmacia,
-    numeroFarmacia,
-    complementoFarmacia ?? null,
-    bairroFarmacia,
-    cidadeFarmacia,
-  );
+    const result = db.prepare(/*sql*/ `
+      INSERT INTO farmacia (nome, email, telefone, cnes, id_endereco)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(
+      texto(data.nomeFarmacia),
+      textoOuNull(data.emailFarmacia),
+      textoOuNull(data.telFarmacia),
+      texto(data.cnesFarmacia),
+      idEndereco,
+    );
 
-  return {
-    idFarmacia: Number(result.lastInsertRowid),
-  };
+    return { idFarmacia: Number(result.lastInsertRowid) };
+  });
 }
 
 // listar
 export function listar() {
-  const stmt = db.prepare(/*sql*/ `
-    SELECT * FROM "tbFarmacia"
-  `);
-
-  return stmt.all();
+  return db.prepare(`${SELECT_FARMACIA} ORDER BY f.nome`).all();
 }
 
 // busca individual
 export function buscarPorId(id) {
-  const stmt = db.prepare(/*sql*/ `
-    SELECT *
-    FROM "tbFarmacia"
-    WHERE "idFarmacia" = ?
-  `);
-
-  return stmt.get(id);
+  return db.prepare(`${SELECT_FARMACIA} WHERE f.id_farmacia = ?`).get(id);
 }
 
-// editar
+// editar (campos não enviados continuam iguais)
 export function editar(id, data) {
-  const stmt = db.prepare(/*sql*/ `
-    UPDATE "tbFarmacia"
-    SET
-      "nomeFarmacia" = ?,
-      "emailFarmacia" = ?,
-      "telFarmacia" = ?,
-      "cnesFarmacia" = ?,
-      "senhaFarmacia" = ?,
-      "idGerente" = ?,
-      "cepFarmacia" = ?,
-      "enderecoFarmacia" = ?,
-      "numeroFarmacia" = ?,
-      "complementoFarmacia" = ?,
-      "bairroFarmacia" = ?,
-      "cidadeFarmacia" = ?
-    WHERE "idFarmacia" = ?
-  `);
+  const atual = buscarPorId(id);
+  if (!atual) return { changes: 0 };
 
-  return stmt.run(
-    data.nomeFarmacia,
-    data.emailFarmacia,
-    data.telFarmacia,
-    data.cnesFarmacia,
-    data.senhaFarmacia,
-    data.idGerente,
-    data.cepFarmacia,
-    data.enderecoFarmacia,
-    data.numeroFarmacia,
-    data.complementoFarmacia ?? null,
-    data.bairroFarmacia,
-    data.cidadeFarmacia,
-    id,
-  );
+  const dados = mesclar(atual, data);
+  validar(dados);
+  const endereco = lerEndereco(dados, CAMPOS_ENDERECO);
+
+  return emTransacao(() => {
+    const idEndereco = salvarEndereco(atual.idEndereco, endereco);
+
+    const result = db.prepare(/*sql*/ `
+      UPDATE farmacia
+      SET nome = ?, email = ?, telefone = ?, cnes = ?, id_endereco = ?
+      WHERE id_farmacia = ?
+    `).run(
+      texto(dados.nomeFarmacia),
+      textoOuNull(dados.emailFarmacia),
+      textoOuNull(dados.telFarmacia),
+      texto(dados.cnesFarmacia),
+      idEndereco,
+      id,
+    );
+
+    return { changes: Number(result.changes) };
+  });
 }
 
 // deletar
+// (bloqueado pelo banco se a farmácia ainda tiver gerentes/funcionários)
 export function deletar(id) {
-  const stmt = db.prepare(/*sql*/ `
-    DELETE FROM "tbFarmacia"
-    WHERE "idFarmacia" = ?
-  `);
+  return emTransacao(() => {
+    const atual = db.prepare("SELECT id_endereco FROM farmacia WHERE id_farmacia = ?").get(id);
+    if (!atual) return { changes: 0 };
 
-  return stmt.run(id);
+    const result = db.prepare("DELETE FROM farmacia WHERE id_farmacia = ?").run(id);
+    if (atual.id_endereco) salvarEndereco(atual.id_endereco, null);
+
+    return { changes: Number(result.changes) };
+  });
 }
