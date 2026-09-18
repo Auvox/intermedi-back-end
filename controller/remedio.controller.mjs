@@ -47,6 +47,23 @@ export async function buscarRemedio(req, res) {
   }
 }
 
+export async function listarOuBuscarRemedios(req, res) {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const termo = url.searchParams.get("busca") || "";
+
+    if (termo.trim()) {
+      const resultados = serviceRemedio.buscarPorTermo(termo);
+      return enviarJson(res, 200, resultados);
+    }
+
+    const remedios = serviceRemedio.listar();
+    return enviarJson(res, 200, remedios);
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
 // editar remedio
 export async function editarRemedio(req, res) {
   try {

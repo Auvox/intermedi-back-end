@@ -66,6 +66,23 @@ export function cadastrar(data) {
   });
 }
 
+export function buscarPorTermo(termo, idFarmacia = null) {
+  const busca = `%${termo.trim().toLowerCase()}%`;
+  
+  return db.prepare(/*sql*/ `
+    SELECT 
+      id_remedio AS id,
+      nome,
+      dosagem,
+      descricao,
+      fabricante
+    FROM remedio
+    WHERE nome LIKE ? OR dosagem LIKE ?
+    ORDER BY nome ASC
+    LIMIT 15
+  `).all(busca, busca);
+}
+
 // listar (opcional: filtrar por nome da categoria, ex.: "Dor de cabeça")
 export function listar(categoria) {
   if (categoria) {
