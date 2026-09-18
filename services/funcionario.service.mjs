@@ -1,4 +1,4 @@
-import db from "../database/database.mjs";
+
 
 // gera uma matricula de 6 digitos que ainda nao existe no banco
 function gerarMatriculaUnica() {

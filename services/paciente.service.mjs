@@ -1,4 +1,4 @@
-import db from "../database/database.mjs";
+
 
 // Cadastrar
 export function cadastrar(data) {
