@@ -1,7 +1,11 @@
 import db, { emTransacao } from "../database/database.mjs";
 import { erro } from "../utils/http.mjs";
 import { mesclar, texto, textoOuNull } from "../utils/dados.mjs";
-import { colunasEndereco, lerEndereco, salvarEndereco } from "./endereco.service.mjs";
+import {
+  colunasEndereco,
+  lerEndereco,
+  salvarEndereco,
+} from "./endereco.service.mjs";
 
 // Nomes que o front usa para o endereço da farmácia
 const CAMPOS_ENDERECO = {
@@ -24,9 +28,13 @@ const SELECT_FARMACIA = /*sql*/ `
       f.cnes        AS cnesFarmacia,
       f.id_endereco AS idEndereco,
       ${colunasEndereco({
-        cep: "cepFarmacia", logradouro: "enderecoFarmacia", numero: "numeroFarmacia",
-        complemento: "complementoFarmacia", bairro: "bairroFarmacia",
-        cidade: "cidadeFarmacia", uf: "ufFarmacia",
+        cep: "cepFarmacia",
+        logradouro: "enderecoFarmacia",
+        numero: "numeroFarmacia",
+        complemento: "complementoFarmacia",
+        bairro: "bairroFarmacia",
+        cidade: "cidadeFarmacia",
+        uf: "ufFarmacia",
       })}
   FROM farmacia f
   LEFT JOIN endereco e ON e.id_endereco = f.id_endereco
@@ -46,16 +54,20 @@ export function cadastrar(data) {
   return emTransacao(() => {
     const idEndereco = salvarEndereco(null, endereco);
 
-    const result = db.prepare(/*sql*/ `
+    const result = db
+      .prepare(
+        /*sql*/ `
       INSERT INTO farmacia (nome, email, telefone, cnes, id_endereco)
       VALUES (?, ?, ?, ?, ?)
-    `).run(
-      texto(data.nomeFarmacia),
-      textoOuNull(data.emailFarmacia),
-      textoOuNull(data.telFarmacia),
-      texto(data.cnesFarmacia),
-      idEndereco,
-    );
+    `,
+      )
+      .run(
+        texto(data.nomeFarmacia),
+        textoOuNull(data.emailFarmacia),
+        textoOuNull(data.telFarmacia),
+        texto(data.cnesFarmacia),
+        idEndereco,
+      );
 
     return { idFarmacia: Number(result.lastInsertRowid) };
   });
@@ -83,18 +95,22 @@ export function editar(id, data) {
   return emTransacao(() => {
     const idEndereco = salvarEndereco(atual.idEndereco, endereco);
 
-    const result = db.prepare(/*sql*/ `
+    const result = db
+      .prepare(
+        /*sql*/ `
       UPDATE farmacia
       SET nome = ?, email = ?, telefone = ?, cnes = ?, id_endereco = ?
       WHERE id_farmacia = ?
-    `).run(
-      texto(dados.nomeFarmacia),
-      textoOuNull(dados.emailFarmacia),
-      textoOuNull(dados.telFarmacia),
-      texto(dados.cnesFarmacia),
-      idEndereco,
-      id,
-    );
+    `,
+      )
+      .run(
+        texto(dados.nomeFarmacia),
+        textoOuNull(dados.emailFarmacia),
+        textoOuNull(dados.telFarmacia),
+        texto(dados.cnesFarmacia),
+        idEndereco,
+        id,
+      );
 
     return { changes: Number(result.changes) };
   });
@@ -104,10 +120,14 @@ export function editar(id, data) {
 // (bloqueado pelo banco se a farmácia ainda tiver gerentes/funcionários)
 export function deletar(id) {
   return emTransacao(() => {
-    const atual = db.prepare("SELECT id_endereco FROM farmacia WHERE id_farmacia = ?").get(id);
+    const atual = db
+      .prepare("SELECT id_endereco FROM farmacia WHERE id_farmacia = ?")
+      .get(id);
     if (!atual) return { changes: 0 };
 
-    const result = db.prepare("DELETE FROM farmacia WHERE id_farmacia = ?").run(id);
+    const result = db
+      .prepare("DELETE FROM farmacia WHERE id_farmacia = ?")
+      .run(id);
     if (atual.id_endereco) salvarEndereco(atual.id_endereco, null);
 
     return { changes: Number(result.changes) };

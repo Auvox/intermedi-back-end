@@ -15,6 +15,8 @@ export async function cadastrarFuncionario(req, res) {
     });
   } catch (error) {
     enviarErro(res, error);
+
+    console.log(error)
   }
 }
 

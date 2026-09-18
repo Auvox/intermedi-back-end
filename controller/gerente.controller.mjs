@@ -13,6 +13,7 @@ export async function cadastrarGerente(req, res) {
     });
   } catch (error) {
     enviarErro(res, error);
+    console.log(error)
   }
 }
 
@@ -26,6 +27,8 @@ export async function consultarGerente(req, res) {
     });
   } catch (error) {
     enviarErro(res, error);
+
+
   }
 }
 
