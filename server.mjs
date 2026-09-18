@@ -7,6 +7,7 @@ import funcionarioRoutes from "./routes/funcionario.routes.mjs";
 import gerenteRoutes from "./routes/gerente.routes.mjs";
 import pacienteRoutes from "./routes/paciente.routes.mjs";
 import appRoutes from "./routes/app.routes.mjs";
+import rotaRoutes from "./sistema-rota/rota.routes.mjs";
 
 const router = new Router();
 
@@ -16,6 +17,7 @@ funcionarioRoutes(router);
 gerenteRoutes(router);
 pacienteRoutes(router);
 appRoutes(router);
+rotaRoutes(router);
 
 const server = createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
