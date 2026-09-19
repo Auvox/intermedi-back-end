@@ -16,19 +16,6 @@ export async function cadastrarPaciente(req, res) {
   }
 }
 
-// listar paciente
-export async function consultarPaciente(req, res) {
-  try {
-    const paciente = servicePaciente.listar();
-    enviarJson(res, 200, {
-      mensagem: "TODOS OS PACIENTES CADASTRADOS - GET",
-      paciente,
-    });
-  } catch (error) {
-    enviarErro(res, error);
-  }
-}
-
 // buscar paciente por id
 export async function buscarPaciente(req, res) {
   try {
@@ -45,6 +32,10 @@ export async function buscarPaciente(req, res) {
   }
 }
 
+// listar paciente
+// para exibir um usuario (realizar uma busca) digitando um termo incompleto já retornará
+// por exemplo (http://localhost:3000/paciente?usuario=ma) retornará a usuaria "Maria Santos"
+// para exibir todos os usuários basta fazer uma busca na url sem inserir um termo (ex: http://localhost:3000/paciente)
 export async function listarOuBuscarPacientes(req, res) {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
