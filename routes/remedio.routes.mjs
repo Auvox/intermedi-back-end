@@ -2,6 +2,7 @@
 import {
   cadastrarRemedio,
   consultarRemedio,
+  listarOuBuscarRemedios,
   buscarRemedio,
   editarRemedio,
   deletarRemedio
@@ -12,6 +13,8 @@ export default function remedioRoutes(router) {
   router.post("/remedios", cadastrarRemedio);
 
   router.get("/remedios", consultarRemedio);
+
+  router.get("/remedios", listarOuBuscarRemedios);
 
   router.get("/remedios/:id", buscarRemedio);
 
