@@ -45,6 +45,36 @@ export async function buscarPaciente(req, res) {
   }
 }
 
+export async function listarOuBuscarPacientes(req, res) {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    // Captura o parâmetro enviado (?usuario=fe ou ?busca=fe)
+    const termo = url.searchParams.get("usuario") || url.searchParams.get("busca") || "";
+
+    if (termo.trim()) {
+      const resultados = servicePaciente.buscarPorTermo(termo);
+      return res.writeHead(200, { "Content-Type": "application/json" }).end(
+        JSON.stringify({
+          mensagem: "PACIENTE(S) ENCONTRADO/A(S) - GET",
+          paciente: resultados
+        })
+      );
+    }
+
+    const todos = servicePaciente.listar();
+    return res.writeHead(200, { "Content-Type": "application/json" }).end(
+      JSON.stringify({
+        mensagem: "TODOS OS PACIENTES LISTADOS - GET",
+        paciente: todos
+      })
+    );
+  } catch (error) {
+    res.writeHead(500, { "Content-Type": "application/json" }).end(
+      JSON.stringify({ erro: error.message })
+    );
+  }
+}
+
 // editar paciente
 export async function editarPaciente(req, res) {
   try {

@@ -78,6 +78,17 @@ export function buscarPorId(id) {
   return db.prepare(`${SELECT_PACIENTE} WHERE p.id_paciente = ?`).get(id);
 }
 
+export function buscarPorTermo(termo) {
+  const busca = `%${termo.trim().toLowerCase()}%`;
+
+  return db.prepare(/*sql*/ `
+    ${SELECT_PACIENTE}
+    WHERE LOWER(p.nome) LIKE ? OR LOWER(p.email) LIKE ?
+    ORDER BY p.nome ASC
+    LIMIT 15
+  `).all(busca, busca);
+}
+
 // Editar (campos não enviados continuam iguais; senha só muda se vier preenchida)
 export function editar(id, data) {
   const atual = buscarPorId(id);
