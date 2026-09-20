@@ -47,18 +47,34 @@ export async function buscarRemedio(req, res) {
   }
 }
 
+// listar remedios
+// para exibir um remédio (realizar uma busca) digitando um termo incompleto já retornará
+// por exemplo (http://localhost:3000/remedios?busca=dipi) retornará o remédio "Dipirona"
+
+// buscar remedio pela categoria
+/*por exemplo (http://localhost:3000/remedios?categoria=do) retornará o remédio que for da categoria 
+"Dor de cabeça, Febre" */
+
+// para exibir todos os remédios basta fazer uma busca na url sem inserir um termo (ex: http://localhost:3000/remedios)
 export async function listarOuBuscarRemedios(req, res) {
   try {
-    const url = new URL(req.url, `http://${req.headers.host}`);
+    const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    
+    // Captura os query params da URL
     const termo = url.searchParams.get("busca") || "";
+    const categoria = url.searchParams.get("categoria") || "";
 
+    // 1. Se informou um termo genérico de busca (nome/descrição)
     if (termo.trim()) {
       const resultados = serviceRemedio.buscarPorTermo(termo);
       return enviarJson(res, 200, resultados);
     }
 
-    const remedios = serviceRemedio.listar();
+    // 2. Se informou 'categoria', o service fará a busca parcial (%termo%)
+    // Se 'categoria' e 'busca' forem vazias, o service retornará todos os remédios normalmente
+    const remedios = serviceRemedio.listar(categoria);
     return enviarJson(res, 200, remedios);
+
   } catch (error) {
     enviarErro(res, error);
   }

@@ -85,21 +85,31 @@ export function buscarPorTermo(termo, idFarmacia = null) {
 
 // listar (opcional: filtrar por nome da categoria, ex.: "Dor de cabeça")
 export function listar(categoria) {
-  if (categoria) {
-    return db.prepare(/*sql*/ `
-      ${SELECT_REMEDIO}
-      WHERE r.id_remedio IN (
-        SELECT rc2.id_remedio
-        FROM remedio_categoria rc2
-        INNER JOIN categoria c2 ON c2.id_categoria = rc2.id_categoria
-        WHERE c2.nome = ?
-      )
-      GROUP BY r.id_remedio
-      ORDER BY r.nome
-    `).all(categoria).map(formatar);
+  if (categoria && categoria.trim()) {
+    // Monta o parâmetro para busca parcial com LIKE (%termo%)
+    const termoCategoria = `%${categoria.trim().toLowerCase()}%`;
+
+    return db
+      .prepare(/*sql*/ `
+        ${SELECT_REMEDIO} 
+        WHERE r.id_remedio IN (
+          SELECT rc2.id_remedio 
+          FROM remedio_categoria rc2 
+          INNER JOIN categoria c2 ON c2.id_categoria = rc2.id_categoria 
+          WHERE LOWER(c2.nome) LIKE ?
+        ) 
+        GROUP BY r.id_remedio 
+        ORDER BY r.nome ASC
+      `)
+      .all(termoCategoria)
+      .map(formatar);
   }
 
-  return db.prepare(`${SELECT_REMEDIO} GROUP BY r.id_remedio ORDER BY r.nome`).all().map(formatar);
+  // Retorno padrão sem filtros
+  return db
+    .prepare(`${SELECT_REMEDIO} GROUP BY r.id_remedio ORDER BY r.nome ASC`)
+    .all()
+    .map(formatar);
 }
 
 // busca individual
