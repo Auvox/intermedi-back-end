@@ -53,9 +53,17 @@ export async function consultarRota(req, res) {
     return;
   }
 
-  if (!["pedestrian", "auto", "bicycle"].includes(modo)) {
+  const modosPermitidos = [
+    "pedestrian",
+    "auto",
+    "motorcycle",
+    "bicycle",
+  ];
+
+  if (!modosPermitidos.includes(modo)) {
     responder(res, 400, {
-      message: "Modo permitido: pedestrian, auto ou bicycle.",
+      message:
+        "Modo permitido: pedestrian, auto, motorcycle ou bicycle.",
     });
     return;
   }
