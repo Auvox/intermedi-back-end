@@ -1,5 +1,6 @@
 import db, { emTransacao } from "../database/database.mjs";
 import { erro } from "../utils/http.mjs";
+import * as serviceFuncionario from "../services/funcionario.service.mjs";
 import { idOuNull, mesclar, texto, textoOuNull } from "../utils/dados.mjs";
 import { gerarHashSenha, gerarSenhaProvisoria } from "../utils/senha.mjs";
 import { colunasEndereco, lerEndereco, salvarEndereco } from "./endereco.service.mjs";
@@ -100,6 +101,30 @@ export function listar() {
 // busca individual
 export function buscarPorId(id) {
   return db.prepare(`${SELECT_GERENTE} WHERE g.id_gerente = ?`).get(id);
+}
+
+// Adicione/substitua no gerente.service.mjs
+
+export function consultarFuncionarioDoGerente(idGerente, idFuncionario) {
+  // 1. Busca os dados do gerente para identificar a sua farmácia
+  const gerente = db.prepare("SELECT id_farmacia FROM gerente WHERE id_gerente = ?").get(idGerente);
+  if (!gerente) {
+    throw erro(404, "Gerente não encontrado.");
+  }
+
+  // 2. Busca o funcionário e valida se ele pertence à mesma farmácia do gerente
+  const funcionario = serviceFuncionario.buscarPorId(idFuncionario);
+  
+  if (!funcionario) {
+    throw erro(404, "Funcionário não encontrado.");
+  }
+
+  // Regra de segurança: O funcionário deve pertencer à mesma farmácia do gerente
+  if (funcionario.fkIdFarmacia !== gerente.id_farmacia) {
+    throw erro(403, "Acesso negado: Este funcionário não pertence à sua farmácia.");
+  }
+
+  return funcionario;
 }
 
 // editar (campos não enviados continuam iguais; senha só muda se vier preenchida)
