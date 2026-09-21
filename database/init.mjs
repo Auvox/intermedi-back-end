@@ -14,6 +14,7 @@ import {
   bancoVazio,
   caminhoDoBanco,
 } from "./setup.mjs";
+import { sincronizarAoIniciar } from "./shared-data.mjs";
 
 const args = process.argv.slice(2);
 const reset = args.includes("--reset");
@@ -26,8 +27,11 @@ try {
   const novo = !bancoExiste(caminho);
   const db = abrirBanco(caminho);
   aplicarSchema(db);
+  const compartilhado = sincronizarAoIniciar(db);
 
-  if (seed || novo || reset) {
+  if (["sincronizado", "atualizado", "alteracoes-locais"].includes(compartilhado)) {
+    console.log(`Banco da main preparado (dados locais preservados): ${caminho}`);
+  } else if (seed || novo || reset) {
     if (!bancoVazio(db)) {
       throw new Error(
         "O banco já tem dados. Para recomeçar do zero use: npm run db:reset",

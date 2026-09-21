@@ -1,9 +1,11 @@
 import { abrirBanco, aplicarSchema } from "./setup.mjs";
+import { sincronizarAoIniciar } from "./shared-data.mjs";
 
 // Conexão única usada por todo o back-end.
 // Ao subir, garante que todas as tabelas existem (não apaga nada).
 const db = abrirBanco();
 aplicarSchema(db);
+sincronizarAoIniciar(db);
 
 // Executa várias operações como uma só: se uma falhar, desfaz todas.
 // Usa SAVEPOINT, então pode ser chamada dentro de outra transação.

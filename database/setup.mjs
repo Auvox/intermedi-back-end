@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { caminhoLocal } from "./shared-data.mjs";
 
 // Caminho do banco:
 //   • padrão: database/intermedi.db
@@ -8,7 +9,7 @@ import { fileURLToPath } from "node:url";
 export function caminhoDoBanco() {
   return (
     process.env.INTERMEDI_DB_PATH ||
-    fileURLToPath(new URL("./intermedi.db", import.meta.url))
+    caminhoLocal()
   );
 }
 
