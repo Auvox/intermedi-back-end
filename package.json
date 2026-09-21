@@ -12,6 +12,7 @@
     "db:reset": "node --env-file-if-exists=.env database/init.mjs --reset",
     "db:publish": "node --env-file-if-exists=.env database/share.mjs publish",
     "db:sync": "node --env-file-if-exists=.env database/share.mjs sync",
+    "prepare": "node scripts/install-hooks.mjs",
     "test": "node --test \"tests/**/*.test.mjs\""
   },
   "devDependencies": {

@@ -59,6 +59,28 @@ database/
 
 ## Rotina do dia a dia
 
+### Dados compartilhados pela main
+
+Na `main`, o banco local é `database/intermedi.main.db`. Nas outras branches,
+é `database/intermedi.db`; ambos ficam fora do Git. Ao rodar `npm install`,
+o hook de commit é instalado neste clone. Cada `git commit` feito localmente
+na `main` exporta automaticamente os registros para `database/main-data.json`
+e inclui esse arquivo no próprio commit. Em outras branches, o hook não mexe
+nos dados compartilhados. Quem fizer `git pull` da `main` recebe o JSON e,
+ao iniciar o servidor ou rodar `npm run db:init`, carrega os dados no banco local.
+
+Antes do primeiro commit na `main`, rode `npm run db:init` e confirme que o
+banco dessa branch contém os cadastros desejados. Se os dados estiverem apenas
+no banco de outra branch, copie-os para o banco da `main` com o servidor parado.
+O snapshot inclui os registros das tabelas, inclusive dados pessoais e hashes
+de senha: revise o arquivo antes de enviar ao repositório remoto.
+
+Dados locais que divergem do último snapshot não são sobrescritos ao iniciar.
+Para substituí-los pelos dados recebidos, rode `npm run db:sync`; o comando
+faz uma cópia de segurança do banco antes. Commits feitos pela interface do
+GitHub ou com `--no-verify` não executam o hook local. Cada colaborador precisa
+rodar `npm install` depois de receber esta alteração.
+
 1. `git checkout development && git pull`
 2. Mudou algo em `database/`? → `npm run db:reset`
 3. `git checkout -b feature/nome-da-tarefa`
