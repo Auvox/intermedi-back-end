@@ -19,6 +19,9 @@ export function lerEndereco(data, campos) {
     return "";
   };
 
+  // Complemento/UF isolados também são um endereço parcial, não ausência dele.
+  if (!Object.keys(campos).some((chave) => valor(chave))) return null;
+
   const endereco = {
     logradouro: valor("logradouro"),
     numero: valor("numero"),
@@ -30,7 +33,6 @@ export function lerEndereco(data, campos) {
   };
 
   const faltando = OBRIGATORIOS.filter((chave) => !endereco[chave]);
-  if (faltando.length === OBRIGATORIOS.length) return null;
   if (faltando.length) {
     const nomes = faltando.map((chave) => [].concat(campos[chave])[0]);
     throw erro(400, `Endereço incompleto. Faltou: ${nomes.join(", ")}.`);

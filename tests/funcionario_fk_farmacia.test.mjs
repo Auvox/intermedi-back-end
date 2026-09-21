@@ -52,7 +52,9 @@ test("cadastrar funcionario grava id_farmacia, normaliza o turno e gera matrícu
 
 test("funcionario sem farmácia ou com farmácia inexistente é recusado", () => {
   assert.throws(() => serviceFuncionario.cadastrar(payload(undefined)), { status: 400 });
-  assert.throws(() => serviceFuncionario.cadastrar(payload(999999)), /FOREIGN KEY/);
+  assert.throws(() => serviceFuncionario.cadastrar(payload(999999)), {
+    status: 400, message: "A farmácia selecionada não existe.",
+  });
 });
 
 test("CPF duplicado retorna 409", () => {

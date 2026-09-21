@@ -88,6 +88,21 @@ database/
 - **Endereço:** fica na tabela `endereco`. O front continua mandando
   `cepFarmacia`, `enderecoFarmacia`... e o service cuida do resto.
   Se não mandar UF/estado, usa `SP`.
+- **Vínculos nos cadastros:** envie os dados pessoais e o endereço no mesmo
+  JSON. O controller lê o corpo e chama o service, que grava `endereco`, pega
+  o ID gerado e o salva no `id_endereco` da entidade, tudo na mesma transação.
+  Se ocorrer erro, nenhuma das duas inserções permanece no banco. Endereço
+  omitido é opcional; se preenchido, precisa de logradouro, número, bairro,
+  cidade e CEP. Gerente e farmácia no painel também enviam a UF escolhida.
+- **Farmácia do gerente/funcionário:** use o `idFarmacia` real de `GET /farmacia`
+  no campo `fkIdFarmacia` do POST. O service aceita também `idFarmacia`, mas
+  rejeita IDs inexistentes e valores diferentes quando ambos são enviados.
+  O endereço da pessoa é próprio: não recebe o ID do endereço da farmácia.
+  `idAdminCadastro` e `idGerenteCadastro`, quando informados, precisam existir.
+- **Resposta do POST:** `recebido` contém o ID da entidade, `idEndereco` e,
+  para gerente/funcionário, `fkIdFarmacia`. O front usa esses IDs ao atualizar
+  a lista. A farmácia não possui senha nem `idGerente`; a associação está
+  em `gerente.id_farmacia`.
 - **Erros:** respondem sempre `{ "error": "mensagem" }` com o status certo
   (400 dado inválido, 404 não encontrado, 409 duplicado/vinculado).
 

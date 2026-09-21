@@ -9,6 +9,7 @@ export async function cadastrarFuncionario(req, res) {
 
     enviarJson(res, 201, {
       status: "CADASTRADO COM SUCESSO - POST",
+      recebido: funcionario,
       matricula: funcionario.matriculaFuncionario,
       // só vem preenchida quando o cadastro não informou senhaFuncionario
       senhaProvisoria: funcionario.senhaProvisoria,

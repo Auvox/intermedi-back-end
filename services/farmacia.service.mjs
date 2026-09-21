@@ -1,6 +1,6 @@
 import db, { emTransacao } from "../database/database.mjs";
 import { erro } from "../utils/http.mjs";
-import { mesclar, texto, textoOuNull } from "../utils/dados.mjs";
+import { idOuNull, mesclar, texto, textoOuNull } from "../utils/dados.mjs";
 import { colunasEndereco, lerEndereco, salvarEndereco } from "./endereco.service.mjs";
 
 // Nomes que o front usa para o endereço da farmácia
@@ -38,6 +38,22 @@ function validar(dados) {
   }
 }
 
+// O vínculo fica em gerente/funcionario.id_farmacia, sempre com um ID real.
+export function farmaciaDoPayload(data, idAtual = null) {
+  const idFarmacia = idOuNull(data.fkIdFarmacia ?? data.idFarmacia ?? idAtual);
+  if (!Number.isInteger(idFarmacia) || idFarmacia <= 0) {
+    throw erro(400, "Selecione uma farmácia cadastrada (fkIdFarmacia).");
+  }
+  if (data.fkIdFarmacia != null && data.idFarmacia != null &&
+      idOuNull(data.fkIdFarmacia) !== idOuNull(data.idFarmacia)) {
+    throw erro(400, "fkIdFarmacia e idFarmacia devem indicar a mesma farmácia.");
+  }
+  if (!db.prepare("SELECT 1 FROM farmacia WHERE id_farmacia = ?").get(idFarmacia)) {
+    throw erro(400, "A farmácia selecionada não existe.");
+  }
+  return idFarmacia;
+}
+
 // cadastrar
 export function cadastrar(data) {
   validar(data);
@@ -57,7 +73,7 @@ export function cadastrar(data) {
       idEndereco,
     );
 
-    return { idFarmacia: Number(result.lastInsertRowid) };
+    return { idFarmacia: Number(result.lastInsertRowid), idEndereco };
   });
 }
 

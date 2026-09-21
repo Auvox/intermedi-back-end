@@ -64,7 +64,7 @@ export function cadastrar(data) {
       idEndereco,
     );
 
-    return { idPaciente: Number(result.lastInsertRowid) };
+    return { idPaciente: Number(result.lastInsertRowid), idEndereco };
   });
 }
 
