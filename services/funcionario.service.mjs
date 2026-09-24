@@ -2,7 +2,11 @@ import db, { emTransacao } from "../database/database.mjs";
 import { erro } from "../utils/http.mjs";
 import { idOuNull, mesclar, texto, textoOuNull } from "../utils/dados.mjs";
 import { gerarHashSenha, gerarSenhaProvisoria } from "../utils/senha.mjs";
-import { colunasEndereco, lerEndereco, salvarEndereco } from "./endereco.service.mjs";
+import {
+  colunasEndereco,
+  lerEndereco,
+  salvarEndereco,
+} from "./endereco.service.mjs";
 import { gerarMatriculaUnica } from "./matricula.service.mjs";
 
 const CAMPOS_ENDERECO = {
@@ -31,9 +35,13 @@ const SELECT_FUNCIONARIO = /*sql*/ `
       fu.created_at          AS createdAtFuncionario,
       fu.id_endereco         AS idEndereco,
       ${colunasEndereco({
-        cep: "cepFuncionario", logradouro: "enderecoFuncionario", numero: "numeroFuncionario",
-        complemento: "complementoFuncionario", bairro: "bairroFuncionario",
-        cidade: "cidadeFuncionario", uf: "ufFuncionario",
+        cep: "cepFuncionario",
+        logradouro: "enderecoFuncionario",
+        numero: "numeroFuncionario",
+        complemento: "complementoFuncionario",
+        bairro: "bairroFuncionario",
+        cidade: "cidadeFuncionario",
+        uf: "ufFuncionario",
       })}
   FROM funcionario fu
   INNER JOIN farmacia f ON f.id_farmacia = fu.id_farmacia
@@ -57,19 +65,28 @@ export function normalizarTurno(valor) {
 const farmaciaDoPayload = (data) => data.fkIdFarmacia ?? data.idFarmacia;
 
 function validar(dados, idFarmacia) {
-  const faltando = ["nomeFuncionario", "cpfFuncionario", "emailFuncionario"]
-    .filter((campo) => !texto(dados[campo]));
-  if (faltando.length) throw erro(400, `Campos obrigatórios: ${faltando.join(", ")}.`);
+  const faltando = [
+    "nomeFuncionario",
+    "cpfFuncionario",
+    "emailFuncionario",
+  ].filter((campo) => !texto(dados[campo]));
+  if (faltando.length)
+    throw erro(400, `Campos obrigatórios: ${faltando.join(", ")}.`);
 
-  if (!idFarmacia) throw erro(400, "Informe fkIdFarmacia (a farmácia do funcionário).");
+  if (!idFarmacia)
+    throw erro(400, "Informe fkIdFarmacia (a farmácia do funcionário).");
   if (Number.isNaN(idFarmacia)) throw erro(400, "fkIdFarmacia inválido.");
 }
 
 function conferirDuplicado(cpf, email, idIgnorar = -1) {
-  const existente = db.prepare(/*sql*/ `
+  const existente = db
+    .prepare(
+      /*sql*/ `
     SELECT cpf, email FROM funcionario
     WHERE id_funcionario <> ? AND (cpf = ? OR email = ?)
-  `).get(idIgnorar, cpf, email);
+  `
+    )
+    .get(idIgnorar, cpf, email);
 
   if (existente?.cpf === cpf) throw erro(409, "CPF já cadastrado.");
   if (existente) throw erro(409, "E-mail já cadastrado.");
@@ -98,24 +115,28 @@ export function cadastrar(data) {
     // matrícula gerada aqui no back
     const matriculaFuncionario = gerarMatriculaUnica("funcionario");
 
-    const result = db.prepare(/*sql*/ `
+    const result = db
+      .prepare(
+        /*sql*/ `
       INSERT INTO funcionario
           (nome, cpf, email, senha_hash, matricula, telefone, cargo, turno,
            id_farmacia, id_gerente_cadastro, id_endereco)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      texto(data.nomeFuncionario),
-      cpf,
-      email,
-      gerarHashSenha(senhaInformada || senhaProvisoria),
-      matriculaFuncionario,
-      textoOuNull(data.telFuncionario),
-      textoOuNull(data.cargoFuncionario),
-      turno,
-      idFarmacia,
-      idGerente,
-      idEndereco,
-    );
+    `
+      )
+      .run(
+        texto(data.nomeFuncionario),
+        cpf,
+        email,
+        gerarHashSenha(senhaInformada || senhaProvisoria),
+        matriculaFuncionario,
+        textoOuNull(data.telFuncionario),
+        textoOuNull(data.cargoFuncionario),
+        turno,
+        idFarmacia,
+        idGerente,
+        idEndereco
+      );
 
     return {
       idFuncionario: Number(result.lastInsertRowid),
@@ -132,7 +153,9 @@ export function listar() {
 
 // busca individual
 export function buscarPorId(id) {
-  return db.prepare(`${SELECT_FUNCIONARIO} WHERE fu.id_funcionario = ?`).get(id);
+  return db
+    .prepare(`${SELECT_FUNCIONARIO} WHERE fu.id_funcionario = ?`)
+    .get(id);
 }
 
 // editar (campos não enviados continuam iguais; senha só muda se vier preenchida)
@@ -155,25 +178,29 @@ export function editar(id, data) {
   return emTransacao(() => {
     const idEndereco = salvarEndereco(atual.idEndereco, endereco);
 
-    const result = db.prepare(/*sql*/ `
+    const result = db
+      .prepare(
+        /*sql*/ `
       UPDATE funcionario
       SET nome = ?, cpf = ?, email = ?, matricula = ?, telefone = ?,
           cargo = ?, turno = ?, id_farmacia = ?, id_endereco = ?,
           senha_hash = COALESCE(?, senha_hash)
       WHERE id_funcionario = ?
-    `).run(
-      texto(dados.nomeFuncionario),
-      cpf,
-      email,
-      texto(dados.matriculaFuncionario),
-      textoOuNull(dados.telFuncionario),
-      textoOuNull(dados.cargoFuncionario),
-      turno,
-      idFarmacia,
-      idEndereco,
-      novaSenha ? gerarHashSenha(novaSenha) : null,
-      id,
-    );
+    `
+      )
+      .run(
+        texto(dados.nomeFuncionario),
+        cpf,
+        email,
+        texto(dados.matriculaFuncionario),
+        textoOuNull(dados.telFuncionario),
+        textoOuNull(dados.cargoFuncionario),
+        turno,
+        idFarmacia,
+        idEndereco,
+        novaSenha ? gerarHashSenha(novaSenha) : null,
+        id
+      );
 
     return { changes: Number(result.changes) };
   });
@@ -182,12 +209,96 @@ export function editar(id, data) {
 // deletar
 export function deletar(id) {
   return emTransacao(() => {
-    const atual = db.prepare("SELECT id_endereco FROM funcionario WHERE id_funcionario = ?").get(id);
+    const atual = db
+      .prepare("SELECT id_endereco FROM funcionario WHERE id_funcionario = ?")
+      .get(id);
     if (!atual) return { changes: 0 };
 
-    const result = db.prepare("DELETE FROM funcionario WHERE id_funcionario = ?").run(id);
+    const result = db
+      .prepare("DELETE FROM funcionario WHERE id_funcionario = ?")
+      .run(id);
     if (atual.id_endereco) salvarEndereco(atual.id_endereco, null);
 
     return { changes: Number(result.changes) };
+  });
+}
+
+export function novoServico(data) {
+  for (const campo of ["idFuncionario", "idPaciente", "idFarmacia"]) {
+    if (!Number.isSafeInteger(data[campo]) || data[campo] <= 0) {
+      throw erro(400, `${campo} deve ser um inteiro positivo.`);
+    }
+  }
+  if (!Array.isArray(data.remedios) || data.remedios.length === 0) {
+    throw erro(400, "Informe pelo menos um item em remedios.");
+  }
+  const ids = new Set();
+  for (const item of data.remedios) {
+    if (
+      !Number.isSafeInteger(item?.idRemedio) ||
+      item.idRemedio <= 0 ||
+      !Number.isSafeInteger(item?.quantidade) ||
+      item.quantidade <= 0
+    ) {
+      throw erro(
+        400,
+        "Cada remédio deve ter idRemedio e quantidade inteiros positivos."
+      );
+    }
+    if (ids.has(item.idRemedio))
+      throw erro(400, "Não repita o mesmo remédio na lista.");
+    ids.add(item.idRemedio);
+  }
+
+  return emTransacao(() => {
+    const funcionario = db
+      .prepare("SELECT id_farmacia FROM funcionario WHERE id_funcionario = ?")
+      .get(data.idFuncionario);
+    if (!funcionario) throw erro(404, "Funcionário não encontrado.");
+    if (
+      !db
+        .prepare("SELECT 1 FROM farmacia WHERE id_farmacia = ?")
+        .get(data.idFarmacia)
+    ) {
+      throw erro(404, "Farmácia não encontrada.");
+    }
+    if (funcionario.id_farmacia !== data.idFarmacia) {
+      throw erro(400, "O funcionário não pertence à farmácia informada.");
+    }
+    if (
+      !db
+        .prepare("SELECT 1 FROM paciente WHERE id_paciente = ?")
+        .get(data.idPaciente)
+    ) {
+      throw erro(404, "Paciente não encontrado.");
+    }
+
+    const result = db
+      .prepare(
+        /*sql*/ `
+      INSERT INTO servico (id_funcionario, id_paciente, id_farmacia, observacao)
+      VALUES (?, ?, ?, ?)
+    `
+      )
+      .run(
+        data.idFuncionario,
+        data.idPaciente,
+        data.idFarmacia,
+        textoOuNull(data.observacao)
+      );
+    const idServico = Number(result.lastInsertRowid);
+    const buscarRemedio = db.prepare(
+      "SELECT 1 FROM remedio WHERE id_remedio = ?"
+    );
+    const inserirItem = db.prepare(/*sql*/ `
+      INSERT INTO servico_remedio (id_servico, id_remedio, quantidade) VALUES (?, ?, ?)
+    `);
+    for (const item of data.remedios) {
+      if (!buscarRemedio.get(item.idRemedio)) {
+        throw erro(404, `Remédio ${item.idRemedio} não encontrado.`);
+      }
+      inserirItem.run(idServico, item.idRemedio, item.quantidade);
+    }
+    return { idServico };
   });
 }
