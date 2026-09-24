@@ -28,6 +28,19 @@ const contagens = () => [
   db.prepare("SELECT COUNT(*) AS n FROM servico_remedio").get().n,
 ];
 
+test("GET /servicos retorna nomes e totais sem duplicar atendimentos", async () => {
+  const res = { setHeader() {}, end(body) { this.body = JSON.parse(body); } };
+  await router.find("GET", "/servicos")({}, res);
+  assert.equal(res.statusCode, 200);
+  const lista = res.body.servicos;
+  assert.equal(lista.length, contagens()[0]);
+  const exemplo = lista.find(s => s.idServico === 1);
+  assert.equal(exemplo.nomePaciente, "Maria Santos");
+  assert.equal(exemplo.totalMedicamentos, 2);
+  assert.equal(exemplo.quantidadeTotal, 3);
+  assert.equal(new Set(lista.map(s => s.idServico)).size, lista.length);
+});
+
 test("POST /servicos grava cabeçalho e vários itens com o mesmo id", async () => {
   const res = await request(payload());
   assert.equal(res.statusCode, 201);

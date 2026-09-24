@@ -1,6 +1,14 @@
 import * as serviceFuncionario from "../services/funcionario.service.mjs";
 import { enviarErro, enviarJson, erro, idDaUrl, lerJson } from "../utils/http.mjs";
 
+export function consultarServicos(req, res) {
+  try {
+    enviarJson(res, 200, { servicos: serviceFuncionario.listarServicos() });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
 // cadastrar serviço e seus medicamentos
 export async function cadastrarServico(req, res) {
   try {

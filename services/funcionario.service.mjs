@@ -302,3 +302,21 @@ export function novoServico(data) {
     return { idServico };
   });
 }
+
+export function listarServicos() {
+  return db.prepare(/*sql*/ `
+    SELECT s.id_servico AS idServico, s.data_servico AS dataServico,
+           s.observacao, p.nome AS nomePaciente, p.id_paciente AS idPaciente,
+           f.nome AS nomeFuncionario, fa.nome AS nomeFarmacia,
+           s.id_farmacia AS idFarmacia,
+           COUNT(sr.id_remedio) AS totalMedicamentos,
+           COALESCE(SUM(sr.quantidade), 0) AS quantidadeTotal
+    FROM servico s
+    JOIN paciente p ON p.id_paciente = s.id_paciente
+    JOIN funcionario f ON f.id_funcionario = s.id_funcionario
+    JOIN farmacia fa ON fa.id_farmacia = s.id_farmacia
+    LEFT JOIN servico_remedio sr ON sr.id_servico = s.id_servico
+    GROUP BY s.id_servico
+    ORDER BY s.data_servico DESC, s.id_servico DESC
+  `).all();
+}
