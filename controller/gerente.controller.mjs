@@ -16,9 +16,44 @@ export async function cadastrarGerente(req, res) {
   }
 }
 
-// listar gerente
+// busca gerente
+// ex: "http://localhost:3000/gerente", retornará todos os gerentes
+// busca funcionarios pelo termo "funcionario"
+// ex: "http://localhost:3000/gerente?funcionario=1"
+// retornará "Lucas Pereira" e todas as informações referentes ao funcionário.
 export async function consultarGerente(req, res) {
   try {
+    const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    const idGerenteParam = url.searchParams.get("idGerente");
+    const idFuncionarioParam = url.searchParams.get("funcionario");
+
+    // Caso o gerente esteja tentando consultar um funcionário
+    if (idFuncionarioParam) {
+      if (!idGerenteParam) {
+        throw erro(400, "Informe o idGerente na URL para realizar a consulta (ex: ?idGerente=1&funcionario=2).");
+      }
+
+      const idGerente = Number(idGerenteParam);
+      const idFuncionario = Number(idFuncionarioParam);
+
+      if (Number.isNaN(idGerente) || idGerente <= 0) {
+        throw erro(400, "ID do gerente inválido.");
+      }
+
+      if (Number.isNaN(idFuncionario) || idFuncionario <= 0) {
+        throw erro(400, "ID do funcionário inválido.");
+      }
+
+      // Executa a busca com a verificação de permissão
+      const funcionario = serviceGerente.consultarFuncionarioDoGerente(idGerente, idFuncionario);
+
+      return enviarJson(res, 200, {
+        status: "Funcionário encontrado com sucesso",
+        resultado: funcionario,
+      });
+    }
+
+    // Caso não passe o parâmetro funcionario, faz a listagem normal de gerentes
     const gerente = serviceGerente.listar();
     enviarJson(res, 200, {
       mensagem: "TODOS OS GERENTES CADASTRADOS - GET",

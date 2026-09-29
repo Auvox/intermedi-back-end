@@ -214,20 +214,32 @@ CREATE TABLE IF NOT EXISTS estoque (
 
 -- ---------------------------------------------------------------------
 --  4.1 CHAMADO
+--  O funcionário SOLICITA o chamado (status 'pendente') e o gerente da
+--  farmácia aceita ou recusa. Fluxo do status:
+--    pendente -> aceito -> em_andamento -> resolvido
+--    pendente -> recusado
+--    (qualquer um antes de resolvido) -> cancelado
+--  id_gerente_resposta / data_resposta / resposta_gerente ficam NULL
+--  até o gerente responder.
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS chamado (
-    id_chamado     INTEGER PRIMARY KEY AUTOINCREMENT,
-    titulo         TEXT    NOT NULL,
-    descricao      TEXT,
-    status         TEXT    NOT NULL DEFAULT 'aberto'
-                   CHECK (status IN ('aberto', 'em_andamento', 'resolvido', 'cancelado')),
-    prioridade     TEXT    NOT NULL DEFAULT 'media'
-                   CHECK (prioridade IN ('baixa', 'media', 'alta', 'urgente')),
-    data_abertura  TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    id_funcionario INTEGER NOT NULL,
-    id_farmacia    INTEGER NOT NULL,
-    FOREIGN KEY (id_funcionario) REFERENCES funcionario (id_funcionario) ON DELETE RESTRICT,
-    FOREIGN KEY (id_farmacia)    REFERENCES farmacia    (id_farmacia)    ON DELETE CASCADE
+    id_chamado          INTEGER PRIMARY KEY AUTOINCREMENT,
+    titulo              TEXT    NOT NULL,
+    descricao           TEXT,
+    status              TEXT    NOT NULL DEFAULT 'pendente'
+                        CHECK (status IN ('pendente', 'aceito', 'em_andamento',
+                                          'resolvido', 'recusado', 'cancelado')),
+    prioridade          TEXT    NOT NULL DEFAULT 'media'
+                        CHECK (prioridade IN ('baixa', 'media', 'alta', 'urgente')),
+    data_abertura       TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_funcionario      INTEGER NOT NULL,
+    id_farmacia         INTEGER NOT NULL,
+    id_gerente_resposta INTEGER,             -- gerente que aceitou/recusou
+    data_resposta       TEXT,
+    resposta_gerente    TEXT,                -- ex.: motivo da recusa
+    FOREIGN KEY (id_funcionario)      REFERENCES funcionario (id_funcionario) ON DELETE RESTRICT,
+    FOREIGN KEY (id_farmacia)         REFERENCES farmacia    (id_farmacia)    ON DELETE CASCADE,
+    FOREIGN KEY (id_gerente_resposta) REFERENCES gerente     (id_gerente)     ON DELETE SET NULL
 );
 
 -- ---------------------------------------------------------------------
@@ -317,7 +329,7 @@ CREATE TABLE IF NOT EXISTS sessao_paciente (
 CREATE INDEX IF NOT EXISTS idx_gerente_farmacia      ON gerente (id_farmacia);
 CREATE INDEX IF NOT EXISTS idx_funcionario_farmacia  ON funcionario (id_farmacia);
 CREATE INDEX IF NOT EXISTS idx_estoque_farmacia      ON estoque (id_farmacia);
-CREATE INDEX IF NOT EXISTS idx_chamado_farmacia      ON chamado (id_farmacia);
+CREATE INDEX IF NOT EXISTS idx_chamado_farmacia      ON chamado (id_farmacia, status);
 CREATE INDEX IF NOT EXISTS idx_servico_farmacia      ON servico (id_farmacia);
 CREATE INDEX IF NOT EXISTS idx_remcat_categoria      ON remedio_categoria (id_categoria);
 CREATE INDEX IF NOT EXISTS idx_sessao_paciente       ON sessao_paciente (id_paciente);

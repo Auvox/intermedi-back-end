@@ -1,9 +1,11 @@
 import db, { emTransacao } from "../database/database.mjs";
 import { erro } from "../utils/http.mjs";
+import * as serviceFuncionario from "../services/funcionario.service.mjs";
 import { idOuNull, mesclar, texto, textoOuNull } from "../utils/dados.mjs";
 import { gerarHashSenha, gerarSenhaProvisoria } from "../utils/senha.mjs";
 import { colunasEndereco, lerEndereco, salvarEndereco } from "./endereco.service.mjs";
 import { gerarMatriculaUnica } from "./matricula.service.mjs";
+import { farmaciaDoPayload } from "./farmacia.service.mjs";
 
 const CAMPOS_ENDERECO = {
   logradouro: "enderecoGerente",
@@ -40,26 +42,22 @@ const SELECT_GERENTE = /*sql*/ `
   LEFT  JOIN endereco e ON e.id_endereco = g.id_endereco
 `;
 
-// Aceita fkIdFarmacia ou idFarmacia
-const farmaciaDoPayload = (data) => data.fkIdFarmacia ?? data.idFarmacia;
-
-function validar(dados, idFarmacia) {
+function validar(dados) {
   const faltando = ["nomeGerente", "emailGerente", "cpfGerente", "crfGerente"]
     .filter((campo) => !texto(dados[campo]));
   if (faltando.length) throw erro(400, `Campos obrigatórios: ${faltando.join(", ")}.`);
 
-  if (!idFarmacia) {
-    throw erro(400, "Informe fkIdFarmacia (a farmácia do gerente).");
-  }
-  if (Number.isNaN(idFarmacia)) throw erro(400, "fkIdFarmacia inválido.");
 }
 
 // cadastrar
 export function cadastrar(data) {
-  const idFarmacia = idOuNull(farmaciaDoPayload(data));
+  const idFarmacia = farmaciaDoPayload(data);
   const idAdmin = idOuNull(data.idAdminCadastro);
-  validar(data, idFarmacia);
+  validar(data);
   if (Number.isNaN(idAdmin)) throw erro(400, "idAdminCadastro inválido.");
+  if (idAdmin && !db.prepare("SELECT 1 FROM admin WHERE id_admin = ?").get(idAdmin)) {
+    throw erro(400, "O administrador informado não existe.");
+  }
   const endereco = lerEndereco(data, CAMPOS_ENDERECO);
 
   // sem senha no cadastro -> gera uma provisória e devolve na resposta
@@ -88,7 +86,10 @@ export function cadastrar(data) {
       idEndereco,
     );
 
-    return { idGerente: Number(result.lastInsertRowid), matriculaGerente, senhaProvisoria };
+    return {
+      idGerente: Number(result.lastInsertRowid), matriculaGerente,
+      fkIdFarmacia: idFarmacia, idEndereco, senhaProvisoria,
+    };
   });
 }
 
@@ -102,14 +103,38 @@ export function buscarPorId(id) {
   return db.prepare(`${SELECT_GERENTE} WHERE g.id_gerente = ?`).get(id);
 }
 
+// Adicione/substitua no gerente.service.mjs
+
+export function consultarFuncionarioDoGerente(idGerente, idFuncionario) {
+  // 1. Busca os dados do gerente para identificar a sua farmácia
+  const gerente = db.prepare("SELECT id_farmacia FROM gerente WHERE id_gerente = ?").get(idGerente);
+  if (!gerente) {
+    throw erro(404, "Gerente não encontrado.");
+  }
+
+  // 2. Busca o funcionário e valida se ele pertence à mesma farmácia do gerente
+  const funcionario = serviceFuncionario.buscarPorId(idFuncionario);
+  
+  if (!funcionario) {
+    throw erro(404, "Funcionário não encontrado.");
+  }
+
+  // Regra de segurança: O funcionário deve pertencer à mesma farmácia do gerente
+  if (funcionario.fkIdFarmacia !== gerente.id_farmacia) {
+    throw erro(403, "Acesso negado: Este funcionário não pertence à sua farmácia.");
+  }
+
+  return funcionario;
+}
+
 // editar (campos não enviados continuam iguais; senha só muda se vier preenchida)
 export function editar(id, data) {
   const atual = buscarPorId(id);
   if (!atual) return { changes: 0 };
 
   const dados = mesclar(atual, data);
-  const idFarmacia = idOuNull(farmaciaDoPayload(data) ?? atual.fkIdFarmacia);
-  validar(dados, idFarmacia);
+  const idFarmacia = farmaciaDoPayload(data, atual.fkIdFarmacia);
+  validar(dados);
   const endereco = lerEndereco(dados, CAMPOS_ENDERECO);
   const novaSenha = texto(data.senhaGerente);
 

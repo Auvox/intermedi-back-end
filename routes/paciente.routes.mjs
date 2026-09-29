@@ -1,6 +1,6 @@
 import {
   cadastrarPaciente,
-  consultarPaciente,
+  listarOuBuscarPacientes,
   buscarPaciente,
   editarPaciente,
   deletarPaciente,
@@ -9,7 +9,7 @@ import {
 export default function pacienteRoutes(router) {
   router.post("/paciente", cadastrarPaciente);
 
-  router.get("/paciente", consultarPaciente);
+  router.get("/paciente", listarOuBuscarPacientes);
 
   router.get("/paciente/:id", buscarPaciente);
 

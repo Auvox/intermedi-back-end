@@ -8,6 +8,7 @@ import {
   salvarEndereco,
 } from "./endereco.service.mjs";
 import { gerarMatriculaUnica } from "./matricula.service.mjs";
+import { farmaciaDoPayload } from "./farmacia.service.mjs";
 
 const CAMPOS_ENDERECO = {
   logradouro: "enderecoFuncionario",
@@ -62,20 +63,11 @@ export function normalizarTurno(valor) {
   return turno;
 }
 
-const farmaciaDoPayload = (data) => data.fkIdFarmacia ?? data.idFarmacia;
+function validar(dados) {
+  const faltando = ["nomeFuncionario", "cpfFuncionario", "emailFuncionario"]
+    .filter((campo) => !texto(dados[campo]));
+  if (faltando.length) throw erro(400, `Campos obrigatórios: ${faltando.join(", ")}.`);
 
-function validar(dados, idFarmacia) {
-  const faltando = [
-    "nomeFuncionario",
-    "cpfFuncionario",
-    "emailFuncionario",
-  ].filter((campo) => !texto(dados[campo]));
-  if (faltando.length)
-    throw erro(400, `Campos obrigatórios: ${faltando.join(", ")}.`);
-
-  if (!idFarmacia)
-    throw erro(400, "Informe fkIdFarmacia (a farmácia do funcionário).");
-  if (Number.isNaN(idFarmacia)) throw erro(400, "fkIdFarmacia inválido.");
 }
 
 function conferirDuplicado(cpf, email, idIgnorar = -1) {
@@ -94,10 +86,13 @@ function conferirDuplicado(cpf, email, idIgnorar = -1) {
 
 // cadastrar
 export function cadastrar(data) {
-  const idFarmacia = idOuNull(farmaciaDoPayload(data));
+  const idFarmacia = farmaciaDoPayload(data);
   const idGerente = idOuNull(data.idGerenteCadastro);
-  validar(data, idFarmacia);
+  validar(data);
   if (Number.isNaN(idGerente)) throw erro(400, "idGerenteCadastro inválido.");
+  if (idGerente && !db.prepare("SELECT 1 FROM gerente WHERE id_gerente = ?").get(idGerente)) {
+    throw erro(400, "O gerente informado não existe.");
+  }
 
   const cpf = texto(data.cpfFuncionario);
   const email = texto(data.emailFuncionario);
@@ -141,6 +136,8 @@ export function cadastrar(data) {
     return {
       idFuncionario: Number(result.lastInsertRowid),
       matriculaFuncionario,
+      fkIdFarmacia: idFarmacia,
+      idEndereco,
       senhaProvisoria,
     };
   });
@@ -164,8 +161,8 @@ export function editar(id, data) {
   if (!atual) return { changes: 0 };
 
   const dados = mesclar(atual, data);
-  const idFarmacia = idOuNull(farmaciaDoPayload(data) ?? atual.fkIdFarmacia);
-  validar(dados, idFarmacia);
+  const idFarmacia = farmaciaDoPayload(data, atual.fkIdFarmacia);
+  validar(dados);
 
   const cpf = texto(dados.cpfFuncionario);
   const email = texto(dados.emailFuncionario);

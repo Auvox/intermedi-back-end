@@ -16,19 +16,6 @@ export async function cadastrarPaciente(req, res) {
   }
 }
 
-// listar paciente
-export async function consultarPaciente(req, res) {
-  try {
-    const paciente = servicePaciente.listar();
-    enviarJson(res, 200, {
-      mensagem: "TODOS OS PACIENTES CADASTRADOS - GET",
-      paciente,
-    });
-  } catch (error) {
-    enviarErro(res, error);
-  }
-}
-
 // buscar paciente por id
 export async function buscarPaciente(req, res) {
   try {
@@ -42,6 +29,40 @@ export async function buscarPaciente(req, res) {
     });
   } catch (error) {
     enviarErro(res, error);
+  }
+}
+
+// listar paciente
+// para exibir um usuario (realizar uma busca) digitando um termo incompleto já retornará
+// por exemplo (http://localhost:3000/paciente?usuario=ma) retornará a usuaria "Maria Santos"
+// para exibir todos os usuários basta fazer uma busca na url sem inserir um termo (ex: http://localhost:3000/paciente)
+export async function listarOuBuscarPacientes(req, res) {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    // Captura o parâmetro enviado (?usuario=fe ou ?busca=fe)
+    const termo = url.searchParams.get("usuario") || url.searchParams.get("busca") || "";
+
+    if (termo.trim()) {
+      const resultados = servicePaciente.buscarPorTermo(termo);
+      return res.writeHead(200, { "Content-Type": "application/json" }).end(
+        JSON.stringify({
+          mensagem: "PACIENTE(S) ENCONTRADO/A(S) - GET",
+          paciente: resultados
+        })
+      );
+    }
+
+    const todos = servicePaciente.listar();
+    return res.writeHead(200, { "Content-Type": "application/json" }).end(
+      JSON.stringify({
+        mensagem: "TODOS OS PACIENTES LISTADOS - GET",
+        paciente: todos
+      })
+    );
+  } catch (error) {
+    res.writeHead(500, { "Content-Type": "application/json" }).end(
+      JSON.stringify({ erro: error.message })
+    );
   }
 }
 

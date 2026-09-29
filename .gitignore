@@ -12,6 +12,7 @@ node_modules/
 *.sqlite-wal
 *.sqlite-shm
 *.sqlite.backup*
+database/main-data.json.tmp
 
 # arquivos enviados (fotos de perfil)
 uploads/
