@@ -1,0 +1,230 @@
+import db, { emTransacao } from "../database/database.mjs";
+import { erro } from "../utils/http.mjs";
+import { texto, textoOuNull } from "../utils/dados.mjs";
+
+// Abaixo (ou igual) a este total na farmácia, o remédio é considerado crítico
+export const ESTOQUE_CRITICO = 20;
+
+const PRIORIDADES = ["baixa", "media", "alta", "urgente"];
+const STATUS = ["pendente", "aceito", "em_andamento", "resolvido", "recusado", "cancelado"];
+
+// Lê a lista [{ idRemedio, quantidade }] enviada pelo funcionário
+function lerRemedios(remedios) {
+  if (!Array.isArray(remedios) || remedios.length === 0) {
+    throw erro(400, "Informe remedios: [{ idRemedio, quantidade }].");
+  }
+
+  const itens = remedios.map((item) => ({
+    idRemedio: Number(item?.idRemedio),
+    quantidade: Number(item?.quantidade),
+  }));
+
+  if (itens.some((i) => !Number.isInteger(i.idRemedio) || i.idRemedio <= 0)) {
+    throw erro(400, "idRemedio inválido.");
+  }
+  if (itens.some((i) => !Number.isInteger(i.quantidade) || i.quantidade <= 0)) {
+    throw erro(400, "quantidade deve ser um número inteiro maior que zero.");
+  }
+  if (new Set(itens.map((i) => i.idRemedio)).size !== itens.length) {
+    throw erro(400, "O mesmo remédio foi informado mais de uma vez.");
+  }
+  return itens;
+}
+
+function lerPrioridade(valor) {
+  const prioridade = texto(valor).toLowerCase() || "media";
+  if (!PRIORIDADES.includes(prioridade)) {
+    throw erro(400, `Prioridade inválida. Use: ${PRIORIDADES.join(", ")}.`);
+  }
+  return prioridade;
+}
+
+// Remédios do chamado com o estoque atual da farmácia
+function remediosDoChamado(idChamado, idFarmacia) {
+  return db.prepare(/*sql*/ `
+    SELECT
+        r.id_remedio                    AS idRemedio,
+        r.nome                          AS nomeRemedio,
+        r.dosagem                       AS dosagemRemedio,
+        cr.quantidade                   AS quantidadeSolicitada,
+        COALESCE(SUM(es.quantidade), 0) AS estoqueAtual
+    FROM chamado_remedio cr
+    INNER JOIN remedio r ON r.id_remedio = cr.id_remedio
+    LEFT  JOIN estoque es ON es.id_remedio = r.id_remedio AND es.id_farmacia = ?
+    WHERE cr.id_chamado = ?
+    GROUP BY r.id_remedio
+    ORDER BY r.nome
+  `).all(idFarmacia, idChamado)
+    .map((r) => ({ ...r, critico: r.estoqueAtual <= ESTOQUE_CRITICO }));
+}
+
+// Monta o chamado completo (é isso que o gerente vai receber na notificação)
+export function buscarPorId(idChamado) {
+  const chamado = db.prepare(/*sql*/ `
+    SELECT
+        ch.id_chamado    AS idChamado,
+        ch.titulo        AS titulo,
+        ch.descricao     AS descricao,
+        ch.status        AS status,
+        ch.prioridade    AS prioridade,
+        ch.data_abertura AS dataAbertura,
+        fu.id_funcionario AS idFuncionario,
+        fu.nome          AS nomeFuncionario,
+        fu.matricula     AS matriculaFuncionario,
+        fu.cargo         AS cargoFuncionario,
+        fu.turno         AS turnoFuncionario,
+        f.id_farmacia    AS idFarmacia,
+        f.nome           AS nomeFarmacia,
+        ch.id_gerente_resposta AS idGerenteResposta,
+        g.nome           AS nomeGerenteResposta,
+        ch.data_resposta AS dataResposta,
+        ch.resposta_gerente AS respostaGerente
+    FROM chamado ch
+    INNER JOIN funcionario fu ON fu.id_funcionario = ch.id_funcionario
+    INNER JOIN farmacia    f  ON f.id_farmacia     = ch.id_farmacia
+    LEFT  JOIN gerente     g  ON g.id_gerente      = ch.id_gerente_resposta
+    WHERE ch.id_chamado = ?
+  `).get(idChamado);
+  if (!chamado) return null;
+
+  const gerentes = db.prepare(/*sql*/ `
+    SELECT id_gerente AS idGerente, nome AS nomeGerente, email AS emailGerente
+    FROM gerente WHERE id_farmacia = ? ORDER BY nome
+  `).all(chamado.idFarmacia);
+
+  return {
+    idChamado: chamado.idChamado,
+    titulo: chamado.titulo,
+    descricao: chamado.descricao,
+    status: chamado.status,
+    prioridade: chamado.prioridade,
+    dataAbertura: chamado.dataAbertura,
+    funcionario: {
+      idFuncionario: chamado.idFuncionario,
+      nomeFuncionario: chamado.nomeFuncionario,
+      matriculaFuncionario: chamado.matriculaFuncionario,
+      cargoFuncionario: chamado.cargoFuncionario,
+      turnoFuncionario: chamado.turnoFuncionario,
+    },
+    farmacia: { idFarmacia: chamado.idFarmacia, nomeFarmacia: chamado.nomeFarmacia },
+    remedios: remediosDoChamado(chamado.idChamado, chamado.idFarmacia),
+    // gerentes da farmácia que devem responder a solicitação
+    gerentes,
+    // null enquanto o gerente não aceitar/recusar
+    resposta: chamado.dataResposta && {
+      idGerente: chamado.idGerenteResposta,
+      nomeGerente: chamado.nomeGerenteResposta,
+      dataResposta: chamado.dataResposta,
+      respostaGerente: chamado.respostaGerente,
+    },
+  };
+}
+
+// ?status=pendente (opcional). Sem status, traz todos.
+function lerStatus(valor) {
+  const status = texto(valor).toLowerCase();
+  if (status && !STATUS.includes(status)) {
+    throw erro(400, `Status inválido. Use: ${STATUS.join(", ")}.`);
+  }
+  return status || null;
+}
+
+// Pendentes primeiro, depois do mais recente para o mais antigo
+function listar(filtroSql, valor, status) {
+  return db.prepare(/*sql*/ `
+    SELECT id_chamado FROM chamado
+    WHERE ${filtroSql} = ? AND (? IS NULL OR status = ?)
+    ORDER BY status = 'pendente' DESC, data_abertura DESC, id_chamado DESC
+  `).all(valor, status, status).map((linha) => buscarPorId(linha.id_chamado));
+}
+
+// Chamados da farmácia do gerente (é a "caixa de notificações" dele)
+export function listarDoGerente(idGerente, statusQuery) {
+  const status = lerStatus(statusQuery);
+  const gerente = db.prepare("SELECT id_farmacia FROM gerente WHERE id_gerente = ?").get(idGerente);
+  if (!gerente) throw erro(404, "Gerente não encontrado");
+
+  const { total } = db.prepare(
+    "SELECT COUNT(*) AS total FROM chamado WHERE id_farmacia = ? AND status = 'pendente'",
+  ).get(gerente.id_farmacia);
+
+  return { totalPendentes: total, chamados: listar("id_farmacia", gerente.id_farmacia, status) };
+}
+
+// Chamados que o funcionário solicitou (para ele acompanhar a resposta)
+export function listarDoFuncionario(idFuncionario, statusQuery) {
+  const status = lerStatus(statusQuery);
+  const existe = db.prepare("SELECT 1 FROM funcionario WHERE id_funcionario = ?").get(idFuncionario);
+  if (!existe) throw erro(404, "Funcionario não encontrado");
+  return listar("id_funcionario", idFuncionario, status);
+}
+
+// Gerente aceita ou recusa um chamado pendente
+export function responder(idChamado, data) {
+  const idGerente = Number(data.idGerente);
+  if (!Number.isInteger(idGerente) || idGerente <= 0) throw erro(400, "Informe idGerente.");
+  if (typeof data.aceitar !== "boolean") throw erro(400, "Informe aceitar: true ou false.");
+
+  const resposta = textoOuNull(data.resposta);
+  if (!data.aceitar && !resposta) throw erro(400, "Informe o motivo da recusa em resposta.");
+
+  const chamado = db.prepare("SELECT status, id_farmacia FROM chamado WHERE id_chamado = ?").get(idChamado);
+  if (!chamado) throw erro(404, "Chamado não encontrado");
+
+  const gerente = db.prepare("SELECT id_farmacia FROM gerente WHERE id_gerente = ?").get(idGerente);
+  if (!gerente) throw erro(404, "Gerente não encontrado");
+  if (gerente.id_farmacia !== chamado.id_farmacia) {
+    throw erro(403, "Este chamado pertence a outra farmácia.");
+  }
+  if (chamado.status !== "pendente") {
+    throw erro(409, `Este chamado já foi respondido (status: ${chamado.status}).`);
+  }
+
+  // "AND status = 'pendente'" evita que dois gerentes respondam ao mesmo tempo
+  const { changes } = db.prepare(/*sql*/ `
+    UPDATE chamado
+    SET status = ?, id_gerente_resposta = ?, data_resposta = CURRENT_TIMESTAMP, resposta_gerente = ?
+    WHERE id_chamado = ? AND status = 'pendente'
+  `).run(data.aceitar ? "aceito" : "recusado", idGerente, resposta, idChamado);
+  if (changes === 0) throw erro(409, "Este chamado já foi respondido.");
+
+  return buscarPorId(idChamado);
+}
+
+// Funcionário solicita um chamado ao gerente (nasce como 'pendente')
+export function solicitar(idFuncionario, data) {
+  const funcionario = db.prepare(
+    "SELECT id_funcionario, id_farmacia FROM funcionario WHERE id_funcionario = ?",
+  ).get(idFuncionario);
+  if (!funcionario) throw erro(404, "Funcionario não encontrado");
+
+  const itens = lerRemedios(data.remedios);
+  const prioridade = lerPrioridade(data.prioridade);
+
+  const existe = db.prepare("SELECT nome FROM remedio WHERE id_remedio = ?");
+  const nomes = itens.map((item) => {
+    const remedio = existe.get(item.idRemedio);
+    if (!remedio) throw erro(404, `Remédio ${item.idRemedio} não encontrado.`);
+    return remedio.nome;
+  });
+
+  // Sem título, gera um a partir dos remédios: "Reposição: Dipirona, Paracetamol"
+  const titulo = texto(data.titulo) || `Reposição: ${nomes.join(", ")}`;
+
+  const idChamado = emTransacao(() => {
+    const { lastInsertRowid } = db.prepare(/*sql*/ `
+      INSERT INTO chamado (titulo, descricao, status, prioridade, id_funcionario, id_farmacia)
+      VALUES (?, ?, 'pendente', ?, ?, ?)
+    `).run(titulo, textoOuNull(data.descricao), prioridade,
+      funcionario.id_funcionario, funcionario.id_farmacia);
+
+    const inserirItem = db.prepare(
+      "INSERT INTO chamado_remedio (id_chamado, id_remedio, quantidade) VALUES (?, ?, ?)",
+    );
+    for (const item of itens) inserirItem.run(lastInsertRowid, item.idRemedio, item.quantidade);
+
+    return Number(lastInsertRowid);
+  });
+
+  return buscarPorId(idChamado);
+}
