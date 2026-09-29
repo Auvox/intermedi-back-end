@@ -27,8 +27,9 @@ export function aplicarSchema(db) {
   db.exec(lerSql("schema.sql"));
 
   // Protege contra um intermedi.db criado com uma versão antiga do schema
-  const colunas = db.prepare("PRAGMA table_info(paciente)").all();
-  if (!colunas.some((c) => c.name === "senha_hash")) {
+  const temColuna = (tabela, coluna) =>
+    db.prepare(`PRAGMA table_info(${tabela})`).all().some((c) => c.name === coluna);
+  if (!temColuna("paciente", "senha_hash") || !temColuna("chamado", "id_gerente_resposta")) {
     throw new Error(
       "O banco foi criado com uma versão antiga do schema. " +
         "Pare o servidor e rode: npm run db:reset",
