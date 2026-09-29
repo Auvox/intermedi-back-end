@@ -1,5 +1,7 @@
 import {
   cadastrarFuncionario,
+  cadastrarServico,
+  consultarServicos,
   consultarFuncionario,
   buscarFuncionario,
   editarFuncionario,
@@ -7,6 +9,9 @@ import {
 } from "../controller/funcionario.controller.mjs";
 
 export default function funcionarioRoutes(router) {
+  router.post("/servicos", cadastrarServico);
+  router.get("/servicos", consultarServicos);
+
   router.post("/funcionario", cadastrarFuncionario);
 
   router.get("/funcionario", consultarFuncionario);

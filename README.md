@@ -139,6 +139,7 @@ rodar `npm install` depois de receber esta alteração.
 | Funcionário | `GET/POST /funcionario` · `GET/PUT/DELETE /funcionario/:id` |
 | Paciente | `GET/POST /paciente` · `GET/PUT/DELETE /paciente/:id` |
 | Remédio | `GET/POST /remedios` · `GET/PUT/DELETE /remedios/:id` · filtro `GET /remedios?categoria=Febre` |
+| Serviço | `POST /servicos` |
 | App do paciente | `POST /api/auth/register` · `POST /api/auth/login` · `POST /api/auth/logout` · `GET/PUT/DELETE /api/pacientes/me` · `PUT /api/pacientes/:id/foto` |
 
 ### Campos obrigatórios novos
