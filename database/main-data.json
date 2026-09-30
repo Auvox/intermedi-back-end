@@ -1,0 +1,1481 @@
+{
+  "version": 1,
+  "tables": {
+    "endereco": [
+      {
+        "id_endereco": 1,
+        "logradouro": "Rua das Flores",
+        "numero": "100",
+        "complemento": null,
+        "bairro": "Guaianases",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "08410-000"
+      },
+      {
+        "id_endereco": 2,
+        "logradouro": "Av. Central",
+        "numero": "250",
+        "complemento": null,
+        "bairro": "Itaquera",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "08210-000"
+      },
+      {
+        "id_endereco": 3,
+        "logradouro": "Rua Augusta",
+        "numero": "1500",
+        "complemento": "Loja 2",
+        "bairro": "Consolação",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "01304-001"
+      },
+      {
+        "id_endereco": 4,
+        "logradouro": "Av. Paulista",
+        "numero": "900",
+        "complemento": "Térreo",
+        "bairro": "Bela Vista",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "01310-100"
+      },
+      {
+        "id_endereco": 5,
+        "logradouro": "Rua Vergueiro",
+        "numero": "3200",
+        "complemento": "Apto 51",
+        "bairro": "Vila Mariana",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "04101-300"
+      },
+      {
+        "id_endereco": 6,
+        "logradouro": "Rua Tuiuti",
+        "numero": "450",
+        "complemento": null,
+        "bairro": "Tatuapé",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "03307-000"
+      },
+      {
+        "id_endereco": 7,
+        "logradouro": "Rua Serra de Bragança",
+        "numero": "120",
+        "complemento": "Casa 3",
+        "bairro": "Tatuapé",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "03318-000"
+      },
+      {
+        "id_endereco": 8,
+        "logradouro": "Rua Domingos de Morais",
+        "numero": "800",
+        "complemento": null,
+        "bairro": "Vila Mariana",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "04010-100"
+      },
+      {
+        "id_endereco": 9,
+        "logradouro": "Rua Itapura",
+        "numero": "300",
+        "complemento": "Apto 12",
+        "bairro": "Tatuapé",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "03310-000"
+      },
+      {
+        "id_endereco": 10,
+        "logradouro": "Av. Jacu-Pêssego",
+        "numero": "1800",
+        "complemento": null,
+        "bairro": "Itaquera",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "08260-000"
+      },
+      {
+        "id_endereco": 11,
+        "logradouro": "Rua Cantareira",
+        "numero": "50",
+        "complemento": null,
+        "bairro": "Centro",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "01024-000"
+      }
+    ],
+    "admin": [
+      {
+        "id_admin": 1,
+        "nome": "Admin Geral",
+        "email": "admin@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "telefone": null,
+        "id_endereco": null
+      }
+    ],
+    "farmacia": [
+      {
+        "id_farmacia": 1,
+        "nome": "Farmácia Pedro João Neto",
+        "email": "pjn@intermedi.com",
+        "telefone": "1111-1111",
+        "cnes": "1234567",
+        "id_endereco": 1
+      },
+      {
+        "id_farmacia": 2,
+        "nome": "Farmácia Vida",
+        "email": "vida@intermedi.com",
+        "telefone": "2222-2222",
+        "cnes": "7654321",
+        "id_endereco": 2
+      },
+      {
+        "id_farmacia": 3,
+        "nome": "Farmácia Saúde Leste",
+        "email": "saudeleste@intermedi.com",
+        "telefone": "3333-3333",
+        "cnes": "2345678",
+        "id_endereco": 3
+      },
+      {
+        "id_farmacia": 4,
+        "nome": "Drogaria Bem Estar",
+        "email": "bemestar@intermedi.com",
+        "telefone": "4444-4444",
+        "cnes": "8765432",
+        "id_endereco": 4
+      }
+    ],
+    "categoria": [
+      {
+        "id_categoria": 1,
+        "nome": "Dor de cabeça",
+        "descricao": "Analgésicos para dores leves e moderadas"
+      },
+      {
+        "id_categoria": 2,
+        "nome": "Febre",
+        "descricao": "Antitérmicos"
+      },
+      {
+        "id_categoria": 3,
+        "nome": "Alergia",
+        "descricao": "Anti-histamínicos"
+      },
+      {
+        "id_categoria": 4,
+        "nome": "Antibiótico",
+        "descricao": "Uso somente com receita (retenção obrigatória)"
+      },
+      {
+        "id_categoria": 5,
+        "nome": "Anti-inflamatório",
+        "descricao": "Reduzem inflamação, dor e inchaço"
+      },
+      {
+        "id_categoria": 6,
+        "nome": "Hipertensão",
+        "descricao": "Controle da pressão arterial"
+      },
+      {
+        "id_categoria": 7,
+        "nome": "Diabetes",
+        "descricao": "Controle da glicemia"
+      },
+      {
+        "id_categoria": 8,
+        "nome": "Estômago",
+        "descricao": "Azia, gastrite, refluxo e gases"
+      },
+      {
+        "id_categoria": 9,
+        "nome": "Vitaminas",
+        "descricao": "Suplementos vitamínicos"
+      }
+    ],
+    "paciente": [
+      {
+        "id_paciente": 1,
+        "nome": "Maria Santos",
+        "cpf": "555.555.555-55",
+        "email": "maria@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "telefone": "11988887777",
+        "medicamento_frequente": null,
+        "foto_perfil": null,
+        "id_endereco": null,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_paciente": 2,
+        "nome": "João Oliveira",
+        "cpf": "808.909.101-12",
+        "email": "joao@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "telefone": "11987654321",
+        "medicamento_frequente": "Losartana Potássica",
+        "foto_perfil": null,
+        "id_endereco": 9,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_paciente": 3,
+        "nome": "Camila Ferreira",
+        "cpf": "909.101.212-23",
+        "email": "camila@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "telefone": "11976543210",
+        "medicamento_frequente": "Loratadina",
+        "foto_perfil": null,
+        "id_endereco": 10,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_paciente": 4,
+        "nome": "Roberto Nunes",
+        "cpf": "121.232.343-45",
+        "email": "roberto@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "telefone": "11965432109",
+        "medicamento_frequente": "Metformina",
+        "foto_perfil": null,
+        "id_endereco": 11,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_paciente": 5,
+        "nome": "Patrícia Gomes",
+        "cpf": "232.343.454-56",
+        "email": null,
+        "senha_hash": null,
+        "telefone": "11954321098",
+        "medicamento_frequente": null,
+        "foto_perfil": null,
+        "id_endereco": null,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_paciente": 6,
+        "nome": "Gabriel Ribeiro",
+        "cpf": "343.454.565-67",
+        "email": "gabriel@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "telefone": "11943210987",
+        "medicamento_frequente": null,
+        "foto_perfil": null,
+        "id_endereco": null,
+        "created_at": "2026-09-30 18:45:49"
+      }
+    ],
+    "gerente": [
+      {
+        "id_gerente": 1,
+        "nome": "Ana Souza",
+        "cpf": "111.111.111-11",
+        "email": "ana@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "crf": "CRF-SP 1001",
+        "matricula": "G000001",
+        "telefone": null,
+        "id_farmacia": 1,
+        "id_admin_cadastro": 1,
+        "id_endereco": null,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_gerente": 2,
+        "nome": "Carlos Lima",
+        "cpf": "222.222.222-22",
+        "email": "carlos@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "crf": "CRF-SP 1002",
+        "matricula": "G000002",
+        "telefone": null,
+        "id_farmacia": 2,
+        "id_admin_cadastro": 1,
+        "id_endereco": null,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_gerente": 3,
+        "nome": "Beatriz Rocha",
+        "cpf": "666.666.666-66",
+        "email": "beatriz@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "crf": "CRF-SP 1003",
+        "matricula": "G000003",
+        "telefone": "11977776666",
+        "id_farmacia": 3,
+        "id_admin_cadastro": 1,
+        "id_endereco": 5,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_gerente": 4,
+        "nome": "Rafael Martins",
+        "cpf": "777.777.777-77",
+        "email": "rafael@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "crf": "CRF-SP 1004",
+        "matricula": "G000004",
+        "telefone": "11966665555",
+        "id_farmacia": 4,
+        "id_admin_cadastro": 1,
+        "id_endereco": 6,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_gerente": 5,
+        "nome": "Fernanda Costa",
+        "cpf": "888.888.888-88",
+        "email": "fernanda@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "crf": "CRF-SP 1005",
+        "matricula": "G000005",
+        "telefone": "11955554444",
+        "id_farmacia": 1,
+        "id_admin_cadastro": 1,
+        "id_endereco": 7,
+        "created_at": "2026-09-30 18:45:49"
+      }
+    ],
+    "funcionario": [
+      {
+        "id_funcionario": 1,
+        "nome": "Lucas Pereira",
+        "cpf": "333.333.333-33",
+        "email": "lucas@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "matricula": "000001",
+        "turno": "manha",
+        "cargo": "Atendente",
+        "telefone": null,
+        "id_farmacia": 1,
+        "id_gerente_cadastro": 1,
+        "id_endereco": null,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_funcionario": 2,
+        "nome": "Julia Alves",
+        "cpf": "444.444.444-44",
+        "email": "julia@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "matricula": "000002",
+        "turno": "tarde",
+        "cargo": "Atendente",
+        "telefone": null,
+        "id_farmacia": 2,
+        "id_gerente_cadastro": 2,
+        "id_endereco": null,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_funcionario": 3,
+        "nome": "Pedro Henrique Silva",
+        "cpf": "101.202.303-40",
+        "email": "pedro@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "matricula": "000003",
+        "turno": "noite",
+        "cargo": "Farmacêutico",
+        "telefone": "11944443333",
+        "id_farmacia": 1,
+        "id_gerente_cadastro": 1,
+        "id_endereco": 8,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_funcionario": 4,
+        "nome": "Mariana Costa",
+        "cpf": "202.303.404-50",
+        "email": "mariana@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "matricula": "000004",
+        "turno": "integral",
+        "cargo": "Caixa",
+        "telefone": "11933332222",
+        "id_farmacia": 1,
+        "id_gerente_cadastro": 5,
+        "id_endereco": null,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_funcionario": 5,
+        "nome": "Thiago Almeida",
+        "cpf": "303.404.505-60",
+        "email": "thiago@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "matricula": "000005",
+        "turno": "manha",
+        "cargo": "Estoquista",
+        "telefone": "11922221111",
+        "id_farmacia": 2,
+        "id_gerente_cadastro": 2,
+        "id_endereco": null,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_funcionario": 6,
+        "nome": "Larissa Mendes",
+        "cpf": "404.505.606-70",
+        "email": "larissa@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "matricula": "000006",
+        "turno": "manha",
+        "cargo": "Atendente",
+        "telefone": "11911110000",
+        "id_farmacia": 3,
+        "id_gerente_cadastro": 3,
+        "id_endereco": null,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_funcionario": 7,
+        "nome": "Bruno Carvalho",
+        "cpf": "505.606.707-80",
+        "email": "bruno@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "matricula": "000007",
+        "turno": "tarde",
+        "cargo": "Farmacêutico",
+        "telefone": "11900009999",
+        "id_farmacia": 3,
+        "id_gerente_cadastro": 3,
+        "id_endereco": null,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_funcionario": 8,
+        "nome": "Aline Barbosa",
+        "cpf": "606.707.808-90",
+        "email": "aline@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "matricula": "000008",
+        "turno": "integral",
+        "cargo": "Atendente",
+        "telefone": "11988880000",
+        "id_farmacia": 4,
+        "id_gerente_cadastro": 4,
+        "id_endereco": null,
+        "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_funcionario": 9,
+        "nome": "Diego Rocha",
+        "cpf": "707.808.909-01",
+        "email": "diego@intermedi.com",
+        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
+        "matricula": "000009",
+        "turno": "noite",
+        "cargo": "Estoquista",
+        "telefone": "11977770000",
+        "id_farmacia": 4,
+        "id_gerente_cadastro": 4,
+        "id_endereco": null,
+        "created_at": "2026-09-30 18:45:49"
+      }
+    ],
+    "remedio": [
+      {
+        "id_remedio": 1,
+        "nome": "Dipirona",
+        "principio_ativo": "dipirona monoidratada",
+        "descricao": "Analgésico e antitérmico",
+        "dosagem": "500mg",
+        "fabricante": "EMS",
+        "registro_anvisa": "1.0001.0001.001-1",
+        "tipo": "generico",
+        "tarja": "sem_tarja",
+        "forma_farmaceutica": "comprimido",
+        "via_administracao": "oral",
+        "apresentacao": "Caixa com 10 comprimidos",
+        "indicacoes": "Dor e febre",
+        "contraindicacoes": "Alergia à dipirona; gestantes no 3º trimestre",
+        "armazenamento": "Temperatura ambiente (15-30 °C)",
+        "foto": null,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_remedio": 2,
+        "nome": "Paracetamol",
+        "principio_ativo": "paracetamol",
+        "descricao": "Analgésico e antitérmico",
+        "dosagem": "750mg",
+        "fabricante": "Medley",
+        "registro_anvisa": "1.0001.0002.001-2",
+        "tipo": "generico",
+        "tarja": "sem_tarja",
+        "forma_farmaceutica": "comprimido",
+        "via_administracao": "oral",
+        "apresentacao": "Caixa com 20 comprimidos",
+        "indicacoes": "Dor leve a moderada e febre",
+        "contraindicacoes": "Doença hepática grave",
+        "armazenamento": "Temperatura ambiente (15-30 °C)",
+        "foto": null,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_remedio": 3,
+        "nome": "Loratadina",
+        "principio_ativo": "loratadina",
+        "descricao": "Antialérgico que não causa sonolência",
+        "dosagem": "10mg",
+        "fabricante": "Neo Química",
+        "registro_anvisa": "1.0001.0003.001-3",
+        "tipo": "generico",
+        "tarja": "sem_tarja",
+        "forma_farmaceutica": "comprimido",
+        "via_administracao": "oral",
+        "apresentacao": "Caixa com 12 comprimidos",
+        "indicacoes": "Rinite alérgica e urticária",
+        "contraindicacoes": "Menores de 2 anos",
+        "armazenamento": "Temperatura ambiente (15-30 °C)",
+        "foto": null,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_remedio": 4,
+        "nome": "Ibuprofeno",
+        "principio_ativo": "ibuprofeno",
+        "descricao": "Anti-inflamatório não esteroidal",
+        "dosagem": "600mg",
+        "fabricante": "EMS",
+        "registro_anvisa": "1.0001.0004.001-4",
+        "tipo": "generico",
+        "tarja": "vermelha",
+        "forma_farmaceutica": "comprimido revestido",
+        "via_administracao": "oral",
+        "apresentacao": "Caixa com 20 comprimidos",
+        "indicacoes": "Dor, inflamação e febre",
+        "contraindicacoes": "Úlcera gástrica ativa",
+        "armazenamento": "Temperatura ambiente (15-30 °C)",
+        "foto": null,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_remedio": 5,
+        "nome": "Amoxicilina",
+        "principio_ativo": "amoxicilina tri-hidratada",
+        "descricao": "Antibiótico de amplo espectro",
+        "dosagem": "500mg",
+        "fabricante": "Eurofarma",
+        "registro_anvisa": "1.0001.0005.001-5",
+        "tipo": "generico",
+        "tarja": "vermelha_retencao",
+        "forma_farmaceutica": "cápsula",
+        "via_administracao": "oral",
+        "apresentacao": "Caixa com 21 cápsulas",
+        "indicacoes": "Infecções bacterianas",
+        "contraindicacoes": "Alergia a penicilinas",
+        "armazenamento": "Temperatura ambiente, longe da umidade",
+        "foto": "/uploads/remedios/4435d718d82ebcba5f8d9783155d740857fa4570089feac4.jpg",
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": "2026-09-30 19:03:53"
+      },
+      {
+        "id_remedio": 6,
+        "nome": "Losartana Potássica",
+        "principio_ativo": "losartana potássica",
+        "descricao": "Anti-hipertensivo",
+        "dosagem": "50mg",
+        "fabricante": "Medley",
+        "registro_anvisa": "1.0001.0006.001-6",
+        "tipo": "generico",
+        "tarja": "vermelha",
+        "forma_farmaceutica": "comprimido revestido",
+        "via_administracao": "oral",
+        "apresentacao": "Caixa com 30 comprimidos",
+        "indicacoes": "Hipertensão arterial",
+        "contraindicacoes": "Gravidez",
+        "armazenamento": "Temperatura ambiente (15-30 °C)",
+        "foto": null,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_remedio": 7,
+        "nome": "Metformina",
+        "principio_ativo": "cloridrato de metformina",
+        "descricao": "Antidiabético oral",
+        "dosagem": "850mg",
+        "fabricante": "Merck",
+        "registro_anvisa": "1.0001.0007.001-7",
+        "tipo": "referencia",
+        "tarja": "vermelha",
+        "forma_farmaceutica": "comprimido",
+        "via_administracao": "oral",
+        "apresentacao": "Caixa com 30 comprimidos",
+        "indicacoes": "Diabetes tipo 2",
+        "contraindicacoes": "Insuficiência renal grave",
+        "armazenamento": "Temperatura ambiente (15-30 °C)",
+        "foto": null,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_remedio": 8,
+        "nome": "Omeprazol",
+        "principio_ativo": "omeprazol",
+        "descricao": "Reduz a acidez do estômago",
+        "dosagem": "20mg",
+        "fabricante": "Aché",
+        "registro_anvisa": "1.0001.0008.001-8",
+        "tipo": "similar",
+        "tarja": "vermelha",
+        "forma_farmaceutica": "cápsula",
+        "via_administracao": "oral",
+        "apresentacao": "Caixa com 28 cápsulas",
+        "indicacoes": "Gastrite, úlcera e refluxo",
+        "contraindicacoes": "Alergia ao omeprazol",
+        "armazenamento": "Temperatura ambiente, longe da umidade",
+        "foto": null,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_remedio": 9,
+        "nome": "Azitromicina",
+        "principio_ativo": "azitromicina di-hidratada",
+        "descricao": "Antibiótico",
+        "dosagem": "500mg",
+        "fabricante": "Eurofarma",
+        "registro_anvisa": "1.0001.0009.001-9",
+        "tipo": "generico",
+        "tarja": "vermelha_retencao",
+        "forma_farmaceutica": "comprimido revestido",
+        "via_administracao": "oral",
+        "apresentacao": "Caixa com 3 comprimidos",
+        "indicacoes": "Infecções respiratórias e de pele",
+        "contraindicacoes": "Alergia a macrolídeos",
+        "armazenamento": "Temperatura ambiente (15-30 °C)",
+        "foto": null,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_remedio": 10,
+        "nome": "Nimesulida",
+        "principio_ativo": "nimesulida",
+        "descricao": "Anti-inflamatório e analgésico",
+        "dosagem": "100mg",
+        "fabricante": "Neo Química",
+        "registro_anvisa": "1.0001.0010.001-0",
+        "tipo": "generico",
+        "tarja": "vermelha",
+        "forma_farmaceutica": "comprimido",
+        "via_administracao": "oral",
+        "apresentacao": "Caixa com 12 comprimidos",
+        "indicacoes": "Dor e inflamação",
+        "contraindicacoes": "Menores de 12 anos; doença hepática",
+        "armazenamento": "Temperatura ambiente (15-30 °C)",
+        "foto": null,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_remedio": 11,
+        "nome": "Cetirizina",
+        "principio_ativo": "dicloridrato de cetirizina",
+        "descricao": "Antialérgico",
+        "dosagem": "10mg",
+        "fabricante": "Medley",
+        "registro_anvisa": "1.0001.0011.001-1",
+        "tipo": "generico",
+        "tarja": "sem_tarja",
+        "forma_farmaceutica": "comprimido revestido",
+        "via_administracao": "oral",
+        "apresentacao": "Caixa com 10 comprimidos",
+        "indicacoes": "Rinite alérgica e urticária",
+        "contraindicacoes": "Insuficiência renal grave",
+        "armazenamento": "Temperatura ambiente (15-30 °C)",
+        "foto": null,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_remedio": 12,
+        "nome": "Enalapril",
+        "principio_ativo": "maleato de enalapril",
+        "descricao": "Anti-hipertensivo",
+        "dosagem": "10mg",
+        "fabricante": "Biosintética",
+        "registro_anvisa": "1.0001.0012.001-2",
+        "tipo": "similar",
+        "tarja": "vermelha",
+        "forma_farmaceutica": "comprimido",
+        "via_administracao": "oral",
+        "apresentacao": "Caixa com 30 comprimidos",
+        "indicacoes": "Hipertensão e insuficiência cardíaca",
+        "contraindicacoes": "Gravidez; histórico de angioedema",
+        "armazenamento": "Temperatura ambiente (15-30 °C)",
+        "foto": null,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_remedio": 13,
+        "nome": "Vitamina C",
+        "principio_ativo": "ácido ascórbico",
+        "descricao": "Suplemento de ácido ascórbico",
+        "dosagem": "1g",
+        "fabricante": "Cimed",
+        "registro_anvisa": "1.0001.0013.001-3",
+        "tipo": "similar",
+        "tarja": "sem_tarja",
+        "forma_farmaceutica": "comprimido efervescente",
+        "via_administracao": "oral",
+        "apresentacao": "Tubo com 10 comprimidos",
+        "indicacoes": "Suplementação de vitamina C",
+        "contraindicacoes": "Cálculo renal",
+        "armazenamento": "Local seco, com o tubo bem fechado",
+        "foto": null,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_remedio": 14,
+        "nome": "Simeticona",
+        "principio_ativo": "simeticona",
+        "descricao": "Alívio de gases",
+        "dosagem": "125mg",
+        "fabricante": "Cimed",
+        "registro_anvisa": "1.0001.0014.001-4",
+        "tipo": "similar",
+        "tarja": "sem_tarja",
+        "forma_farmaceutica": "cápsula gelatinosa",
+        "via_administracao": "oral",
+        "apresentacao": "Caixa com 10 cápsulas",
+        "indicacoes": "Excesso de gases",
+        "contraindicacoes": "Alergia à simeticona",
+        "armazenamento": "Temperatura ambiente (15-30 °C)",
+        "foto": null,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_remedio": 15,
+        "nome": "Dexclorfeniramina",
+        "principio_ativo": "maleato de dexclorfeniramina",
+        "descricao": "Antialérgico",
+        "dosagem": "2mg",
+        "fabricante": "EMS",
+        "registro_anvisa": "1.0001.0015.001-5",
+        "tipo": "generico",
+        "tarja": "vermelha",
+        "forma_farmaceutica": "comprimido",
+        "via_administracao": "oral",
+        "apresentacao": "Caixa com 20 comprimidos",
+        "indicacoes": "Alergias, coceira e rinite",
+        "contraindicacoes": "Recém-nascidos; lactantes",
+        "armazenamento": "Temperatura ambiente (15-30 °C)",
+        "foto": null,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      }
+    ],
+    "remedio_categoria": [
+      {
+        "id_remedio": 1,
+        "id_categoria": 1
+      },
+      {
+        "id_remedio": 1,
+        "id_categoria": 2
+      },
+      {
+        "id_remedio": 2,
+        "id_categoria": 1
+      },
+      {
+        "id_remedio": 2,
+        "id_categoria": 2
+      },
+      {
+        "id_remedio": 3,
+        "id_categoria": 3
+      },
+      {
+        "id_remedio": 4,
+        "id_categoria": 1
+      },
+      {
+        "id_remedio": 4,
+        "id_categoria": 5
+      },
+      {
+        "id_remedio": 5,
+        "id_categoria": 4
+      },
+      {
+        "id_remedio": 6,
+        "id_categoria": 6
+      },
+      {
+        "id_remedio": 7,
+        "id_categoria": 7
+      },
+      {
+        "id_remedio": 8,
+        "id_categoria": 8
+      },
+      {
+        "id_remedio": 9,
+        "id_categoria": 4
+      },
+      {
+        "id_remedio": 10,
+        "id_categoria": 2
+      },
+      {
+        "id_remedio": 10,
+        "id_categoria": 5
+      },
+      {
+        "id_remedio": 11,
+        "id_categoria": 3
+      },
+      {
+        "id_remedio": 12,
+        "id_categoria": 6
+      },
+      {
+        "id_remedio": 13,
+        "id_categoria": 9
+      },
+      {
+        "id_remedio": 14,
+        "id_categoria": 8
+      },
+      {
+        "id_remedio": 15,
+        "id_categoria": 3
+      }
+    ],
+    "estoque": [
+      {
+        "id_estoque": 1,
+        "id_remedio": 1,
+        "id_farmacia": 1,
+        "quantidade": 120,
+        "estoque_minimo": 30,
+        "lote": "L-A1",
+        "validade": "2027-06-30",
+        "id_gerente_cadastro": 1,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 2,
+        "id_remedio": 2,
+        "id_farmacia": 1,
+        "quantidade": 40,
+        "estoque_minimo": 50,
+        "lote": "L-B1",
+        "validade": "2027-03-31",
+        "id_gerente_cadastro": 1,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 3,
+        "id_remedio": 4,
+        "id_farmacia": 1,
+        "quantidade": 85,
+        "estoque_minimo": 20,
+        "lote": "L-D1",
+        "validade": "2027-01-31",
+        "id_gerente_cadastro": 1,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 4,
+        "id_remedio": 6,
+        "id_farmacia": 1,
+        "quantidade": 200,
+        "estoque_minimo": 40,
+        "lote": "L-F1",
+        "validade": "2027-08-31",
+        "id_gerente_cadastro": 1,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 5,
+        "id_remedio": 8,
+        "id_farmacia": 1,
+        "quantidade": 65,
+        "estoque_minimo": 20,
+        "lote": "L-H1",
+        "validade": "2026-12-31",
+        "id_gerente_cadastro": 1,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 6,
+        "id_remedio": 13,
+        "id_farmacia": 1,
+        "quantidade": 30,
+        "estoque_minimo": 20,
+        "lote": "L-M1",
+        "validade": "2026-11-30",
+        "id_gerente_cadastro": 1,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 7,
+        "id_remedio": 3,
+        "id_farmacia": 2,
+        "quantidade": 60,
+        "estoque_minimo": 20,
+        "lote": "L-C1",
+        "validade": "2027-05-31",
+        "id_gerente_cadastro": 2,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 8,
+        "id_remedio": 1,
+        "id_farmacia": 2,
+        "quantidade": 15,
+        "estoque_minimo": 30,
+        "lote": "L-A2",
+        "validade": "2027-04-30",
+        "id_gerente_cadastro": 2,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 9,
+        "id_remedio": 5,
+        "id_farmacia": 2,
+        "quantidade": 90,
+        "estoque_minimo": 20,
+        "lote": "L-E1",
+        "validade": "2026-12-31",
+        "id_gerente_cadastro": 2,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 10,
+        "id_remedio": 7,
+        "id_farmacia": 2,
+        "quantidade": 150,
+        "estoque_minimo": 40,
+        "lote": "L-G1",
+        "validade": "2027-09-30",
+        "id_gerente_cadastro": 2,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 11,
+        "id_remedio": 11,
+        "id_farmacia": 2,
+        "quantidade": 45,
+        "estoque_minimo": 20,
+        "lote": "L-K1",
+        "validade": "2027-02-28",
+        "id_gerente_cadastro": 2,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 12,
+        "id_remedio": 14,
+        "id_farmacia": 2,
+        "quantidade": 0,
+        "estoque_minimo": 10,
+        "lote": "L-N1",
+        "validade": "2027-01-31",
+        "id_gerente_cadastro": 2,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 13,
+        "id_remedio": 1,
+        "id_farmacia": 3,
+        "quantidade": 300,
+        "estoque_minimo": 50,
+        "lote": "L-A3",
+        "validade": "2027-07-31",
+        "id_gerente_cadastro": 3,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 14,
+        "id_remedio": 2,
+        "id_farmacia": 3,
+        "quantidade": 180,
+        "estoque_minimo": 50,
+        "lote": "L-B3",
+        "validade": "2027-05-31",
+        "id_gerente_cadastro": 3,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 15,
+        "id_remedio": 5,
+        "id_farmacia": 3,
+        "quantidade": 29,
+        "estoque_minimo": 20,
+        "lote": "L-E3",
+        "validade": "2026-12-31",
+        "id_gerente_cadastro": 3,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": "2026-09-30 19:05:09"
+      },
+      {
+        "id_estoque": 16,
+        "id_remedio": 9,
+        "id_farmacia": 3,
+        "quantidade": 25,
+        "estoque_minimo": 20,
+        "lote": "L-I1",
+        "validade": "2027-03-31",
+        "id_gerente_cadastro": 3,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 17,
+        "id_remedio": 10,
+        "id_farmacia": 3,
+        "quantidade": 70,
+        "estoque_minimo": 20,
+        "lote": "L-J1",
+        "validade": "2027-01-31",
+        "id_gerente_cadastro": 3,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 18,
+        "id_remedio": 12,
+        "id_farmacia": 3,
+        "quantidade": 110,
+        "estoque_minimo": 30,
+        "lote": "L-L1",
+        "validade": "2027-10-31",
+        "id_gerente_cadastro": 3,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 19,
+        "id_remedio": 4,
+        "id_farmacia": 4,
+        "quantidade": 55,
+        "estoque_minimo": 20,
+        "lote": "L-D4",
+        "validade": "2027-02-28",
+        "id_gerente_cadastro": 4,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 20,
+        "id_remedio": 6,
+        "id_farmacia": 4,
+        "quantidade": 12,
+        "estoque_minimo": 30,
+        "lote": "L-F4",
+        "validade": "2027-06-30",
+        "id_gerente_cadastro": 4,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 21,
+        "id_remedio": 7,
+        "id_farmacia": 4,
+        "quantidade": 95,
+        "estoque_minimo": 30,
+        "lote": "L-G4",
+        "validade": "2027-04-30",
+        "id_gerente_cadastro": 4,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 22,
+        "id_remedio": 8,
+        "id_farmacia": 4,
+        "quantidade": 140,
+        "estoque_minimo": 30,
+        "lote": "L-H4",
+        "validade": "2027-08-31",
+        "id_gerente_cadastro": 4,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 23,
+        "id_remedio": 15,
+        "id_farmacia": 4,
+        "quantidade": 35,
+        "estoque_minimo": 20,
+        "lote": "L-O1",
+        "validade": "2027-01-31",
+        "id_gerente_cadastro": 4,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 24,
+        "id_remedio": 13,
+        "id_farmacia": 4,
+        "quantidade": 60,
+        "estoque_minimo": 20,
+        "lote": "L-M4",
+        "validade": "2026-08-31",
+        "id_gerente_cadastro": 4,
+        "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      }
+    ],
+    "chamado": [
+      {
+        "id_chamado": 1,
+        "titulo": "Falta de paracetamol",
+        "descricao": "Estoque baixo",
+        "status": "pendente",
+        "prioridade": "alta",
+        "data_abertura": "2026-09-20 09:15:00",
+        "id_funcionario": 1,
+        "id_farmacia": 1,
+        "id_gerente_resposta": null,
+        "data_resposta": null,
+        "resposta_gerente": null
+      },
+      {
+        "id_chamado": 2,
+        "titulo": "Reposição de amoxicilina",
+        "descricao": "Restam apenas 8 unidades no lote L-E3",
+        "status": "em_andamento",
+        "prioridade": "urgente",
+        "data_abertura": "2026-09-22 14:30:00",
+        "id_funcionario": 6,
+        "id_farmacia": 3,
+        "id_gerente_resposta": 3,
+        "data_resposta": "2026-09-22 15:00:00",
+        "resposta_gerente": "Pedido feito ao distribuidor"
+      },
+      {
+        "id_chamado": 3,
+        "titulo": "Dipirona acabando",
+        "descricao": "Lote L-A2 com 15 unidades, alta procura na semana",
+        "status": "aceito",
+        "prioridade": "media",
+        "data_abertura": "2026-09-24 10:00:00",
+        "id_funcionario": 2,
+        "id_farmacia": 2,
+        "id_gerente_resposta": 2,
+        "data_resposta": "2026-09-24 11:30:00",
+        "resposta_gerente": null
+      },
+      {
+        "id_chamado": 4,
+        "titulo": "Pedido de losartana",
+        "descricao": "Clientes hipertensos sem o remédio no fim de semana",
+        "status": "resolvido",
+        "prioridade": "alta",
+        "data_abertura": "2026-09-10 08:45:00",
+        "id_funcionario": 8,
+        "id_farmacia": 4,
+        "id_gerente_resposta": 4,
+        "data_resposta": "2026-09-10 09:10:00",
+        "resposta_gerente": "Redistribuição da farmácia 1"
+      },
+      {
+        "id_chamado": 5,
+        "titulo": "Simeticona zerada",
+        "descricao": "Lote L-N1 sem unidades",
+        "status": "pendente",
+        "prioridade": "baixa",
+        "data_abertura": "2026-09-25 16:20:00",
+        "id_funcionario": 5,
+        "id_farmacia": 2,
+        "id_gerente_resposta": null,
+        "data_resposta": null,
+        "resposta_gerente": null
+      },
+      {
+        "id_chamado": 6,
+        "titulo": "Leitor de código de barras com defeito",
+        "descricao": "Caixa 2 não lê as embalagens",
+        "status": "cancelado",
+        "prioridade": "baixa",
+        "data_abertura": "2026-09-05 11:00:00",
+        "id_funcionario": 4,
+        "id_farmacia": 1,
+        "id_gerente_resposta": null,
+        "data_resposta": null,
+        "resposta_gerente": null
+      },
+      {
+        "id_chamado": 7,
+        "titulo": "Mais vitamina C",
+        "descricao": "Procura subiu com o frio",
+        "status": "recusado",
+        "prioridade": "baixa",
+        "data_abertura": "2026-09-12 13:00:00",
+        "id_funcionario": 3,
+        "id_farmacia": 1,
+        "id_gerente_resposta": 1,
+        "data_resposta": "2026-09-12 17:00:00",
+        "resposta_gerente": "Estoque atual ainda atende a demanda"
+      },
+      {
+        "id_chamado": 8,
+        "titulo": "Reposição: Losartana Potássica",
+        "descricao": null,
+        "status": "aceito",
+        "prioridade": "alta",
+        "data_abertura": "2026-09-30 19:06:14",
+        "id_funcionario": 8,
+        "id_farmacia": 4,
+        "id_gerente_resposta": 4,
+        "data_resposta": "2026-09-30 19:06:45",
+        "resposta_gerente": null
+      }
+    ],
+    "chamado_remedio": [
+      {
+        "id_chamado": 1,
+        "id_remedio": 2,
+        "quantidade": 50
+      },
+      {
+        "id_chamado": 2,
+        "id_remedio": 5,
+        "quantidade": 100
+      },
+      {
+        "id_chamado": 3,
+        "id_remedio": 1,
+        "quantidade": 60
+      },
+      {
+        "id_chamado": 4,
+        "id_remedio": 6,
+        "quantidade": 80
+      },
+      {
+        "id_chamado": 5,
+        "id_remedio": 14,
+        "quantidade": 40
+      },
+      {
+        "id_chamado": 7,
+        "id_remedio": 13,
+        "quantidade": 50
+      },
+      {
+        "id_chamado": 8,
+        "id_remedio": 6,
+        "quantidade": 48
+      }
+    ],
+    "servico": [
+      {
+        "id_servico": 1,
+        "id_funcionario": 1,
+        "id_paciente": 1,
+        "id_farmacia": 1,
+        "observacao": null,
+        "data_servico": "2026-09-18 10:05:00"
+      },
+      {
+        "id_servico": 2,
+        "id_funcionario": 2,
+        "id_paciente": 2,
+        "id_farmacia": 2,
+        "observacao": "Retirada mensal",
+        "data_servico": "2026-09-19 15:40:00"
+      },
+      {
+        "id_servico": 3,
+        "id_funcionario": 6,
+        "id_paciente": 3,
+        "id_farmacia": 3,
+        "observacao": "Crise alérgica, orientada a voltar se piorar",
+        "data_servico": "2026-09-21 09:30:00"
+      },
+      {
+        "id_servico": 4,
+        "id_funcionario": 8,
+        "id_paciente": 4,
+        "id_farmacia": 4,
+        "observacao": "Uso contínuo",
+        "data_servico": "2026-09-23 18:10:00"
+      },
+      {
+        "id_servico": 5,
+        "id_funcionario": 3,
+        "id_paciente": 5,
+        "id_farmacia": 1,
+        "observacao": "Atendimento no balcão",
+        "data_servico": "2026-09-24 21:00:00"
+      },
+      {
+        "id_servico": 6,
+        "id_funcionario": 7,
+        "id_paciente": 6,
+        "id_farmacia": 3,
+        "observacao": "Receita de antibiótico retida",
+        "data_servico": "2026-09-26 14:15:00"
+      },
+      {
+        "id_servico": 7,
+        "id_funcionario": 1,
+        "id_paciente": 2,
+        "id_farmacia": 1,
+        "observacao": null,
+        "data_servico": "2026-09-27 08:50:00"
+      }
+    ],
+    "servico_remedio": [
+      {
+        "id_servico": 1,
+        "id_remedio": 1,
+        "quantidade": 2
+      },
+      {
+        "id_servico": 1,
+        "id_remedio": 2,
+        "quantidade": 1
+      },
+      {
+        "id_servico": 2,
+        "id_remedio": 6,
+        "quantidade": 2
+      },
+      {
+        "id_servico": 3,
+        "id_remedio": 3,
+        "quantidade": 1
+      },
+      {
+        "id_servico": 3,
+        "id_remedio": 11,
+        "quantidade": 1
+      },
+      {
+        "id_servico": 4,
+        "id_remedio": 7,
+        "quantidade": 3
+      },
+      {
+        "id_servico": 5,
+        "id_remedio": 4,
+        "quantidade": 1
+      },
+      {
+        "id_servico": 5,
+        "id_remedio": 8,
+        "quantidade": 1
+      },
+      {
+        "id_servico": 6,
+        "id_remedio": 9,
+        "quantidade": 1
+      },
+      {
+        "id_servico": 7,
+        "id_remedio": 6,
+        "quantidade": 1
+      },
+      {
+        "id_servico": 7,
+        "id_remedio": 13,
+        "quantidade": 1
+      }
+    ],
+    "redistribuicao": [
+      {
+        "id_redistribuicao": 1,
+        "id_remedio": 6,
+        "id_farmacia_origem": 1,
+        "id_farmacia_destino": 4,
+        "quantidade": 80,
+        "status": "recebida",
+        "data_solicitacao": "2026-09-10 09:00:00",
+        "data_aprovacao": "2026-09-10 11:00:00",
+        "data_envio": "2026-09-11 08:00:00",
+        "data_recebimento": "2026-09-11 15:30:00"
+      },
+      {
+        "id_redistribuicao": 2,
+        "id_remedio": 1,
+        "id_farmacia_origem": 3,
+        "id_farmacia_destino": 2,
+        "quantidade": 60,
+        "status": "enviada",
+        "data_solicitacao": "2026-09-24 10:30:00",
+        "data_aprovacao": "2026-09-24 13:00:00",
+        "data_envio": "2026-09-25 09:00:00",
+        "data_recebimento": null
+      },
+      {
+        "id_redistribuicao": 3,
+        "id_remedio": 5,
+        "id_farmacia_origem": 2,
+        "id_farmacia_destino": 3,
+        "quantidade": 40,
+        "status": "aprovada",
+        "data_solicitacao": "2026-09-22 15:00:00",
+        "data_aprovacao": "2026-09-23 10:00:00",
+        "data_envio": null,
+        "data_recebimento": null
+      },
+      {
+        "id_redistribuicao": 4,
+        "id_remedio": 2,
+        "id_farmacia_origem": 3,
+        "id_farmacia_destino": 1,
+        "quantidade": 50,
+        "status": "solicitada",
+        "data_solicitacao": "2026-09-26 17:45:00",
+        "data_aprovacao": null,
+        "data_envio": null,
+        "data_recebimento": null
+      },
+      {
+        "id_redistribuicao": 5,
+        "id_remedio": 8,
+        "id_farmacia_origem": 4,
+        "id_farmacia_destino": 1,
+        "quantidade": 30,
+        "status": "recusada",
+        "data_solicitacao": "2026-09-15 12:00:00",
+        "data_aprovacao": null,
+        "data_envio": null,
+        "data_recebimento": null
+      }
+    ]
+  }
+}

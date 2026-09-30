@@ -9,6 +9,7 @@ import {
 } from "./endereco.service.mjs";
 import { gerarMatriculaUnica } from "./matricula.service.mjs";
 import { farmaciaDoPayload } from "./farmacia.service.mjs";
+import { baixar as baixarEstoque } from "./estoque.service.mjs";
 
 const CAMPOS_ENDERECO = {
   logradouro: "enderecoFuncionario",
@@ -296,11 +297,14 @@ export function novoServico(data) {
       }
       inserirItem.run(idServico, item.idRemedio, item.quantidade);
     }
-    return { idServico };
+    // dá baixa no estoque da farmácia (se faltar algo, a transação desfaz tudo)
+    const baixas = baixarEstoque(data.idFarmacia, data.remedios);
+    return { idServico, baixas };
   });
 }
 
-export function listarServicos() {
+// idFarmacia opcional: só os serviços daquela farmácia
+export function listarServicos(idFarmacia = null) {
   return db.prepare(/*sql*/ `
     SELECT s.id_servico AS idServico, s.data_servico AS dataServico,
            s.observacao, p.nome AS nomePaciente, p.id_paciente AS idPaciente,
@@ -313,7 +317,49 @@ export function listarServicos() {
     JOIN funcionario f ON f.id_funcionario = s.id_funcionario
     JOIN farmacia fa ON fa.id_farmacia = s.id_farmacia
     LEFT JOIN servico_remedio sr ON sr.id_servico = s.id_servico
+    WHERE (? IS NULL OR s.id_farmacia = ?)
     GROUP BY s.id_servico
     ORDER BY s.data_servico DESC, s.id_servico DESC
-  `).all();
+  `).all(idFarmacia, idFarmacia);
+}
+
+// detalhe do serviço: paciente, funcionário, farmácia e os remédios entregues
+export function buscarServico(idServico) {
+  const servico = db.prepare(/*sql*/ `
+    SELECT s.id_servico AS idServico, s.data_servico AS dataServico, s.observacao,
+           p.id_paciente AS idPaciente, p.nome AS nomePaciente, p.cpf AS cpfPaciente,
+           p.email AS emailPaciente, p.telefone AS telPaciente,
+           p.medicamento_frequente AS medicamentoFrequentePaciente,
+           f.id_funcionario AS idFuncionario, f.nome AS nomeFuncionario, f.cpf AS cpfFuncionario,
+           f.email AS emailFuncionario, f.telefone AS telFuncionario, f.matricula AS matriculaFuncionario,
+           f.cargo AS cargoFuncionario, f.turno AS turnoFuncionario,
+           fa.id_farmacia AS idFarmacia, fa.nome AS nomeFarmacia, fa.cnes AS cnesFarmacia,
+           fa.email AS emailFarmacia, fa.telefone AS telFarmacia
+    FROM servico s
+    JOIN paciente p ON p.id_paciente = s.id_paciente
+    JOIN funcionario f ON f.id_funcionario = s.id_funcionario
+    JOIN farmacia fa ON fa.id_farmacia = s.id_farmacia
+    WHERE s.id_servico = ?
+  `).get(idServico);
+  if (!servico) return null;
+
+  const remedios = db.prepare(/*sql*/ `
+    SELECT r.id_remedio AS idRemedio, r.nome AS nomeRemedio, r.dosagem AS dosagemRemedio,
+           r.descricao AS descRemedio, r.fabricante AS fabricanteRemedio,
+           r.tarja AS tarjaRemedio, r.foto AS fotoRemedio, sr.quantidade,
+           (SELECT group_concat(c.nome, ', ') FROM remedio_categoria rc
+              JOIN categoria c ON c.id_categoria = rc.id_categoria
+             WHERE rc.id_remedio = r.id_remedio) AS categorias
+    FROM servico_remedio sr
+    JOIN remedio r ON r.id_remedio = sr.id_remedio
+    WHERE sr.id_servico = ?
+    ORDER BY r.nome
+  `).all(idServico).map((item) => ({ ...item, categorias: item.categorias ?? "" }));
+
+  return {
+    ...servico,
+    totalMedicamentos: remedios.length,
+    quantidadeTotal: remedios.reduce((total, item) => total + item.quantidade, 0),
+    remedios,
+  };
 }

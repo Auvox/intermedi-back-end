@@ -67,8 +67,9 @@ export function enviarErro(res, error) {
 }
 
 // Converte o id da URL em número (404 se não for válido)
-export function idDaUrl(req, rotulo = "Registro") {
-  const id = Number(req.params?.id);
+// parametro: nome na rota, ex.: "/gerente/:id/estoque/:idRemedio" -> "idRemedio"
+export function idDaUrl(req, rotulo = "Registro", parametro = "id") {
+  const id = Number(req.params?.[parametro]);
   if (!Number.isInteger(id) || id <= 0) throw erro(404, `${rotulo} não encontrado`);
   return id;
 }

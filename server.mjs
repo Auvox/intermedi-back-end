@@ -8,6 +8,8 @@ import gerenteRoutes from "./routes/gerente.routes.mjs";
 import pacienteRoutes from "./routes/paciente.routes.mjs";
 import appRoutes from "./routes/app.routes.mjs";
 import chamadoRoutes from "./routes/chamado.routes.mjs";
+import estoqueRoutes from "./routes/estoque.routes.mjs";
+import categoriaRoutes from "./routes/categoria.routes.mjs";
 import rotaRoutes from "./sistema-rota/rota.routes.mjs";
 
 const router = new Router();
@@ -19,6 +21,8 @@ gerenteRoutes(router);
 pacienteRoutes(router);
 appRoutes(router);
 chamadoRoutes(router);
+estoqueRoutes(router);
+categoriaRoutes(router);
 rotaRoutes(router);
 
 const server = createServer(async (req, res) => {

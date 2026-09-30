@@ -2,7 +2,8 @@ import db, { emTransacao } from "../database/database.mjs";
 import { erro } from "../utils/http.mjs";
 import { texto, textoOuNull } from "../utils/dados.mjs";
 
-// Abaixo (ou igual) a este total na farmácia, o remédio é considerado crítico
+// Estoque mínimo padrão, usado quando o remédio ainda não está no estoque da
+// farmácia (quem está usa o estoque_minimo definido pelo gerente)
 export const ESTOQUE_CRITICO = 20;
 
 const PRIORIDADES = ["baixa", "media", "alta", "urgente"];
@@ -47,15 +48,15 @@ function remediosDoChamado(idChamado, idFarmacia) {
         r.nome                          AS nomeRemedio,
         r.dosagem                       AS dosagemRemedio,
         cr.quantidade                   AS quantidadeSolicitada,
-        COALESCE(SUM(es.quantidade), 0) AS estoqueAtual
+        COALESCE(es.quantidade, 0)      AS estoqueAtual,
+        COALESCE(es.estoque_minimo, ?)  AS estoqueMinimo
     FROM chamado_remedio cr
     INNER JOIN remedio r ON r.id_remedio = cr.id_remedio
     LEFT  JOIN estoque es ON es.id_remedio = r.id_remedio AND es.id_farmacia = ?
     WHERE cr.id_chamado = ?
-    GROUP BY r.id_remedio
     ORDER BY r.nome
-  `).all(idFarmacia, idChamado)
-    .map((r) => ({ ...r, critico: r.estoqueAtual <= ESTOQUE_CRITICO }));
+  `).all(ESTOQUE_CRITICO, idFarmacia, idChamado)
+    .map((r) => ({ ...r, critico: r.estoqueAtual <= r.estoqueMinimo }));
 }
 
 // Monta o chamado completo (é isso que o gerente vai receber na notificação)
