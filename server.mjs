@@ -10,6 +10,8 @@ import appRoutes from "./routes/app.routes.mjs";
 import chamadoRoutes from "./routes/chamado.routes.mjs";
 import estoqueRoutes from "./routes/estoque.routes.mjs";
 import categoriaRoutes from "./routes/categoria.routes.mjs";
+import redistribuicaoRoutes from "./routes/redistribuicao.routes.mjs";
+import { iniciarEntregas } from "./services/redistribuicao.service.mjs";
 import rotaRoutes from "./sistema-rota/rota.routes.mjs";
 
 const router = new Router();
@@ -23,7 +25,11 @@ appRoutes(router);
 chamadoRoutes(router);
 estoqueRoutes(router);
 categoriaRoutes(router);
+redistribuicaoRoutes(router);
 rotaRoutes(router);
+
+// confere a cada 5s os remédios que já chegaram (tempo de entrega das redistribuições)
+iniciarEntregas();
 
 const server = createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

@@ -211,19 +211,20 @@ INSERT INTO paciente (nome, cpf, email, senha_hash, telefone, medicamento_freque
 INSERT INTO chamado (titulo, descricao, status, prioridade, data_abertura, id_funcionario, id_farmacia,
                      id_gerente_resposta, data_resposta, resposta_gerente) VALUES
     ('Falta de paracetamol',                   'Estoque baixo',                                       'pendente',     'alta',    '2026-09-20 09:15:00', 1, 1, NULL, NULL, NULL),
-    ('Reposição de amoxicilina',               'Restam apenas 8 unidades no lote L-E3',               'em_andamento', 'urgente', '2026-09-22 14:30:00', 6, 3, 3, '2026-09-22 15:00:00', 'Pedido feito ao distribuidor'),
-    ('Dipirona acabando',                      'Lote L-A2 com 15 unidades, alta procura na semana',   'aceito',       'media',   '2026-09-24 10:00:00', 2, 2, 2, '2026-09-24 11:30:00', NULL),
+    ('Reposição de amoxicilina',               'Restam apenas 8 unidades no lote L-E3',               'em_andamento', 'urgente', '2026-09-22 14:30:00', 6, 3, 3, '2026-09-22 15:00:00', 'Pedido enviado para a rede'),
+    ('Dipirona acabando',                      'Lote L-A2 com 15 unidades, alta procura na semana',   'resolvido',    'media',   '2026-09-24 10:00:00', 2, 2, 2, '2026-09-24 11:30:00', NULL),
     ('Pedido de losartana',                    'Clientes hipertensos sem o remédio no fim de semana', 'resolvido',    'alta',    '2026-09-10 08:45:00', 8, 4, 4, '2026-09-10 09:10:00', 'Redistribuição da farmácia 1'),
-    ('Simeticona zerada',                      'Lote L-N1 sem unidades',                              'pendente',     'baixa',   '2026-09-25 16:20:00', 5, 2, NULL, NULL, NULL),
+    ('Simeticona zerada e pouca dipirona',     'Pacote: simeticona e dipirona',                       'pendente',     'baixa',   '2026-09-25 16:20:00', 5, 2, NULL, NULL, NULL),
     ('Leitor de código de barras com defeito', 'Caixa 2 não lê as embalagens',                        'cancelado',    'baixa',   '2026-09-05 11:00:00', 4, 1, NULL, NULL, NULL),
     ('Mais vitamina C',                        'Procura subiu com o frio',                            'recusado',     'baixa',   '2026-09-12 13:00:00', 3, 1, 1, '2026-09-12 17:00:00', 'Estoque atual ainda atende a demanda');
 
 INSERT INTO chamado_remedio (id_chamado, id_remedio, quantidade) VALUES
     (1, 2,  50),
-    (2, 5, 100),
+    (2, 5,  60),
     (3, 1,  60),
     (4, 6,  80),
     (5, 14, 40),
+    (5, 1,  30),   -- chamado 5 é um "pacote" com 2 remédios
     (7, 13, 50);
 
 INSERT INTO servico (id_funcionario, id_paciente, id_farmacia, observacao, data_servico) VALUES
@@ -244,10 +245,15 @@ INSERT INTO servico_remedio (id_servico, id_remedio, quantidade) VALUES
     (6, 9, 1),
     (7, 6, 1), (7, 13, 1);
 
-INSERT INTO redistribuicao (id_remedio, id_farmacia_origem, id_farmacia_destino, quantidade, status,
-                            data_solicitacao, data_aprovacao, data_envio, data_recebimento) VALUES
-    (6, 1, 4,  80, 'recebida',   '2026-09-10 09:00:00', '2026-09-10 11:00:00', '2026-09-11 08:00:00', '2026-09-11 15:30:00'),
-    (1, 3, 2,  60, 'enviada',    '2026-09-24 10:30:00', '2026-09-24 13:00:00', '2026-09-25 09:00:00', NULL),
-    (5, 2, 3,  40, 'aprovada',   '2026-09-22 15:00:00', '2026-09-23 10:00:00', NULL,                  NULL),
-    (2, 3, 1,  50, 'solicitada', '2026-09-26 17:45:00', NULL,                  NULL,                  NULL),
-    (8, 4, 1,  30, 'recusada',   '2026-09-15 12:00:00', NULL,                  NULL,                  NULL);
+-- Pedidos entre farmácias gerados pelos chamados (origem = fornecedora, destino = solicitante)
+INSERT INTO redistribuicao (id_chamado, id_remedio, id_farmacia_origem, id_farmacia_destino, quantidade, status,
+                            id_gerente_resposta, motivo_recusa, data_solicitacao, data_aprovacao, data_recusa,
+                            data_envio, data_prevista_chegada, data_recebimento) VALUES
+    -- chamado 4: Losartana da farmácia 1 para a 4 (já chegou)
+    (4, 6, 1, 4, 80, 'recebida', 1, NULL, '2026-09-10 09:10:00', '2026-09-10 09:30:00', NULL,
+     '2026-09-10 09:30:00', '2026-09-10 09:32:00', '2026-09-10 09:32:00'),
+    -- chamado 3: Dipirona da farmácia 3 para a 2 (já chegou)
+    (3, 1, 3, 2, 60, 'recebida', 3, NULL, '2026-09-24 11:30:00', '2026-09-24 11:40:00', NULL,
+     '2026-09-24 11:40:00', '2026-09-24 11:42:00', '2026-09-24 11:42:00'),
+    -- chamado 2: Amoxicilina pedida à farmácia 2 -> gerente Carlos tem uma NOTIFICAÇÃO pendente
+    (2, 5, 2, 3, 60, 'solicitada', NULL, NULL, '2026-09-22 15:00:00', NULL, NULL, NULL, NULL, NULL);

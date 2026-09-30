@@ -30,7 +30,8 @@ export function aplicarSchema(db) {
   const temColuna = (tabela, coluna) =>
     db.prepare(`PRAGMA table_info(${tabela})`).all().some((c) => c.name === coluna);
   if (!temColuna("paciente", "senha_hash") || !temColuna("chamado", "id_gerente_resposta") ||
-      !temColuna("remedio", "registro_anvisa") || !temColuna("estoque", "estoque_minimo")) {
+      !temColuna("remedio", "registro_anvisa") || !temColuna("estoque", "estoque_minimo") ||
+      !temColuna("redistribuicao", "data_prevista_chegada")) {
     throw new Error(
       "O banco foi criado com uma versão antiga do schema. " +
         "Pare o servidor e rode: npm run db:reset",

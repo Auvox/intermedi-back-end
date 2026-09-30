@@ -908,13 +908,13 @@
         "id_estoque": 4,
         "id_remedio": 6,
         "id_farmacia": 1,
-        "quantidade": 200,
+        "quantidade": 140,
         "estoque_minimo": 40,
         "lote": "L-F1",
         "validade": "2027-08-31",
         "id_gerente_cadastro": 1,
         "created_at": "2026-09-30 18:45:49",
-        "updated_at": null
+        "updated_at": "2026-09-30 20:31:57"
       },
       {
         "id_estoque": 5,
@@ -1016,13 +1016,13 @@
         "id_estoque": 13,
         "id_remedio": 1,
         "id_farmacia": 3,
-        "quantidade": 300,
+        "quantidade": 260,
         "estoque_minimo": 50,
         "lote": "L-A3",
         "validade": "2027-07-31",
         "id_gerente_cadastro": 3,
         "created_at": "2026-09-30 18:45:49",
-        "updated_at": null
+        "updated_at": "2026-09-30 20:24:24"
       },
       {
         "id_estoque": 14,
@@ -1100,13 +1100,13 @@
         "id_estoque": 20,
         "id_remedio": 6,
         "id_farmacia": 4,
-        "quantidade": 12,
+        "quantidade": 60,
         "estoque_minimo": 30,
         "lote": "L-F4",
         "validade": "2027-06-30",
         "id_gerente_cadastro": 4,
         "created_at": "2026-09-30 18:45:49",
-        "updated_at": null
+        "updated_at": "2026-09-30 20:33:58"
       },
       {
         "id_estoque": 21,
@@ -1154,6 +1154,18 @@
         "validade": "2026-08-31",
         "id_gerente_cadastro": 4,
         "created_at": "2026-09-30 18:45:49",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 25,
+        "id_remedio": 1,
+        "id_farmacia": 4,
+        "quantidade": 40,
+        "estoque_minimo": 20,
+        "lote": "L-A3",
+        "validade": "2027-07-31",
+        "id_gerente_cadastro": null,
+        "created_at": "2026-09-30 20:24:46",
         "updated_at": null
       }
     ],
@@ -1261,6 +1273,32 @@
         "id_gerente_resposta": 4,
         "data_resposta": "2026-09-30 19:06:45",
         "resposta_gerente": null
+      },
+      {
+        "id_chamado": 9,
+        "titulo": "Reposição: Dipirona",
+        "descricao": "Preciso desse remediozinhos",
+        "status": "resolvido",
+        "prioridade": "alta",
+        "data_abertura": "2026-09-30 20:21:16",
+        "id_funcionario": 8,
+        "id_farmacia": 4,
+        "id_gerente_resposta": 4,
+        "data_resposta": "2026-09-30 20:23:10",
+        "resposta_gerente": "Galera, quem puder ajudar aí, da um salve"
+      },
+      {
+        "id_chamado": 10,
+        "titulo": "Reposição: Losartana Potássica",
+        "descricao": null,
+        "status": "resolvido",
+        "prioridade": "urgente",
+        "data_abertura": "2026-09-30 20:29:36",
+        "id_funcionario": 8,
+        "id_farmacia": 4,
+        "id_gerente_resposta": 4,
+        "data_resposta": "2026-09-30 20:30:35",
+        "resposta_gerente": "eu preciso meu parceiro"
       }
     ],
     "chamado_remedio": [
@@ -1298,6 +1336,16 @@
         "id_chamado": 8,
         "id_remedio": 6,
         "quantidade": 48
+      },
+      {
+        "id_chamado": 9,
+        "id_remedio": 1,
+        "quantidade": 40
+      },
+      {
+        "id_chamado": 10,
+        "id_remedio": 6,
+        "quantidade": 60
       }
     ],
     "servico": [
@@ -1356,6 +1404,14 @@
         "id_farmacia": 1,
         "observacao": null,
         "data_servico": "2026-09-27 08:50:00"
+      },
+      {
+        "id_servico": 8,
+        "id_funcionario": 8,
+        "id_paciente": 2,
+        "id_farmacia": 4,
+        "observacao": "okk",
+        "data_servico": "2026-09-30 20:29:15"
       }
     ],
     "servico_remedio": [
@@ -1413,68 +1469,132 @@
         "id_servico": 7,
         "id_remedio": 13,
         "quantidade": 1
+      },
+      {
+        "id_servico": 8,
+        "id_remedio": 6,
+        "quantidade": 12
       }
     ],
     "redistribuicao": [
       {
         "id_redistribuicao": 1,
+        "id_chamado": null,
         "id_remedio": 6,
         "id_farmacia_origem": 1,
         "id_farmacia_destino": 4,
         "quantidade": 80,
         "status": "recebida",
+        "id_gerente_resposta": null,
+        "motivo_recusa": null,
         "data_solicitacao": "2026-09-10 09:00:00",
         "data_aprovacao": "2026-09-10 11:00:00",
+        "data_recusa": null,
         "data_envio": "2026-09-11 08:00:00",
+        "data_prevista_chegada": null,
         "data_recebimento": "2026-09-11 15:30:00"
       },
       {
         "id_redistribuicao": 2,
+        "id_chamado": null,
         "id_remedio": 1,
         "id_farmacia_origem": 3,
         "id_farmacia_destino": 2,
         "quantidade": 60,
         "status": "enviada",
+        "id_gerente_resposta": null,
+        "motivo_recusa": null,
         "data_solicitacao": "2026-09-24 10:30:00",
         "data_aprovacao": "2026-09-24 13:00:00",
+        "data_recusa": null,
         "data_envio": "2026-09-25 09:00:00",
+        "data_prevista_chegada": null,
         "data_recebimento": null
       },
       {
         "id_redistribuicao": 3,
+        "id_chamado": null,
         "id_remedio": 5,
         "id_farmacia_origem": 2,
         "id_farmacia_destino": 3,
         "quantidade": 40,
         "status": "aprovada",
+        "id_gerente_resposta": null,
+        "motivo_recusa": null,
         "data_solicitacao": "2026-09-22 15:00:00",
         "data_aprovacao": "2026-09-23 10:00:00",
+        "data_recusa": null,
         "data_envio": null,
+        "data_prevista_chegada": null,
         "data_recebimento": null
       },
       {
         "id_redistribuicao": 4,
+        "id_chamado": null,
         "id_remedio": 2,
         "id_farmacia_origem": 3,
         "id_farmacia_destino": 1,
         "quantidade": 50,
         "status": "solicitada",
+        "id_gerente_resposta": null,
+        "motivo_recusa": null,
         "data_solicitacao": "2026-09-26 17:45:00",
         "data_aprovacao": null,
+        "data_recusa": null,
         "data_envio": null,
+        "data_prevista_chegada": null,
         "data_recebimento": null
       },
       {
         "id_redistribuicao": 5,
+        "id_chamado": null,
         "id_remedio": 8,
         "id_farmacia_origem": 4,
         "id_farmacia_destino": 1,
         "quantidade": 30,
         "status": "recusada",
+        "id_gerente_resposta": null,
+        "motivo_recusa": null,
         "data_solicitacao": "2026-09-15 12:00:00",
         "data_aprovacao": null,
+        "data_recusa": null,
         "data_envio": null,
+        "data_prevista_chegada": null,
         "data_recebimento": null
+      },
+      {
+        "id_redistribuicao": 6,
+        "id_chamado": 9,
+        "id_remedio": 1,
+        "id_farmacia_origem": 3,
+        "id_farmacia_destino": 4,
+        "quantidade": 40,
+        "status": "recebida",
+        "id_gerente_resposta": 3,
+        "motivo_recusa": null,
+        "data_solicitacao": "2026-09-30 20:23:10",
+        "data_aprovacao": "2026-09-30 20:24:25",
+        "data_recusa": null,
+        "data_envio": "2026-09-30 20:24:25",
+        "data_prevista_chegada": "2026-09-30 20:24:45",
+        "data_recebimento": "2026-09-30 20:24:45"
+      },
+      {
+        "id_redistribuicao": 7,
+        "id_chamado": 10,
+        "id_remedio": 6,
+        "id_farmacia_origem": 1,
+        "id_farmacia_destino": 4,
+        "quantidade": 60,
+        "status": "recebida",
+        "id_gerente_resposta": 1,
+        "motivo_recusa": null,
+        "data_solicitacao": "2026-09-30 20:30:36",
+        "data_aprovacao": "2026-09-30 20:31:57",
+        "data_recusa": null,
+        "data_envio": "2026-09-30 20:31:57",
+        "data_prevista_chegada": "2026-09-30 20:33:57",
+        "data_recebimento": "2026-09-30 20:33:57"
       }
     ]
   }

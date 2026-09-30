@@ -1,6 +1,7 @@
 import db from "../database/database.mjs";
 import { erro } from "../utils/http.mjs";
 import { texto, textoOuNull } from "../utils/dados.mjs";
+import { processarChegadas } from "./redistribuicao.service.mjs";
 
 // Estoque de cada farmácia. O gerente só pode adicionar remédios que
 // já existem no catálogo do admin (tabela remedio).
@@ -80,6 +81,7 @@ export function buscarItem(idFarmacia, idRemedio) {
 //   busca:    parte do nome ou princípio ativo
 //   situacao: ok | critico | zerado | vencido
 export function listarDaFarmacia(idFarmacia, { busca, situacao } = {}) {
+  processarChegadas(); // remédios de redistribuição que já chegaram entram antes de listar
   const farmacia = db.prepare("SELECT id_farmacia AS idFarmacia, nome AS nomeFarmacia FROM farmacia WHERE id_farmacia = ?")
     .get(idFarmacia);
   if (!farmacia) throw erro(404, "Farmácia não encontrada");

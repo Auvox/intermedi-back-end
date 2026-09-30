@@ -323,24 +323,44 @@ CREATE TABLE IF NOT EXISTS servico_remedio (
 
 -- =====================================================================
 --  PARTE 6 — REDISTRIBUIÇÃO  (transferência de remédio entre farmácias)
+--  Nasce quando o gerente ACEITA um chamado: para cada remédio do chamado
+--  é criado um pedido para UMA farmácia que tem o remédio sobrando.
+--    origem  = farmácia FORNECEDORA (quem envia)
+--    destino = farmácia SOLICITANTE (dona do chamado)
+--  Fluxo do status:
+--    solicitada -> enviada -> recebida   (fornecedor aceitou; estoque da
+--                                         origem sai na hora e o do destino
+--                                         entra quando chega, após o tempo
+--                                         de entrega)
+--    solicitada -> recusada              (o sistema cria outra linha
+--                                         'solicitada' para a próxima
+--                                         farmácia que tiver o remédio)
+--  'aprovada' e 'cancelada' ficam para uso manual/legado.
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS redistribuicao (
-    id_redistribuicao    INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_remedio           INTEGER NOT NULL,
-    id_farmacia_origem   INTEGER NOT NULL,
-    id_farmacia_destino  INTEGER NOT NULL,
-    quantidade           INTEGER NOT NULL CHECK (quantidade > 0),
-    status               TEXT    NOT NULL DEFAULT 'solicitada'
-                         CHECK (status IN ('solicitada', 'aprovada', 'enviada',
-                                           'recebida', 'recusada', 'cancelada')),
-    data_solicitacao     TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    data_aprovacao       TEXT,
-    data_envio           TEXT,
-    data_recebimento     TEXT,
+    id_redistribuicao      INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_chamado             INTEGER,                 -- chamado que originou o pedido
+    id_remedio             INTEGER NOT NULL,
+    id_farmacia_origem     INTEGER NOT NULL,
+    id_farmacia_destino    INTEGER NOT NULL,
+    quantidade             INTEGER NOT NULL CHECK (quantidade > 0),
+    status                 TEXT    NOT NULL DEFAULT 'solicitada'
+                           CHECK (status IN ('solicitada', 'aprovada', 'enviada',
+                                             'recebida', 'recusada', 'cancelada')),
+    id_gerente_resposta    INTEGER,                 -- gerente da origem que aceitou/recusou
+    motivo_recusa          TEXT,
+    data_solicitacao       TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    data_aprovacao         TEXT,
+    data_recusa            TEXT,
+    data_envio             TEXT,
+    data_prevista_chegada  TEXT,                    -- data_envio + tempo de entrega
+    data_recebimento       TEXT,
     CHECK (id_farmacia_origem <> id_farmacia_destino),
+    FOREIGN KEY (id_chamado)          REFERENCES chamado  (id_chamado)  ON DELETE SET NULL,
     FOREIGN KEY (id_remedio)          REFERENCES remedio  (id_remedio)  ON DELETE RESTRICT,
     FOREIGN KEY (id_farmacia_origem)  REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT,
-    FOREIGN KEY (id_farmacia_destino) REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT
+    FOREIGN KEY (id_farmacia_destino) REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT,
+    FOREIGN KEY (id_gerente_resposta) REFERENCES gerente  (id_gerente)  ON DELETE SET NULL
 );
 
 
