@@ -1,5 +1,6 @@
 import * as serviceFarmacia from "../services/farmacia.service.mjs";
 import { enviarErro, enviarJson, erro, idDaUrl, lerJson } from "../utils/http.mjs";
+import { apagarArquivoDaFoto } from "./foto.controller.mjs";
 
 // cadastrar farmacia
 export async function cadastrarFarmacia(req, res) {
@@ -66,8 +67,10 @@ export async function editarFarmacia(req, res) {
 export async function deletarFarmacia(req, res) {
   try {
     const id = idDaUrl(req, "Farmacia");
+    const foto = serviceFarmacia.buscarPorId(id)?.fotoFarmacia;
     const deletado = serviceFarmacia.deletar(id);
     if (deletado.changes === 0) throw erro(404, "Farmacia não encontrado");
+    await apagarArquivoDaFoto(foto);
 
     enviarJson(res, 200, {
       mensagem: "Farmacia Deletado!",

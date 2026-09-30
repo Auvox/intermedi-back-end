@@ -34,6 +34,7 @@ const SELECT_FUNCIONARIO = /*sql*/ `
       fu.id_farmacia         AS fkIdFarmacia,
       f.nome                 AS nomeFarmacia,
       fu.id_gerente_cadastro AS idGerenteCadastro,
+      fu.foto                AS fotoFuncionario,
       fu.created_at          AS createdAtFuncionario,
       fu.id_endereco         AS idEndereco,
       ${colunasEndereco({

@@ -1,5 +1,6 @@
 import * as serviceGerente from "../services/gerente.service.mjs";
 import { enviarErro, enviarJson, erro, idDaUrl, lerJson } from "../utils/http.mjs";
+import { apagarArquivoDaFoto } from "./foto.controller.mjs";
 
 // cadastrar gerente
 export async function cadastrarGerente(req, res) {
@@ -101,8 +102,10 @@ export async function editarGerente(req, res) {
 export async function deletarGerente(req, res) {
   try {
     const id = idDaUrl(req, "Gerente");
+    const foto = serviceGerente.buscarPorId(id)?.fotoGerente;
     const deletado = serviceGerente.deletar(id);
     if (deletado.changes === 0) throw erro(404, "Gerente não encontrado");
+    await apagarArquivoDaFoto(foto);
 
     enviarJson(res, 200, {
       mensagem: "Gerente Deletado!",

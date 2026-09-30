@@ -76,6 +76,8 @@ CREATE TABLE IF NOT EXISTS farmacia (
     telefone     TEXT,
     cnes         TEXT    NOT NULL UNIQUE,
     id_endereco  INTEGER,
+    foto         TEXT,                     -- URL: /uploads/fotos/<arquivo> (fachada/logo)
+    created_at   TEXT    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_endereco) REFERENCES endereco (id_endereco)
         ON DELETE SET NULL
 );
@@ -135,6 +137,7 @@ CREATE TABLE IF NOT EXISTS gerente (
     id_farmacia        INTEGER NOT NULL,
     id_admin_cadastro  INTEGER,
     id_endereco        INTEGER,
+    foto               TEXT,               -- URL: /uploads/fotos/<arquivo>
     created_at         TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_farmacia)       REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT,
     FOREIGN KEY (id_admin_cadastro) REFERENCES admin    (id_admin)    ON DELETE SET NULL,
@@ -159,6 +162,7 @@ CREATE TABLE IF NOT EXISTS funcionario (
     id_farmacia          INTEGER NOT NULL,
     id_gerente_cadastro  INTEGER,
     id_endereco          INTEGER,
+    foto                 TEXT,             -- URL: /uploads/fotos/<arquivo>
     created_at           TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_farmacia)         REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT,
     FOREIGN KEY (id_gerente_cadastro) REFERENCES gerente  (id_gerente)  ON DELETE SET NULL,

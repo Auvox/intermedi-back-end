@@ -130,7 +130,9 @@
         "email": "pjn@intermedi.com",
         "telefone": "1111-1111",
         "cnes": "1234567",
-        "id_endereco": 1
+        "id_endereco": 1,
+        "foto": null,
+        "created_at": "2026-09-30 20:47:54"
       },
       {
         "id_farmacia": 2,
@@ -138,7 +140,9 @@
         "email": "vida@intermedi.com",
         "telefone": "2222-2222",
         "cnes": "7654321",
-        "id_endereco": 2
+        "id_endereco": 2,
+        "foto": null,
+        "created_at": "2026-09-30 20:47:54"
       },
       {
         "id_farmacia": 3,
@@ -146,7 +150,9 @@
         "email": "saudeleste@intermedi.com",
         "telefone": "3333-3333",
         "cnes": "2345678",
-        "id_endereco": 3
+        "id_endereco": 3,
+        "foto": null,
+        "created_at": "2026-09-30 20:47:54"
       },
       {
         "id_farmacia": 4,
@@ -154,7 +160,9 @@
         "email": "bemestar@intermedi.com",
         "telefone": "4444-4444",
         "cnes": "8765432",
-        "id_endereco": 4
+        "id_endereco": 4,
+        "foto": null,
+        "created_at": "2026-09-30 20:47:54"
       }
     ],
     "categoria": [
@@ -291,6 +299,7 @@
         "id_farmacia": 1,
         "id_admin_cadastro": 1,
         "id_endereco": null,
+        "foto": null,
         "created_at": "2026-09-30 18:45:49"
       },
       {
@@ -305,6 +314,7 @@
         "id_farmacia": 2,
         "id_admin_cadastro": 1,
         "id_endereco": null,
+        "foto": null,
         "created_at": "2026-09-30 18:45:49"
       },
       {
@@ -319,6 +329,7 @@
         "id_farmacia": 3,
         "id_admin_cadastro": 1,
         "id_endereco": 5,
+        "foto": null,
         "created_at": "2026-09-30 18:45:49"
       },
       {
@@ -333,6 +344,7 @@
         "id_farmacia": 4,
         "id_admin_cadastro": 1,
         "id_endereco": 6,
+        "foto": null,
         "created_at": "2026-09-30 18:45:49"
       },
       {
@@ -347,6 +359,7 @@
         "id_farmacia": 1,
         "id_admin_cadastro": 1,
         "id_endereco": 7,
+        "foto": null,
         "created_at": "2026-09-30 18:45:49"
       }
     ],
@@ -364,6 +377,7 @@
         "id_farmacia": 1,
         "id_gerente_cadastro": 1,
         "id_endereco": null,
+        "foto": null,
         "created_at": "2026-09-30 18:45:49"
       },
       {
@@ -379,6 +393,7 @@
         "id_farmacia": 2,
         "id_gerente_cadastro": 2,
         "id_endereco": null,
+        "foto": null,
         "created_at": "2026-09-30 18:45:49"
       },
       {
@@ -394,6 +409,7 @@
         "id_farmacia": 1,
         "id_gerente_cadastro": 1,
         "id_endereco": 8,
+        "foto": null,
         "created_at": "2026-09-30 18:45:49"
       },
       {
@@ -409,6 +425,7 @@
         "id_farmacia": 1,
         "id_gerente_cadastro": 5,
         "id_endereco": null,
+        "foto": null,
         "created_at": "2026-09-30 18:45:49"
       },
       {
@@ -424,6 +441,7 @@
         "id_farmacia": 2,
         "id_gerente_cadastro": 2,
         "id_endereco": null,
+        "foto": null,
         "created_at": "2026-09-30 18:45:49"
       },
       {
@@ -439,6 +457,7 @@
         "id_farmacia": 3,
         "id_gerente_cadastro": 3,
         "id_endereco": null,
+        "foto": null,
         "created_at": "2026-09-30 18:45:49"
       },
       {
@@ -454,6 +473,7 @@
         "id_farmacia": 3,
         "id_gerente_cadastro": 3,
         "id_endereco": null,
+        "foto": null,
         "created_at": "2026-09-30 18:45:49"
       },
       {
@@ -469,6 +489,7 @@
         "id_farmacia": 4,
         "id_gerente_cadastro": 4,
         "id_endereco": null,
+        "foto": null,
         "created_at": "2026-09-30 18:45:49"
       },
       {
@@ -484,6 +505,7 @@
         "id_farmacia": 4,
         "id_gerente_cadastro": 4,
         "id_endereco": null,
+        "foto": null,
         "created_at": "2026-09-30 18:45:49"
       }
     ],
@@ -968,13 +990,13 @@
         "id_estoque": 9,
         "id_remedio": 5,
         "id_farmacia": 2,
-        "quantidade": 90,
+        "quantidade": 85,
         "estoque_minimo": 20,
         "lote": "L-E1",
         "validade": "2026-12-31",
         "id_gerente_cadastro": 2,
         "created_at": "2026-09-30 18:45:49",
-        "updated_at": null
+        "updated_at": "2026-09-30 20:49:12"
       },
       {
         "id_estoque": 10,
@@ -1028,13 +1050,13 @@
         "id_estoque": 14,
         "id_remedio": 2,
         "id_farmacia": 3,
-        "quantidade": 180,
+        "quantidade": 85,
         "estoque_minimo": 50,
         "lote": "L-B3",
         "validade": "2027-05-31",
         "id_gerente_cadastro": 3,
         "created_at": "2026-09-30 18:45:49",
-        "updated_at": null
+        "updated_at": "2026-09-30 21:52:06"
       },
       {
         "id_estoque": 15,
@@ -1166,6 +1188,54 @@
         "validade": "2027-07-31",
         "id_gerente_cadastro": null,
         "created_at": "2026-09-30 20:24:46",
+        "updated_at": null
+      },
+      {
+        "id_estoque": 26,
+        "id_remedio": 5,
+        "id_farmacia": 4,
+        "quantidade": 30,
+        "estoque_minimo": 20,
+        "lote": "L-E1",
+        "validade": "2026-12-31",
+        "id_gerente_cadastro": null,
+        "created_at": "2026-09-30 20:51:12",
+        "updated_at": "2026-09-30 21:41:17"
+      },
+      {
+        "id_estoque": 27,
+        "id_remedio": 12,
+        "id_farmacia": 2,
+        "quantidade": 1000,
+        "estoque_minimo": 20,
+        "lote": null,
+        "validade": null,
+        "id_gerente_cadastro": 2,
+        "created_at": "2026-09-30 21:53:35",
+        "updated_at": "2026-09-30 21:54:37"
+      },
+      {
+        "id_estoque": 28,
+        "id_remedio": 2,
+        "id_farmacia": 4,
+        "quantidade": 55,
+        "estoque_minimo": 20,
+        "lote": "L-B3",
+        "validade": "2027-05-31",
+        "id_gerente_cadastro": null,
+        "created_at": "2026-09-30 21:54:08",
+        "updated_at": "2026-09-30 21:56:59"
+      },
+      {
+        "id_estoque": 29,
+        "id_remedio": 12,
+        "id_farmacia": 4,
+        "quantidade": 2000,
+        "estoque_minimo": 20,
+        "lote": null,
+        "validade": null,
+        "id_gerente_cadastro": null,
+        "created_at": "2026-09-30 21:56:38",
         "updated_at": null
       }
     ],
@@ -1299,6 +1369,32 @@
         "id_gerente_resposta": 4,
         "data_resposta": "2026-09-30 20:30:35",
         "resposta_gerente": "eu preciso meu parceiro"
+      },
+      {
+        "id_chamado": 11,
+        "titulo": "Reposição: Amoxicilina",
+        "descricao": null,
+        "status": "resolvido",
+        "prioridade": "media",
+        "data_abertura": "2026-09-30 20:48:15",
+        "id_funcionario": 8,
+        "id_farmacia": 4,
+        "id_gerente_resposta": 4,
+        "data_resposta": "2026-09-30 20:48:35",
+        "resposta_gerente": null
+      },
+      {
+        "id_chamado": 12,
+        "titulo": "Reposição: Omeprazol, Paracetamol, Enalapril",
+        "descricao": null,
+        "status": "em_andamento",
+        "prioridade": "baixa",
+        "data_abertura": "2026-09-30 21:48:32",
+        "id_funcionario": 9,
+        "id_farmacia": 4,
+        "id_gerente_resposta": 4,
+        "data_resposta": "2026-09-30 21:49:59",
+        "resposta_gerente": "foi apenas o paracetomol paizao"
       }
     ],
     "chamado_remedio": [
@@ -1346,6 +1442,26 @@
         "id_chamado": 10,
         "id_remedio": 6,
         "quantidade": 60
+      },
+      {
+        "id_chamado": 11,
+        "id_remedio": 5,
+        "quantidade": 5
+      },
+      {
+        "id_chamado": 12,
+        "id_remedio": 2,
+        "quantidade": 95
+      },
+      {
+        "id_chamado": 12,
+        "id_remedio": 8,
+        "quantidade": 58
+      },
+      {
+        "id_chamado": 12,
+        "id_remedio": 12,
+        "quantidade": 2000
       }
     ],
     "servico": [
@@ -1412,6 +1528,14 @@
         "id_farmacia": 4,
         "observacao": "okk",
         "data_servico": "2026-09-30 20:29:15"
+      },
+      {
+        "id_servico": 9,
+        "id_funcionario": 9,
+        "id_paciente": 1,
+        "id_farmacia": 4,
+        "observacao": "Muito obrigado",
+        "data_servico": "2026-09-30 21:56:59"
       }
     ],
     "servico_remedio": [
@@ -1474,6 +1598,11 @@
         "id_servico": 8,
         "id_remedio": 6,
         "quantidade": 12
+      },
+      {
+        "id_servico": 9,
+        "id_remedio": 2,
+        "quantidade": 40
       }
     ],
     "redistribuicao": [
@@ -1595,6 +1724,57 @@
         "data_envio": "2026-09-30 20:31:57",
         "data_prevista_chegada": "2026-09-30 20:33:57",
         "data_recebimento": "2026-09-30 20:33:57"
+      },
+      {
+        "id_redistribuicao": 8,
+        "id_chamado": 11,
+        "id_remedio": 5,
+        "id_farmacia_origem": 2,
+        "id_farmacia_destino": 4,
+        "quantidade": 5,
+        "status": "recebida",
+        "id_gerente_resposta": 2,
+        "motivo_recusa": null,
+        "data_solicitacao": "2026-09-30 20:48:35",
+        "data_aprovacao": "2026-09-30 20:49:12",
+        "data_recusa": null,
+        "data_envio": "2026-09-30 20:49:12",
+        "data_prevista_chegada": "2026-09-30 20:51:12",
+        "data_recebimento": "2026-09-30 20:51:12"
+      },
+      {
+        "id_redistribuicao": 9,
+        "id_chamado": 12,
+        "id_remedio": 2,
+        "id_farmacia_origem": 3,
+        "id_farmacia_destino": 4,
+        "quantidade": 95,
+        "status": "recebida",
+        "id_gerente_resposta": 3,
+        "motivo_recusa": null,
+        "data_solicitacao": "2026-09-30 21:49:59",
+        "data_aprovacao": "2026-09-30 21:52:06",
+        "data_recusa": null,
+        "data_envio": "2026-09-30 21:52:06",
+        "data_prevista_chegada": "2026-09-30 21:54:06",
+        "data_recebimento": "2026-09-30 21:54:06"
+      },
+      {
+        "id_redistribuicao": 10,
+        "id_chamado": 12,
+        "id_remedio": 12,
+        "id_farmacia_origem": 2,
+        "id_farmacia_destino": 4,
+        "quantidade": 2000,
+        "status": "recebida",
+        "id_gerente_resposta": 2,
+        "motivo_recusa": null,
+        "data_solicitacao": "2026-09-30 21:53:54",
+        "data_aprovacao": "2026-09-30 21:54:38",
+        "data_recusa": null,
+        "data_envio": "2026-09-30 21:54:38",
+        "data_prevista_chegada": "2026-09-30 21:56:38",
+        "data_recebimento": "2026-09-30 21:56:38"
       }
     ]
   }

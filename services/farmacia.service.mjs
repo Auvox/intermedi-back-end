@@ -22,6 +22,8 @@ const SELECT_FARMACIA = /*sql*/ `
       f.email       AS emailFarmacia,
       f.telefone    AS telFarmacia,
       f.cnes        AS cnesFarmacia,
+      f.foto        AS fotoFarmacia,
+      f.created_at  AS createdAtFarmacia,
       f.id_endereco AS idEndereco,
       ${colunasEndereco({
         cep: "cepFarmacia", logradouro: "enderecoFarmacia", numero: "numeroFarmacia",

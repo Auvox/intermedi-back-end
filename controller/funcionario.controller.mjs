@@ -1,5 +1,6 @@
 import * as serviceFuncionario from "../services/funcionario.service.mjs";
 import { enviarErro, enviarJson, erro, idDaUrl, lerJson } from "../utils/http.mjs";
+import { apagarArquivoDaFoto } from "./foto.controller.mjs";
 
 // listar serviços (filtro opcional: GET /servicos?idFarmacia=3)
 export function consultarServicos(req, res) {
@@ -112,8 +113,10 @@ export async function editarFuncionario(req, res) {
 export async function deletarFuncionario(req, res) {
   try {
     const id = idDaUrl(req, "Funcionario");
+    const foto = serviceFuncionario.buscarPorId(id)?.fotoFuncionario;
     const deletado = serviceFuncionario.deletar(id);
     if (deletado.changes === 0) throw erro(404, "Funcionario não encontrado");
+    await apagarArquivoDaFoto(foto);
 
     enviarJson(res, 200, {
       mensagem: "Funcionario Deletado!",

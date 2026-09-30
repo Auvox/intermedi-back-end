@@ -30,6 +30,7 @@ const SELECT_GERENTE = /*sql*/ `
       g.id_farmacia       AS fkIdFarmacia,
       f.nome              AS nomeFarmacia,
       g.id_admin_cadastro AS idAdminCadastro,
+      g.foto              AS fotoGerente,
       g.created_at        AS createdAtGerente,
       g.id_endereco       AS idEndereco,
       ${colunasEndereco({
