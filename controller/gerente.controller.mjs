@@ -112,3 +112,14 @@ export async function deletarGerente(req, res) {
     enviarErro(res, error);
   }
 }
+
+export async function logoutGerente(req, res) {
+  try {
+    // executa o logout do gerente
+    enviarJson(res, 200, {
+      status: "Sessão encerrada com sucesso.",
+    });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
