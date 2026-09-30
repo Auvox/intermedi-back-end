@@ -1,6 +1,7 @@
 import {
   cadastrarGerente,
   consultarGerente,
+  consultarFarmaciaDoGerente,
   buscarGerente,
   editarGerente,
   deletarGerente,
@@ -11,8 +12,10 @@ export default function gerenteRoutes(router) {
   router.post("/gerente", cadastrarGerente);
 
   router.post("/gerente/logout", logoutGerente);
-  
+
   router.get("/gerente", consultarGerente);
+
+  router.get("/gerente/:id/farmacia", consultarFarmaciaDoGerente);
 
   router.get("/gerente/:id", buscarGerente);
 
