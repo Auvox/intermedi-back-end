@@ -64,6 +64,25 @@ export async function consultarGerente(req, res) {
   }
 }
 
+// busca pela farmácia do gerente atual, onde ele está cadastrado.
+export async function consultarFarmaciaDoGerente(req, res) {
+  try {
+    const idGerente = idDaUrl(req, "Gerente"); // extrai o ID da URL (:id)
+    
+    const farmacia = serviceGerente.consultarFarmaciaDoGerente(idGerente);
+    if (!farmacia) {
+      throw erro(404, "Farmácia do gerente não encontrada.");
+    }
+
+    enviarJson(res, 200, {
+      status: "Farmácia do gerente encontrada com sucesso",
+      resultado: farmacia,
+    });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
 // buscar gerente por id
 export async function buscarGerente(req, res) {
   try {
@@ -107,6 +126,17 @@ export async function deletarGerente(req, res) {
     enviarJson(res, 200, {
       mensagem: "Gerente Deletado!",
       deletado,
+    });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+export async function logoutGerente(req, res) {
+  try {
+    // executa o logout do gerente
+    enviarJson(res, 200, {
+      status: "Sessão encerrada com sucesso.",
     });
   } catch (error) {
     enviarErro(res, error);
