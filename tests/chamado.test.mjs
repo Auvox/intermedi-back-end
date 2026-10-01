@@ -70,7 +70,7 @@ test("fluxo completo: aceita -> fornecedor aceita -> estoque sai na hora e entra
   const antes = { f1: quantidade(1, 2), f3: quantidade(3, 2) };
 
   // gerente da farmácia 1 aceita: pedido vai para a farmácia 3
-  const { chamado, despacho } = serviceChamado.responder(idChamado, { idGerente: 1, aceitar: true });
+  const { chamado, despacho } = serviceChamado.responder(idChamado, { idGerente: 1, aceitar: true, nomeGerenteConfirmacao: "Ana Souza" });
   assert.equal(chamado.status, "em_andamento");
   assert.equal(despacho[0].enviadoPara.idFarmacia, 3);
   assert.equal(chamado.remedios[0].situacao, "aguardando_fornecedor");
@@ -105,7 +105,7 @@ test("fluxo completo: aceita -> fornecedor aceita -> estoque sai na hora e entra
 test("recusa do fornecedor repassa sozinho para a próxima farmácia que tem o remédio", () => {
   // Dipirona 40 para a farmácia 2: sobra em f3 (250) e f1 (90)
   const { idChamado } = serviceChamado.solicitar(2, { remedios: [{ idRemedio: 1, quantidade: 40 }] });
-  const { despacho } = serviceChamado.responder(idChamado, { idGerente: 2, aceitar: true });
+  const { despacho } = serviceChamado.responder(idChamado, { idGerente: 2, aceitar: true, nomeGerenteConfirmacao: "Carlos Lima" });
   assert.equal(despacho[0].enviadoPara.idFarmacia, 3);
 
   const recusa = serviceRedistribuicao.responder(despacho[0].idRedistribuicao,
@@ -130,7 +130,7 @@ test("pacote: prefere a farmácia que atende mais itens; item que ninguém tem f
   const { idChamado } = serviceChamado.solicitar(1, { remedios: [
     { idRemedio: 2, quantidade: 10 }, { idRemedio: 1, quantidade: 10 }, { idRemedio: 14, quantidade: 5 },
   ] });
-  const { chamado, despacho } = serviceChamado.responder(idChamado, { idGerente: 1, aceitar: true });
+  const { chamado, despacho } = serviceChamado.responder(idChamado, { idGerente: 1, aceitar: true, nomeGerenteConfirmacao: "Ana Souza" });
 
   const para = Object.fromEntries(despacho.map((d) => [d.idRemedio, d.enviadoPara?.idFarmacia ?? null]));
   assert.deepEqual(para, { 1: 3, 2: 3, 14: null });
@@ -140,7 +140,7 @@ test("pacote: prefere a farmácia que atende mais itens; item que ninguém tem f
 test("gerente recusa chamado exige motivo; não responde duas vezes", () => {
   const { idChamado } = serviceChamado.solicitar(6, { remedios: [{ idRemedio: 5, quantidade: 1 }] });
   assert.throws(() => serviceChamado.responder(idChamado, { idGerente: 3, aceitar: false }), { status: 400 });
-  assert.throws(() => serviceChamado.responder(idChamado, { idGerente: 1, aceitar: true }), { status: 403 });
+  assert.throws(() => serviceChamado.responder(idChamado, { idGerente: 1, aceitar: true, nomeGerenteConfirmacao: "Ana Souza" }), { status: 403 });
 
   const { chamado, despacho } = serviceChamado.responder(idChamado, { idGerente: 3, aceitar: false, resposta: "Sem verba" });
   assert.equal(chamado.status, "recusado");
@@ -161,4 +161,42 @@ test("filtros inválidos são recusados", () => {
   assert.throws(() => serviceChamado.listarDoGerente(3, "xyz"), { status: 400 });
   assert.throws(() => serviceRedistribuicao.listarDoGerente(3, { tipo: "xyz" }), { status: 400 });
   assert.throws(() => serviceRedistribuicao.listarDoGerente(999, {}), { status: 404 });
+});
+
+test("aceite exige nome do gerente salvo no banco e falhas não alteram chamado nem pedidos", () => {
+  const { idChamado } = serviceChamado.solicitar(1, { remedios: [{ idRemedio: 2, quantidade: 1 }] });
+  const antes = db.prepare("SELECT * FROM chamado WHERE id_chamado = ?").get(idChamado);
+  const pedidosAntes = db.prepare("SELECT COUNT(*) AS n FROM redistribuicao").get().n;
+  for (const nomeGerenteConfirmacao of [undefined, null, "", "   ", 1, {}, "Ana", "ana souza", "Carlos Lima", "Fernanda Costa"]) {
+    assert.throws(() => serviceChamado.responder(idChamado, {
+      idGerente: 1, aceitar: true, nomeGerenteConfirmacao,
+    }), { status: 400 });
+    assert.deepEqual(db.prepare("SELECT * FROM chamado WHERE id_chamado = ?").get(idChamado), antes);
+    assert.equal(db.prepare("SELECT COUNT(*) AS n FROM redistribuicao").get().n, pedidosAntes);
+  }
+  const resultado = serviceChamado.responder(idChamado, {
+    idGerente: 1, aceitar: true, nomeGerenteConfirmacao: "  Ana Souza  ",
+  });
+  assert.equal(resultado.chamado.status, "em_andamento");
+  assert.equal(resultado.chamado.resposta.idGerente, 1);
+  assert.throws(() => serviceChamado.responder(idChamado, {
+    idGerente: 1, aceitar: true, nomeGerenteConfirmacao: "Ana Souza",
+  }), { status: 409 });
+});
+
+test("rota HTTP bloqueia aceite sem confirmação e permite nome correto", async () => {
+  const { Readable } = await import("node:stream");
+  const { responderChamado } = await import("../controller/chamado.controller.mjs");
+  const { idChamado } = serviceChamado.solicitar(1, { remedios: [{ idRemedio: 2, quantidade: 1 }] });
+  async function request(body) {
+    const req = Readable.from([Buffer.from(JSON.stringify(body))]);
+    req.params = { id: String(idChamado) };
+    const res = { setHeader() {}, end(body) { this.body = JSON.parse(body); } };
+    await responderChamado(req, res);
+    return res;
+  }
+  assert.equal((await request({ idGerente: 1, aceitar: true })).statusCode, 400);
+  const res = await request({ idGerente: 1, aceitar: true, nomeGerenteConfirmacao: "Ana Souza" });
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.chamado.status, "em_andamento");
 });

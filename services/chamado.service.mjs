@@ -210,13 +210,21 @@ export function responder(idChamado, data) {
   const chamado = db.prepare("SELECT status, id_farmacia FROM chamado WHERE id_chamado = ?").get(idChamado);
   if (!chamado) throw erro(404, "Chamado não encontrado");
 
-  const gerente = db.prepare("SELECT id_farmacia FROM gerente WHERE id_gerente = ?").get(idGerente);
+  const gerente = db.prepare("SELECT id_farmacia, nome FROM gerente WHERE id_gerente = ?").get(idGerente);
   if (!gerente) throw erro(404, "Gerente não encontrado");
   if (gerente.id_farmacia !== chamado.id_farmacia) {
     throw erro(403, "Este chamado pertence a outra farmácia.");
   }
   if (chamado.status !== "pendente") {
     throw erro(409, `Este chamado já foi respondido (status: ${chamado.status}).`);
+  }
+
+  if (data.aceitar) {
+    const nome = data.nomeGerenteConfirmacao;
+    if (typeof nome !== "string" || !nome.trim() ||
+        nome.trim().normalize("NFC") !== gerente.nome.trim().normalize("NFC")) {
+      throw erro(400, "Digite o nome completo do gerente responsável para confirmar o aceite.");
+    }
   }
 
   // Aceitar = "abrir" o chamado para a rede: cada remédio vira um pedido
