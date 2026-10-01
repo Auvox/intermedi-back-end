@@ -5,7 +5,6 @@ import {
   buscarGerente,
   editarGerente,
   deletarGerente,
-  consultarFarmaciaDoGerente,
   consultarServicosDoFuncionario,
   logoutGerente,
 } from "../controller/gerente.controller.mjs";
