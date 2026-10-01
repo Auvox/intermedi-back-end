@@ -80,6 +80,47 @@ export async function buscarGerente(req, res) {
   }
 }
 
+// consultar farmácia do gerente
+export async function consultarFarmaciaDoGerente(req, res) {
+  try {
+    const id = idDaUrl(req, "Gerente");
+    const farmacia = serviceGerente.consultarFarmaciaDoGerente(id);
+    if (!farmacia) throw erro(404, "Farmácia do gerente não encontrada");
+
+    enviarJson(res, 200, {
+      status: "Farmácia encontrada com sucesso",
+      resultado: farmacia,
+    });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+// consultar serviços do funcionário
+export async function consultarServicosDoFuncionario(req, res) {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    const idGerente = Number(url.searchParams.get("idGerente"));
+    const idFuncionario = Number(url.searchParams.get("idFuncionario"));
+
+    if (!idGerente || Number.isNaN(idGerente)) {
+      throw erro(400, "ID do gerente inválido.");
+    }
+    if (!idFuncionario || Number.isNaN(idFuncionario)) {
+      throw erro(400, "ID do funcionário inválido.");
+    }
+
+    const servicos = serviceGerente.consultarServicosDoFuncionario(idGerente, idFuncionario);
+
+    enviarJson(res, 200, {
+      status: "Serviços do funcionário encontrados com sucesso",
+      resultado: servicos,
+    });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
 // editar gerente
 export async function editarGerente(req, res) {
   try {
@@ -107,6 +148,17 @@ export async function deletarGerente(req, res) {
     enviarJson(res, 200, {
       mensagem: "Gerente Deletado!",
       deletado,
+    });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+// deslogar da conta
+export async function logoutGerente(req, res) {
+  try {
+    enviarJson(res, 200, {
+      mensagem: "Sessão encerrada com sucesso.",
     });
   } catch (error) {
     enviarErro(res, error);
