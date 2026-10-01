@@ -2,6 +2,7 @@ import {
   cadastrarGerente,
   consultarGerente,
   consultarFarmaciaDoGerente,
+  consultarServicosDoFuncionario,
   buscarGerente,
   editarGerente,
   deletarGerente,
@@ -9,17 +10,15 @@ import {
 } from "../controller/gerente.controller.mjs";
 
 export default function gerenteRoutes(router) {
-  router.post("/gerente", cadastrarGerente);
-
+  // Rotas específicas devem ser registradas ANTES das rotas dinâmicas (:id)
+  router.get("/gerente/funcionario/servicos", consultarServicosDoFuncionario);
+  router.get("/gerente/:id/farmacia", consultarFarmaciaDoGerente);
   router.post("/gerente/logout", logoutGerente);
 
+  // Rotas padrão
+  router.post("/gerente", cadastrarGerente);
   router.get("/gerente", consultarGerente);
-
-  router.get("/gerente/:id/farmacia", consultarFarmaciaDoGerente);
-
   router.get("/gerente/:id", buscarGerente);
-
   router.put("/gerente/:id", editarGerente);
-
   router.delete("/gerente/:id", deletarGerente);
 }

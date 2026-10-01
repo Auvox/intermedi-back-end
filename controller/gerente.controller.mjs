@@ -99,6 +99,31 @@ export async function buscarGerente(req, res) {
   }
 }
 
+// consultar serviços do funcionário
+export async function consultarServicosDoFuncionario(req, res) {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    const idGerente = Number(url.searchParams.get("idGerente"));
+    const idFuncionario = Number(url.searchParams.get("idFuncionario"));
+
+    if (!idGerente || Number.isNaN(idGerente)) {
+      throw erro(400, "ID do gerente inválido.");
+    }
+    if (!idFuncionario || Number.isNaN(idFuncionario)) {
+      throw erro(400, "ID do funcionário inválido.");
+    }
+
+    const servicos = serviceGerente.consultarServicosDoFuncionario(idGerente, idFuncionario);
+
+    enviarJson(res, 200, {
+      status: "Serviços do funcionário encontrados com sucesso",
+      resultado: servicos,
+    });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
 // editar gerente
 export async function editarGerente(req, res) {
   try {
@@ -132,11 +157,11 @@ export async function deletarGerente(req, res) {
   }
 }
 
+// deslogar da conta
 export async function logoutGerente(req, res) {
   try {
-    // executa o logout do gerente
     enviarJson(res, 200, {
-      status: "Sessão encerrada com sucesso.",
+      mensagem: "Sessão encerrada com sucesso.",
     });
   } catch (error) {
     enviarErro(res, error);

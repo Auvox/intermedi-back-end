@@ -42,6 +42,22 @@ const SELECT_GERENTE = /*sql*/ `
   LEFT  JOIN endereco e ON e.id_endereco = g.id_endereco
 `;
 
+const COLUNAS_FARMACIA = `
+  f.id_farmacia AS idFarmacia,
+  f.nome        AS nomeFarmacia,
+  f.email       AS emailFarmacia,
+  f.telefone    AS telFarmacia,
+  f.cnes        AS cnesFarmacia,
+  f.id_endereco AS idEndereco
+`;
+
+const COLUNAS_SERVICO_FUNCIONARIO = `
+  func.id_funcionario AS idFuncionario,
+  func.nome           AS nomeFuncionario,
+  func.cargo          AS cargoServico,
+  func.turno          AS turnoFuncionario
+`;
+
 function validar(dados) {
   const faltando = ["nomeGerente", "emailGerente", "cpfGerente", "crfGerente"]
     .filter((campo) => !texto(dados[campo]));
@@ -103,10 +119,32 @@ export function buscarPorId(id) {
   return db.prepare(`${SELECT_GERENTE} WHERE g.id_gerente = ?`).get(id);
 }
 
-// Adicione/substitua no gerente.service.mjs
+// consultar farmacia do gerente
+export function consultarFarmaciaDoGerente(idGerente) {
+  const sql = `
+    SELECT 
+      ${COLUNAS_FARMACIA}
+    FROM gerente g
+    INNER JOIN farmacia f ON f.id_farmacia = g.id_farmacia
+    WHERE g.id_gerente = ?
+  `;
+  return db.prepare(sql).get(idGerente);
+}
+
+// consultar servicos do funcionario
+export function consultarServicosDoFuncionario(idGerente, idFuncionario) {
+  const sql = /*sql*/ `
+    SELECT 
+      ${COLUNAS_SERVICO_FUNCIONARIO}
+    FROM funcionario func
+    INNER JOIN gerente g ON g.id_farmacia = func.id_farmacia
+    WHERE g.id_gerente = ? AND func.id_funcionario = ?
+  `;
+  return db.prepare(sql).all(idGerente, idFuncionario);
+}
 
 export function consultarFuncionarioDoGerente(idGerente, idFuncionario) {
-  // 1. Busca os dados do gerente para identificar a sua farmácia
+  // Busca os dados do gerente para identificar a sua farmácia
   const gerente = db.prepare("SELECT id_farmacia FROM gerente WHERE id_gerente = ?").get(idGerente);
   if (!gerente) {
     throw erro(404, "Gerente não encontrado.");
@@ -125,19 +163,6 @@ export function consultarFuncionarioDoGerente(idGerente, idFuncionario) {
   }
 
   return funcionario;
-}
-
-// consulta a farmácia pelo id do gerente passado pelo parâmetro.
-export function consultarFarmaciaDoGerente(idGerente) {
-  // SELECT * FROM farmacia WHERE id_gerente = idGerente (ou relacionando as tabelas)
-  return db.prepare(`
-    SELECT 
-      f.id_farmacia AS idFarmacia,
-      f.nome        AS nomeFarmacia
-    FROM gerente g
-    INNER JOIN farmacia f ON f.id_farmacia = g.id_farmacia
-    WHERE g.id_gerente = ?
-  `).get(idGerente);
 }
 
 // editar (campos não enviados continuam iguais; senha só muda se vier preenchida)
