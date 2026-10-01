@@ -1,6 +1,7 @@
 import {
   cadastrarGerente,
   consultarGerente,
+  consultarFarmaciaDoGerente,
   buscarGerente,
   editarGerente,
   deletarGerente,
