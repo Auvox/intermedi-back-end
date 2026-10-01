@@ -2,10 +2,10 @@ import {
   cadastrarGerente,
   consultarGerente,
   consultarFarmaciaDoGerente,
+  consultarServicosDoFuncionario,
   buscarGerente,
   editarGerente,
   deletarGerente,
-  consultarServicosDoFuncionario,
   logoutGerente,
 } from "../controller/gerente.controller.mjs";
 

@@ -121,7 +121,7 @@ export function buscarPorId(id) {
 
 // consultar farmacia do gerente
 export function consultarFarmaciaDoGerente(idGerente) {
-  const sql = /*sql*/ `
+  const sql = `
     SELECT 
       ${COLUNAS_FARMACIA}
     FROM gerente g
@@ -163,19 +163,6 @@ export function consultarFuncionarioDoGerente(idGerente, idFuncionario) {
   }
 
   return funcionario;
-}
-
-// consulta a farmácia pelo id do gerente passado pelo parâmetro.
-export function consultarFarmaciaDoGerente(idGerente) {
-  // SELECT * FROM farmacia WHERE id_gerente = idGerente (ou relacionando as tabelas)
-  return db.prepare(`
-    SELECT 
-      f.id_farmacia AS idFarmacia,
-      f.nome        AS nomeFarmacia
-    FROM gerente g
-    INNER JOIN farmacia f ON f.id_farmacia = g.id_farmacia
-    WHERE g.id_gerente = ?
-  `).get(idGerente);
 }
 
 // editar (campos não enviados continuam iguais; senha só muda se vier preenchida)
