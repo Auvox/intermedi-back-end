@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { geocodificarEndereco } from "../services/geocodificacao.service.mjs";
+import { geocodificarEndereco } from "../sistema-rota/geocodificacao.service.mjs";
 
 test("geocodificação valida endereço, resposta e falhas sem chamar a API real", async () => {
   const endereco = { logradouro: "Rua Teste", numero: "123", bairro: "Centro", cidade: "São Paulo", uf: "SP", cep: "01000-000" };

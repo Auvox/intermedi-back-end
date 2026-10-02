@@ -15,6 +15,7 @@ import resumoRoutes from "./routes/resumo.routes.mjs";
 import fotoRoutes from "./routes/foto.routes.mjs";
 import { iniciarEntregas } from "./services/redistribuicao.service.mjs";
 import rotaRoutes from "./sistema-rota/rota.routes.mjs";
+import ocrRoutes from "./sistema-foto/ocr.routes.mjs";
 
 const router = new Router();
 
@@ -31,6 +32,7 @@ redistribuicaoRoutes(router);
 resumoRoutes(router);
 fotoRoutes(router);
 rotaRoutes(router);
+ocrRoutes(router);
 
 // confere a cada 5s os remédios que já chegaram (tempo de entrega das redistribuições)
 iniciarEntregas();

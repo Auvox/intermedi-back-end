@@ -2,7 +2,7 @@ import db, { emTransacao } from "../database/database.mjs";
 import { erro } from "../utils/http.mjs";
 import { idOuNull, mesclar, texto, textoOuNull } from "../utils/dados.mjs";
 import { colunasEndereco, lerEndereco, salvarEndereco } from "./endereco.service.mjs";
-import { geocodificarEndereco } from "./geocodificacao.service.mjs";
+import { geocodificarEndereco } from "../sistema-rota/geocodificacao.service.mjs";
 
 // Nomes que o front usa para o endereço da farmácia
 const CAMPOS_ENDERECO = {
