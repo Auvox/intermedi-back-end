@@ -49,7 +49,9 @@ CREATE TABLE IF NOT EXISTS endereco (
     bairro       TEXT    NOT NULL,
     cidade       TEXT    NOT NULL,
     uf           TEXT    NOT NULL CHECK (length(uf) = 2),
-    cep          TEXT    NOT NULL
+    cep          TEXT    NOT NULL,
+    latitude     REAL CHECK (latitude BETWEEN -90 AND 90),
+    longitude    REAL CHECK (longitude BETWEEN -180 AND 180)
 );
 
 -- ---------------------------------------------------------------------

@@ -2,6 +2,7 @@ import db, { emTransacao } from "../database/database.mjs";
 import { erro } from "../utils/http.mjs";
 import { idOuNull, mesclar, texto, textoOuNull } from "../utils/dados.mjs";
 import { colunasEndereco, lerEndereco, salvarEndereco } from "./endereco.service.mjs";
+import { geocodificarEndereco } from "./geocodificacao.service.mjs";
 
 // Nomes que o front usa para o endereço da farmácia
 const CAMPOS_ENDERECO = {
@@ -25,6 +26,8 @@ const SELECT_FARMACIA = /*sql*/ `
       f.foto        AS fotoFarmacia,
       f.created_at  AS createdAtFarmacia,
       f.id_endereco AS idEndereco,
+      e.latitude AS latitude,
+      e.longitude AS longitude,
       ${colunasEndereco({
         cep: "cepFarmacia", logradouro: "enderecoFarmacia", numero: "numeroFarmacia",
         complemento: "complementoFarmacia", bairro: "bairroFarmacia",
@@ -57,12 +60,13 @@ export function farmaciaDoPayload(data, idAtual = null) {
 }
 
 // cadastrar
-export function cadastrar(data) {
+export async function cadastrar(data) {
   validar(data);
   const endereco = lerEndereco(data, CAMPOS_ENDERECO);
+  const coordenadas = endereco ? await geocodificarEndereco(endereco) : null;
 
   return emTransacao(() => {
-    const idEndereco = salvarEndereco(null, endereco);
+    const idEndereco = salvarEndereco(null, endereco, coordenadas);
 
     const result = db.prepare(/*sql*/ `
       INSERT INTO farmacia (nome, email, telefone, cnes, id_endereco)
@@ -90,16 +94,24 @@ export function buscarPorId(id) {
 }
 
 // editar (campos não enviados continuam iguais)
-export function editar(id, data) {
+export async function editar(id, data) {
   const atual = buscarPorId(id);
   if (!atual) return { changes: 0 };
 
   const dados = mesclar(atual, data);
   validar(dados);
   const endereco = lerEndereco(dados, CAMPOS_ENDERECO);
+  const enderecoAnterior = lerEndereco(atual, CAMPOS_ENDERECO);
+  const camposLocalizacao = ["logradouro", "numero", "bairro", "cidade", "uf", "cep"];
+  const mudouEndereco = camposLocalizacao.some((campo) =>
+    endereco?.[campo] !== enderecoAnterior?.[campo]);
+  // Complemento, nome e telefone não exigem uma nova consulta.
+  const coordenadas = mudouEndereco
+    ? (endereco ? await geocodificarEndereco(endereco) : null)
+    : undefined;
 
   return emTransacao(() => {
-    const idEndereco = salvarEndereco(atual.idEndereco, endereco);
+    const idEndereco = salvarEndereco(atual.idEndereco, endereco, coordenadas);
 
     const result = db.prepare(/*sql*/ `
       UPDATE farmacia

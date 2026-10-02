@@ -29,6 +29,21 @@ export function aplicarSchema(db) {
   // Protege contra um intermedi.db criado com uma versão antiga do schema
   const temColuna = (tabela, coluna) =>
     db.prepare(`PRAGMA table_info(${tabela})`).all().some((c) => c.name === coluna);
+  // Adiciona coordenadas sem apagar cadastros; pode rodar a cada inicialização.
+  db.exec("SAVEPOINT coordenadas_endereco");
+  try {
+    if (!temColuna("endereco", "latitude")) {
+      db.exec("ALTER TABLE endereco ADD COLUMN latitude REAL CHECK (latitude BETWEEN -90 AND 90)");
+    }
+    if (!temColuna("endereco", "longitude")) {
+      db.exec("ALTER TABLE endereco ADD COLUMN longitude REAL CHECK (longitude BETWEEN -180 AND 180)");
+    }
+    db.exec("RELEASE coordenadas_endereco");
+  } catch (error) {
+    db.exec("ROLLBACK TO coordenadas_endereco");
+    db.exec("RELEASE coordenadas_endereco");
+    throw error;
+  }
   if (!temColuna("paciente", "senha_hash") || !temColuna("chamado", "id_gerente_resposta") ||
       !temColuna("remedio", "registro_anvisa") || !temColuna("estoque", "estoque_minimo") ||
       !temColuna("redistribuicao", "data_prevista_chegada") || !temColuna("funcionario", "foto")) {
