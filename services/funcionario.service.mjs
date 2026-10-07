@@ -49,6 +49,25 @@ const SELECT_FUNCIONARIO = /*sql*/ `
   LEFT  JOIN endereco e ON e.id_endereco = fu.id_endereco
 `;
 
+const SELECT_SERVICO = /*sql*/ `
+  SELECT
+      s.id_servico                    AS idServico,
+      s.data_servico                  AS dataServico,
+      s.observacao                    AS observacao,
+      p.id_paciente                   AS idPaciente,
+      p.nome                          AS nomePaciente,
+      f.nome                          AS nomeFuncionario,
+      s.id_farmacia                   AS idFarmacia,
+      fa.nome                         AS nomeFarmacia,
+      COUNT(sr.id_remedio)            AS totalMedicamentos,
+      COALESCE(SUM(sr.quantidade), 0) AS quantidadeTotal
+  FROM servico s
+  INNER JOIN paciente p     ON p.id_paciente = s.id_paciente
+  INNER JOIN funcionario f  ON f.id_funcionario = s.id_funcionario
+  INNER JOIN farmacia fa    ON fa.id_farmacia = s.id_farmacia
+  LEFT  JOIN servico_remedio sr ON sr.id_servico = s.id_servico
+`;
+
 // "Manhã", "MANHA", "manha" -> "manha"
 const TURNOS = ["manha", "tarde", "noite", "integral"];
 export function normalizarTurno(valor) {
@@ -67,7 +86,6 @@ function validar(dados) {
   const faltando = ["nomeFuncionario", "cpfFuncionario", "emailFuncionario"]
     .filter((campo) => !texto(dados[campo]));
   if (faltando.length) throw erro(400, `Campos obrigatórios: ${faltando.join(", ")}.`);
-
 }
 
 function conferirDuplicado(cpf, email, idIgnorar = -1) {
@@ -270,6 +288,42 @@ export function novoServico(data) {
       throw erro(404, "Paciente não encontrado.");
     }
 
+    // Busca o remédio e a quantidade correspondente na tabela 'estoque' para a farmácia informada
+    const buscarEstoque = db.prepare(/*sql*/ `
+      SELECT r.nome, COALESCE(e.quantidade, 0) AS quantidade
+      FROM remedio r
+      LEFT JOIN estoque e ON e.id_remedio = r.id_remedio AND e.id_farmacia = ?
+      WHERE r.id_remedio = ?
+    `);
+
+    // Atualiza a quantidade na tabela 'estoque'
+    const atualizarEstoque = db.prepare(/*sql*/ `
+      UPDATE estoque
+      SET quantidade = quantidade - ?
+      WHERE id_remedio = ? AND id_farmacia = ?
+    `);
+
+    const inserirItem = db.prepare(/*sql*/ `
+      INSERT INTO servico_remedio (id_servico, id_remedio, quantidade) VALUES (?, ?, ?)
+    `);
+
+    // Validar se o remédio existe e se há estoque suficiente na farmácia
+    for (const item of data.remedios) {
+      const remedioEstoque = buscarEstoque.get(data.idFarmacia, item.idRemedio);
+
+      if (!remedioEstoque) {
+        throw erro(404, `Remédio ID ${item.idRemedio} não encontrado.`);
+      }
+
+      if (remedioEstoque.quantidade < item.quantidade) {
+        throw erro(
+          400,
+          `Estoque insuficiente para o remédio '${remedioEstoque.nome}' (ID: ${item.idRemedio}). Disponível: ${remedioEstoque.quantidade}, Solicitado: ${item.quantidade}.`
+        );
+      }
+    }
+
+    // Cria o registro do serviço
     const result = db
       .prepare(
         /*sql*/ `
@@ -284,36 +338,31 @@ export function novoServico(data) {
         textoOuNull(data.observacao)
       );
     const idServico = Number(result.lastInsertRowid);
-    const buscarRemedio = db.prepare(
-      "SELECT 1 FROM remedio WHERE id_remedio = ?"
-    );
-    const inserirItem = db.prepare(/*sql*/ `
-      INSERT INTO servico_remedio (id_servico, id_remedio, quantidade) VALUES (?, ?, ?)
-    `);
+
+    // Baixa no estoque da farmácia e vínculo no servico_remedio
     for (const item of data.remedios) {
-      if (!buscarRemedio.get(item.idRemedio)) {
-        throw erro(404, `Remédio ${item.idRemedio} não encontrado.`);
-      }
+      atualizarEstoque.run(item.quantidade, item.idRemedio, data.idFarmacia);
       inserirItem.run(idServico, item.idRemedio, item.quantidade);
     }
-    return { idServico };
+
+    return { 
+        idServico, 
+        itensBaixados: data.remedios.map(item => ({
+          idRemedio: item.idRemedio,
+          quantidadeBaixada: item.quantidade
+        })) 
+    };
   });
 }
 
 export function listarServicos() {
-  return db.prepare(/*sql*/ `
-    SELECT s.id_servico AS idServico, s.data_servico AS dataServico,
-           s.observacao, p.nome AS nomePaciente, p.id_paciente AS idPaciente,
-           f.nome AS nomeFuncionario, fa.nome AS nomeFarmacia,
-           s.id_farmacia AS idFarmacia,
-           COUNT(sr.id_remedio) AS totalMedicamentos,
-           COALESCE(SUM(sr.quantidade), 0) AS quantidadeTotal
-    FROM servico s
-    JOIN paciente p ON p.id_paciente = s.id_paciente
-    JOIN funcionario f ON f.id_funcionario = s.id_funcionario
-    JOIN farmacia fa ON fa.id_farmacia = s.id_farmacia
-    LEFT JOIN servico_remedio sr ON sr.id_servico = s.id_servico
-    GROUP BY s.id_servico
-    ORDER BY s.data_servico DESC, s.id_servico DESC
-  `).all();
+  return db
+    .prepare(
+      /*sql*/ `
+      ${SELECT_SERVICO}
+      GROUP BY s.id_servico
+      ORDER BY s.data_servico DESC, s.id_servico DESC
+    `
+    )
+    .all();
 }

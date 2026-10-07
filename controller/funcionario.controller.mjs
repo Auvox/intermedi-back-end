@@ -9,7 +9,7 @@ export function consultarServicos(req, res) {
   }
 }
 
-// cadastrar serviço e seus medicamentos
+// cadastrar serviço e seus medicamentos com baixa no estoque
 export async function cadastrarServico(req, res) {
   try {
     const data = await lerJson(req);
@@ -20,8 +20,7 @@ export async function cadastrarServico(req, res) {
     });
   } catch (error) {
     enviarErro(res, error);
-
-    console.log(error)
+    console.log(error);
   }
 }
 
@@ -107,7 +106,7 @@ export async function deletarFuncionario(req, res) {
 
 export async function logoutFuncionario(req, res) {
   try {
-    // executa o logout do gerente
+    // executa o logout do funcionario
     enviarJson(res, 200, {
       status: "Sessão encerrada com sucesso.",
     });
