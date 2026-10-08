@@ -84,7 +84,7 @@ export function cadastrar(data) {
     const idEndereco = salvarEndereco(null, endereco);
     const matriculaGerente = gerarMatriculaUnica("gerente", "G");
 
-    const result = db.prepare(/*sql*/ `
+    const result = db.prepare( `
       INSERT INTO gerente
           (nome, email, senha_hash, cpf, crf, matricula, telefone,
            id_farmacia, id_admin_cadastro, id_endereco)
@@ -133,7 +133,7 @@ export function consultarFarmaciaDoGerente(idGerente) {
 
 // consultar servicos do funcionario
 export function consultarServicosDoFuncionario(idGerente, idFuncionario) {
-  const sql = /*sql*/ `
+  const sql = `
     SELECT 
       ${COLUNAS_SERVICO_FUNCIONARIO}
     FROM funcionario func
@@ -179,7 +179,7 @@ export function editar(id, data) {
   return emTransacao(() => {
     const idEndereco = salvarEndereco(atual.idEndereco, endereco);
 
-    const result = db.prepare(/*sql*/ `
+    const result = db.prepare(`
       UPDATE gerente
       SET nome = ?, email = ?, cpf = ?, crf = ?, matricula = ?, telefone = ?,
           id_farmacia = ?, id_endereco = ?,
@@ -197,6 +197,45 @@ export function editar(id, data) {
       novaSenha ? gerarHashSenha(novaSenha) : null,
       id,
     );
+
+    return { changes: Number(result.changes) };
+  });
+}
+
+// Alterar quantidade ou dados do estoque da farmácia do gerente
+export function alterarEstoque(idGerente, idEstoque, dadosEstoque) {
+  // Busca o gerente para identificar a sua farmácia
+  const gerente = db.prepare("SELECT id_farmacia FROM gerente WHERE id_gerente = ?").get(idGerente);
+  if (!gerente) {
+    throw erro(404, "Gerente não encontrado.");
+  }
+
+  // Busca o item de estoque correspondente
+  const estoqueAtual = db.prepare("SELECT * FROM estoque WHERE id_estoque = ?").get(idEstoque);
+  if (!estoqueAtual) {
+    throw erro(404, "Registro de estoque não encontrado.");
+  }
+
+  // Regra de segurança: O estoque deve pertencer à mesma farmácia do gerente
+  if (estoqueAtual.id_farmacia !== gerente.id_farmacia) {
+    throw erro(403, "Acesso negado: Este estoque não pertence à farmácia do gerente.");
+  }
+
+  // Valida se a nova quantidade foi informada e é válida
+  const novaQuantidade = Number(dadosEstoque.quantidade);
+  if (Number.isNaN(novaQuantidade) || novaQuantidade < 0) {
+    throw erro(400, "A quantidade informada é inválida.");
+  }
+
+  const novoLote = texto(dadosEstoque.lote) || estoqueAtual.lote;
+
+  // Executa a atualização no banco de dados
+  return emTransacao(() => {
+    const result = db.prepare( `
+      UPDATE estoque
+      SET quantidade = ?, lote = ?
+      WHERE id_estoque = ? AND id_farmacia = ?
+    `).run(novaQuantidade, novoLote, idEstoque, gerente.id_farmacia);
 
     return { changes: Number(result.changes) };
   });

@@ -141,6 +141,36 @@ export async function editarGerente(req, res) {
   }
 }
 
+export async function alterarEstoqueGerente(req, res) {
+  try {
+    const idGerente = idDaUrl(req, "Gerente"); // Extrai o primeiro ID da URL
+    
+    // Como a URL é /gerente/:id/estoque/:idEstoque, precisamos extrair o idEstoque também.
+    // Dependendo de como sua função idDaUrl lida com múltiplos parâmetros, você pode extrair via regex da URL:
+    const urlParts = req.url.split("/");
+    // Exemplo de rota: ["", "gerente", "3", "estoque", "5"] -> O idEstoque estará no índice 4
+    const idEstoque = Number(urlParts[4]);
+
+    if (!idEstoque || Number.isNaN(idEstoque)) {
+      throw erro(400, "ID do estoque inválido na URL.");
+    }
+
+    const data = await lerJson(req);
+    const resultado = serviceGerente.alterarEstoque(idGerente, idEstoque, data);
+
+    if (resultado.changes === 0) {
+      throw erro(404, "Estoque não encontrado ou sem alterações realizadas.");
+    }
+
+    enviarJson(res, 200, {
+      status: "ESTOQUE ATUALIZADO COM SUCESSO",
+      alterados: resultado.changes,
+    });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
 // deletar gerente
 export async function deletarGerente(req, res) {
   try {
