@@ -24,6 +24,20 @@ function endereco(sufixo, logradouro = "endereco") {
 }
 
 test("POSTs separam os endereços e mantêm os vínculos com rollback em erros", async (t) => {
+  const fetchOriginal = globalThis.fetch;
+  const chaveOriginal = process.env.GEOAPIFY_API_KEY;
+  process.env.GEOAPIFY_API_KEY = "chave-de-teste";
+  globalThis.fetch = async (url, options) => {
+    if (new URL(url).hostname === "api.geoapify.com") {
+      return { ok: true, json: async () => ({ results: [{ lat: -19.92, lon: -43.94, housenumber: "23" }] }) };
+    }
+    return fetchOriginal(url, options);
+  };
+  t.after(() => {
+    globalThis.fetch = fetchOriginal;
+    if (chaveOriginal === undefined) delete process.env.GEOAPIFY_API_KEY;
+    else process.env.GEOAPIFY_API_KEY = chaveOriginal;
+  });
   const router = new Router();
   for (const registrar of [farmaciaRoutes, gerenteRoutes, funcionarioRoutes, pacienteRoutes]) registrar(router);
   const server = createServer((req, res) => {

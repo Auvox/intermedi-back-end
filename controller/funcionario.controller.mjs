@@ -1,9 +1,29 @@
 import * as serviceFuncionario from "../services/funcionario.service.mjs";
 import { enviarErro, enviarJson, erro, idDaUrl, lerJson } from "../utils/http.mjs";
+import { apagarArquivoDaFoto } from "./foto.controller.mjs";
 
+// listar serviços (filtro opcional: GET /servicos?idFarmacia=3)
 export function consultarServicos(req, res) {
   try {
-    enviarJson(res, 200, { servicos: serviceFuncionario.listarServicos() });
+    const valor = new URL(req.url ?? "/", "http://localhost").searchParams.get("idFarmacia");
+    const idFarmacia = valor ? Number(valor) : null;
+    if (valor && (!Number.isSafeInteger(idFarmacia) || idFarmacia <= 0)) {
+      throw erro(400, "idFarmacia deve ser um inteiro positivo.");
+    }
+    enviarJson(res, 200, { servicos: serviceFuncionario.listarServicos(idFarmacia) });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+// detalhe de um serviço
+export function buscarServico(req, res) {
+  try {
+    const id = idDaUrl(req, "Serviço");
+    const servico = serviceFuncionario.buscarServico(id);
+    if (!servico) throw erro(404, "Serviço não encontrado");
+
+    enviarJson(res, 200, { status: "Servico encontrado", resultado: servico });
   } catch (error) {
     enviarErro(res, error);
   }
@@ -93,8 +113,10 @@ export async function editarFuncionario(req, res) {
 export async function deletarFuncionario(req, res) {
   try {
     const id = idDaUrl(req, "Funcionario");
+    const foto = serviceFuncionario.buscarPorId(id)?.fotoFuncionario;
     const deletado = serviceFuncionario.deletar(id);
     if (deletado.changes === 0) throw erro(404, "Funcionario não encontrado");
+    await apagarArquivoDaFoto(foto);
 
     enviarJson(res, 200, {
       mensagem: "Funcionario Deletado!",

@@ -1,8 +1,10 @@
 import db, { emTransacao } from "../database/database.mjs";
 import { erro } from "../utils/http.mjs";
 import { texto, textoOuNull } from "../utils/dados.mjs";
+import { despachar, farmaciasComRemedio, pedidosDoChamado, processarChegadas } from "./redistribuicao.service.mjs";
 
-// Abaixo (ou igual) a este total na farmácia, o remédio é considerado crítico
+// Estoque mínimo padrão, usado quando o remédio ainda não está no estoque da
+// farmácia (quem está usa o estoque_minimo definido pelo gerente)
 export const ESTOQUE_CRITICO = 20;
 
 const PRIORIDADES = ["baixa", "media", "alta", "urgente"];
@@ -47,19 +49,37 @@ function remediosDoChamado(idChamado, idFarmacia) {
         r.nome                          AS nomeRemedio,
         r.dosagem                       AS dosagemRemedio,
         cr.quantidade                   AS quantidadeSolicitada,
-        COALESCE(SUM(es.quantidade), 0) AS estoqueAtual
+        COALESCE(es.quantidade, 0)      AS estoqueAtual,
+        COALESCE(es.estoque_minimo, ?)  AS estoqueMinimo
     FROM chamado_remedio cr
     INNER JOIN remedio r ON r.id_remedio = cr.id_remedio
     LEFT  JOIN estoque es ON es.id_remedio = r.id_remedio AND es.id_farmacia = ?
     WHERE cr.id_chamado = ?
-    GROUP BY r.id_remedio
     ORDER BY r.nome
-  `).all(idFarmacia, idChamado)
-    .map((r) => ({ ...r, critico: r.estoqueAtual <= ESTOQUE_CRITICO }));
+  `).all(ESTOQUE_CRITICO, idFarmacia, idChamado)
+    .map((r) => ({ ...r, critico: r.estoqueAtual <= r.estoqueMinimo }));
+}
+
+// Situação de cada remédio do chamado, olhando o pedido mais recente dele:
+//   aguardando_gerente    -> o gerente ainda não aceitou o chamado
+//   aguardando_fornecedor -> pedido enviado, esperando a outra farmácia responder
+//   a_caminho             -> fornecedor aceitou, remédio em trânsito
+//   recebido              -> chegou e entrou no estoque
+//   sem_fornecedor        -> nenhuma farmácia tem (ou todas recusaram)
+//   null                  -> chamado recusado/cancelado
+function situacaoDoItem(statusChamado, pedido) {
+  if (statusChamado === "pendente") return "aguardando_gerente";
+  if (["recusado", "cancelado"].includes(statusChamado)) return null;
+  if (!pedido || ["recusada", "cancelada"].includes(pedido.status)) return "sem_fornecedor";
+  return {
+    solicitada: "aguardando_fornecedor", aprovada: "aguardando_fornecedor",
+    enviada: "a_caminho", recebida: "recebido",
+  }[pedido.status];
 }
 
 // Monta o chamado completo (é isso que o gerente vai receber na notificação)
 export function buscarPorId(idChamado) {
+  processarChegadas();
   const chamado = db.prepare(/*sql*/ `
     SELECT
         ch.id_chamado    AS idChamado,
@@ -87,6 +107,7 @@ export function buscarPorId(idChamado) {
   `).get(idChamado);
   if (!chamado) return null;
 
+  const pedidos = pedidosDoChamado(chamado.idChamado);
   const gerentes = db.prepare(/*sql*/ `
     SELECT id_gerente AS idGerente, nome AS nomeGerente, email AS emailGerente
     FROM gerente WHERE id_farmacia = ? ORDER BY nome
@@ -107,7 +128,24 @@ export function buscarPorId(idChamado) {
       turnoFuncionario: chamado.turnoFuncionario,
     },
     farmacia: { idFarmacia: chamado.idFarmacia, nomeFarmacia: chamado.nomeFarmacia },
-    remedios: remediosDoChamado(chamado.idChamado, chamado.idFarmacia),
+    remedios: remediosDoChamado(chamado.idChamado, chamado.idFarmacia).map((item) => {
+      const pedido = pedidos.filter((p) => p.idRemedio === item.idRemedio).at(-1);
+      return {
+        ...item,
+        situacao: situacaoDoItem(chamado.status, pedido),
+        pedidoAtual: pedido ? {
+          idRedistribuicao: pedido.idRedistribuicao,
+          status: pedido.status,
+          idFarmaciaFornecedora: pedido.idFarmaciaOrigem,
+          nomeFarmaciaFornecedora: pedido.nomeFarmaciaOrigem,
+          dataPrevistaChegada: pedido.dataPrevistaChegada,
+          segundosParaChegar: pedido.segundosParaChegar,
+          dataRecebimento: pedido.dataRecebimento,
+        } : null,
+      };
+    }),
+    // todas as tentativas de pedido às outras farmácias (inclui recusas)
+    pedidos,
     // gerentes da farmácia que devem responder a solicitação
     gerentes,
     // null enquanto o gerente não aceitar/recusar
@@ -140,6 +178,7 @@ function listar(filtroSql, valor, status) {
 
 // Chamados da farmácia do gerente (é a "caixa de notificações" dele)
 export function listarDoGerente(idGerente, statusQuery) {
+  processarChegadas();
   const status = lerStatus(statusQuery);
   const gerente = db.prepare("SELECT id_farmacia FROM gerente WHERE id_gerente = ?").get(idGerente);
   if (!gerente) throw erro(404, "Gerente não encontrado");
@@ -171,7 +210,7 @@ export function responder(idChamado, data) {
   const chamado = db.prepare("SELECT status, id_farmacia FROM chamado WHERE id_chamado = ?").get(idChamado);
   if (!chamado) throw erro(404, "Chamado não encontrado");
 
-  const gerente = db.prepare("SELECT id_farmacia FROM gerente WHERE id_gerente = ?").get(idGerente);
+  const gerente = db.prepare("SELECT id_farmacia, nome FROM gerente WHERE id_gerente = ?").get(idGerente);
   if (!gerente) throw erro(404, "Gerente não encontrado");
   if (gerente.id_farmacia !== chamado.id_farmacia) {
     throw erro(403, "Este chamado pertence a outra farmácia.");
@@ -180,15 +219,73 @@ export function responder(idChamado, data) {
     throw erro(409, `Este chamado já foi respondido (status: ${chamado.status}).`);
   }
 
-  // "AND status = 'pendente'" evita que dois gerentes respondam ao mesmo tempo
-  const { changes } = db.prepare(/*sql*/ `
-    UPDATE chamado
-    SET status = ?, id_gerente_resposta = ?, data_resposta = CURRENT_TIMESTAMP, resposta_gerente = ?
-    WHERE id_chamado = ? AND status = 'pendente'
-  `).run(data.aceitar ? "aceito" : "recusado", idGerente, resposta, idChamado);
-  if (changes === 0) throw erro(409, "Este chamado já foi respondido.");
+  if (data.aceitar) {
+    const nome = data.nomeGerenteConfirmacao;
+    if (typeof nome !== "string" || !nome.trim() ||
+        nome.trim().normalize("NFC") !== gerente.nome.trim().normalize("NFC")) {
+      throw erro(400, "Digite o nome completo do gerente responsável para confirmar o aceite.");
+    }
+  }
 
-  return buscarPorId(idChamado);
+  // Aceitar = "abrir" o chamado para a rede: cada remédio vira um pedido
+  // para a farmácia que tem mais sobrando (tudo na mesma transação)
+  return emTransacao(() => {
+    // "AND status = 'pendente'" evita que dois gerentes respondam ao mesmo tempo
+    const { changes } = db.prepare(/*sql*/ `
+      UPDATE chamado
+      SET status = ?, id_gerente_resposta = ?, data_resposta = CURRENT_TIMESTAMP, resposta_gerente = ?
+      WHERE id_chamado = ? AND status = 'pendente'
+    `).run(data.aceitar ? "em_andamento" : "recusado", idGerente, resposta, idChamado);
+    if (changes === 0) throw erro(409, "Este chamado já foi respondido.");
+
+    const despacho = data.aceitar ? despachar(idChamado) : [];
+    return { chamado: buscarPorId(idChamado), despacho };
+  });
+}
+
+// Confere o gerente e devolve o chamado (ações do gerente da farmácia solicitante)
+function chamadoDoGerente(idChamado, idGerenteValor) {
+  const idGerente = Number(idGerenteValor);
+  if (!Number.isInteger(idGerente) || idGerente <= 0) throw erro(400, "Informe idGerente.");
+  const chamado = db.prepare("SELECT status, id_farmacia FROM chamado WHERE id_chamado = ?").get(idChamado);
+  if (!chamado) throw erro(404, "Chamado não encontrado");
+  const gerente = db.prepare("SELECT id_farmacia FROM gerente WHERE id_gerente = ?").get(idGerente);
+  if (!gerente) throw erro(404, "Gerente não encontrado");
+  if (gerente.id_farmacia !== chamado.id_farmacia) throw erro(403, "Este chamado pertence a outra farmácia.");
+  return chamado;
+}
+
+// Antes de aceitar: quais farmácias da rede têm cada remédio do chamado
+export function disponibilidade(idChamado, idGerente) {
+  const chamado = chamadoDoGerente(idChamado, idGerente);
+  const itens = db.prepare(/*sql*/ `
+    SELECT cr.id_remedio AS idRemedio, r.nome AS nomeRemedio, r.dosagem AS dosagemRemedio,
+           cr.quantidade AS quantidadeSolicitada
+    FROM chamado_remedio cr INNER JOIN remedio r ON r.id_remedio = cr.id_remedio
+    WHERE cr.id_chamado = ? ORDER BY r.nome
+  `).all(idChamado);
+
+  const remedios = itens.map((item) => {
+    const farmacias = farmaciasComRemedio(item.idRemedio, chamado.id_farmacia).map((f) => ({
+      ...f,
+      // pode mandar tudo sem ficar abaixo do próprio estoque mínimo
+      podeAtender: !f.vencido && f.disponivel >= (item.quantidadeSolicitada ?? 1),
+    }));
+    return { ...item, farmacias, temFornecedor: farmacias.some((f) => f.podeAtender) };
+  });
+  return { idChamado, remedios, todosTemFornecedor: remedios.every((r) => r.temFornecedor) };
+}
+
+// Tenta de novo os itens sem fornecedor (ex.: outra farmácia recebeu estoque)
+export function redistribuir(idChamado, idGerente) {
+  const chamado = chamadoDoGerente(idChamado, idGerente);
+  if (chamado.status !== "em_andamento") {
+    throw erro(409, `Só dá para redistribuir chamado em andamento (status: ${chamado.status}).`);
+  }
+  return emTransacao(() => {
+    const despacho = despachar(idChamado);
+    return { chamado: buscarPorId(idChamado), despacho };
+  });
 }
 
 // Funcionário solicita um chamado ao gerente (nasce como 'pendente')

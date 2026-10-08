@@ -44,15 +44,20 @@ export function lerEndereco(data, campos) {
 }
 
 // Cria/atualiza/remove o endereço e devolve o id_endereco a gravar na entidade
-export function salvarEndereco(idAtual, endereco) {
+export function salvarEndereco(idAtual, endereco, coordenadas = undefined) {
   if (!endereco) {
     if (idAtual) removerEndereco(idAtual);
     return null;
   }
 
   const valores = [
-    endereco.logradouro, endereco.numero, endereco.complemento,
-    endereco.bairro, endereco.cidade, endereco.uf, endereco.cep,
+    endereco.logradouro,
+    endereco.numero,
+    endereco.complemento,
+    endereco.bairro,
+    endereco.cidade,
+    endereco.uf,
+    endereco.cep,
   ];
 
   if (idAtual) {
@@ -62,13 +67,35 @@ export function salvarEndereco(idAtual, endereco) {
           cidade = ?, uf = ?, cep = ?
       WHERE id_endereco = ?
     `).run(...valores, idAtual);
+
+    // Só altera as coordenadas quando elas forem enviadas.
+    if (coordenadas !== undefined) {
+      db.prepare(/*sql*/ `
+        UPDATE endereco
+        SET latitude = ?, longitude = ?
+        WHERE id_endereco = ?
+      `).run(
+        coordenadas?.latitude ?? null,
+        coordenadas?.longitude ?? null,
+        idAtual,
+      );
+    }
+
     return idAtual;
   }
 
   const result = db.prepare(/*sql*/ `
-    INSERT INTO endereco (logradouro, numero, complemento, bairro, cidade, uf, cep)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(...valores);
+    INSERT INTO endereco (
+      logradouro, numero, complemento, bairro, cidade, uf, cep,
+      latitude, longitude
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    ...valores,
+    coordenadas?.latitude ?? null,
+    coordenadas?.longitude ?? null,
+  );
+
   return Number(result.lastInsertRowid);
 }
 
