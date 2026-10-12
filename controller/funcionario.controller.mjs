@@ -16,7 +16,7 @@ export function consultarServicos(req, res) {
   }
 }
 
-// detalhe de um serviço
+// detalhe de um serviço.
 export function buscarServico(req, res) {
   try {
     const id = idDaUrl(req, "Serviço");
