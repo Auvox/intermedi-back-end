@@ -44,6 +44,20 @@ export async function cadastrarServico(req, res) {
   }
 }
 
+export async function cadastrarServicoFuncionario(req, res) {
+  try {
+    const data = await lerJson(req);
+    const resultado = serviceFuncionario.novoServico(data);
+
+    enviarJson(res, 201, {
+      status: "Serviço cadastrado com sucesso e estoque atualizado",
+      resultado,
+    });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
 // cadastrar funcionario
 export async function cadastrarFuncionario(req, res) {
   try {

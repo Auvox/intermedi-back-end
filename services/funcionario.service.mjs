@@ -70,7 +70,6 @@ const SELECT_SERVICO = `
   LEFT  JOIN servico_remedio sr ON sr.id_servico = s.id_servico
 `;
 
-// Constante limpa para os detalhes completos do serviço
 const SELECT_DETALHE_SERVICO = `
   SELECT 
       s.id_servico AS idServico, 
@@ -101,7 +100,6 @@ const SELECT_DETALHE_SERVICO = `
   JOIN farmacia fa ON fa.id_farmacia = s.id_farmacia
 `;
 
-// Constante limpa para os remédios vinculados ao serviço
 const SELECT_REMEDIOS_SERVICO = `
   SELECT 
       r.id_remedio AS idRemedio, 
@@ -169,13 +167,11 @@ export function cadastrar(data) {
   const turno = normalizarTurno(data.turnoFuncionario);
   const endereco = lerEndereco(data, CAMPOS_ENDERECO);
 
-  // sem senha no cadastro -> gera uma provisória e devolve na resposta
   const senhaInformada = texto(data.senhaFuncionario);
   const senhaProvisoria = senhaInformada ? undefined : gerarSenhaProvisoria();
 
   return emTransacao(() => {
     const idEndereco = salvarEndereco(null, endereco);
-    // matrícula gerada aqui no back
     const matriculaFuncionario = gerarMatriculaUnica("funcionario");
 
     const result = db
@@ -222,7 +218,7 @@ export function buscarPorId(id) {
     .get(id);
 }
 
-// editar (campos não enviados continuam iguais; senha só muda se vier preenchida)
+// editar
 export function editar(id, data) {
   const atual = buscarPorId(id);
   if (!atual) return { changes: 0 };
@@ -243,7 +239,8 @@ export function editar(id, data) {
     const idEndereco = salvarEndereco(atual.idEndereco, endereco);
 
     const result = db
-      .prepare(`
+      .prepare(
+        /*sql*/ `
       UPDATE funcionario
       SET nome = ?, cpf = ?, email = ?, matricula = ?, telefone = ?,
           cargo = ?, turno = ?, id_farmacia = ?, id_endereco = ?,
@@ -286,6 +283,7 @@ export function deletar(id) {
   });
 }
 
+// novo servico (com baixa no estoque)
 export function novoServico(data) {
   for (const campo of ["idFuncionario", "idPaciente", "idFarmacia"]) {
     if (!Number.isSafeInteger(data[campo]) || data[campo] <= 0) {
@@ -336,7 +334,6 @@ export function novoServico(data) {
       throw erro(404, "Paciente não encontrado.");
     }
 
-    // Busca o remédio e a quantidade correspondente na tabela 'estoque' para a farmácia informada
     const buscarEstoque = db.prepare(`
       SELECT r.nome, COALESCE(e.quantidade, 0) AS quantidade
       FROM remedio r
@@ -344,7 +341,6 @@ export function novoServico(data) {
       WHERE r.id_remedio = ?
     `);
 
-    // Atualiza a quantidade na tabela 'estoque'
     const atualizarEstoque = db.prepare(`
       UPDATE estoque
       SET quantidade = quantidade - ?
@@ -355,7 +351,6 @@ export function novoServico(data) {
       INSERT INTO servico_remedio (id_servico, id_remedio, quantidade) VALUES (?, ?, ?)
     `);
 
-    // Validar se o remédio existe e se há estoque suficiente na farmácia
     for (const item of data.remedios) {
       const remedioEstoque = buscarEstoque.get(data.idFarmacia, item.idRemedio);
 
@@ -371,7 +366,6 @@ export function novoServico(data) {
       }
     }
 
-    // Cria o registro do serviço
     const result = db
       .prepare(`
       INSERT INTO servico (id_funcionario, id_paciente, id_farmacia, observacao)
@@ -386,12 +380,11 @@ export function novoServico(data) {
       );
     const idServico = Number(result.lastInsertRowid);
 
-    // Baixa no estoque da farmácia e vínculo no servico_remedio
     for (const item of data.remedios) {
       atualizarEstoque.run(item.quantidade, item.idRemedio, data.idFarmacia);
       inserirItem.run(idServico, item.idRemedio, item.quantidade);
     }
-    // dá baixa no estoque da farmácia (se faltar algo, a transação desfaz tudo)
+
     const baixas = baixarEstoque(data.idFarmacia, data.remedios);
 
     return { 
@@ -405,7 +398,7 @@ export function novoServico(data) {
   });
 }
 
-// idFarmacia opcional: só os serviços daquela farmácia
+// listar servicos
 export function listarServicos(idFarmacia = null) {
   return db.prepare(`
     ${SELECT_SERVICO}
@@ -415,7 +408,7 @@ export function listarServicos(idFarmacia = null) {
   `).all(idFarmacia, idFarmacia);
 }
 
-// detalhe do serviço: paciente, funcionário, farmácia e os remédios entregues
+// buscar servico por id
 export function buscarServico(idServico) {
   const servico = db.prepare(`
     ${SELECT_DETALHE_SERVICO}
