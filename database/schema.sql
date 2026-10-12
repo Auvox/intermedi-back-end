@@ -49,7 +49,9 @@ CREATE TABLE IF NOT EXISTS endereco (
     bairro       TEXT    NOT NULL,
     cidade       TEXT    NOT NULL,
     uf           TEXT    NOT NULL CHECK (length(uf) = 2),
-    cep          TEXT    NOT NULL
+    cep          TEXT    NOT NULL,
+    latitude     REAL CHECK (latitude BETWEEN -90 AND 90),
+    longitude    REAL CHECK (longitude BETWEEN -180 AND 180)
 );
 
 -- ---------------------------------------------------------------------
@@ -76,6 +78,8 @@ CREATE TABLE IF NOT EXISTS farmacia (
     telefone     TEXT,
     cnes         TEXT    NOT NULL UNIQUE,
     id_endereco  INTEGER,
+    foto         TEXT,                     -- URL: /uploads/fotos/<arquivo> (fachada/logo)
+    created_at   TEXT    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_endereco) REFERENCES endereco (id_endereco)
         ON DELETE SET NULL
 );
@@ -135,6 +139,7 @@ CREATE TABLE IF NOT EXISTS gerente (
     id_farmacia        INTEGER NOT NULL,
     id_admin_cadastro  INTEGER,
     id_endereco        INTEGER,
+    foto               TEXT,               -- URL: /uploads/fotos/<arquivo>
     created_at         TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_farmacia)       REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT,
     FOREIGN KEY (id_admin_cadastro) REFERENCES admin    (id_admin)    ON DELETE SET NULL,
@@ -159,6 +164,7 @@ CREATE TABLE IF NOT EXISTS funcionario (
     id_farmacia          INTEGER NOT NULL,
     id_gerente_cadastro  INTEGER,
     id_endereco          INTEGER,
+    foto                 TEXT,             -- URL: /uploads/fotos/<arquivo>
     created_at           TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_farmacia)         REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT,
     FOREIGN KEY (id_gerente_cadastro) REFERENCES gerente  (id_gerente)  ON DELETE SET NULL,
@@ -172,14 +178,33 @@ CREATE TABLE IF NOT EXISTS funcionario (
 
 -- ---------------------------------------------------------------------
 --  3.1 REMEDIO  (catálogo geral, igual para todas as farmácias)
+--  Cadastrado pelo ADMIN. Os campos abaixo são as informações exibidas
+--  na apresentação do remédio nas demais plataformas.
+--  tarja:  sem_tarja          -> venda livre
+--          vermelha           -> venda sob prescrição
+--          vermelha_retencao  -> prescrição com retenção da receita
+--          preta              -> controlado (receita azul/amarela retida)
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS remedio (
-    id_remedio   INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome         TEXT    NOT NULL,
-    descricao    TEXT,
-    dosagem      TEXT,                       -- ex.: '500mg'
-    fabricante   TEXT,
-    created_at   TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP
+    id_remedio          INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome                TEXT    NOT NULL,          -- nome comercial, ex.: 'Dipirona'
+    principio_ativo     TEXT,                      -- ex.: 'dipirona monoidratada'
+    descricao           TEXT,
+    dosagem             TEXT,                      -- ex.: '500mg'
+    fabricante          TEXT,                      -- laboratório
+    registro_anvisa     TEXT    UNIQUE,            -- 13 dígitos, ex.: '1.0235.0987.001-3'
+    tipo                TEXT    CHECK (tipo IN ('referencia', 'generico', 'similar')),
+    tarja               TEXT    NOT NULL DEFAULT 'sem_tarja'
+                        CHECK (tarja IN ('sem_tarja', 'vermelha', 'vermelha_retencao', 'preta')),
+    forma_farmaceutica  TEXT,                      -- ex.: 'comprimido', 'xarope'
+    via_administracao   TEXT,                      -- ex.: 'oral', 'tópica'
+    apresentacao        TEXT,                      -- ex.: 'Caixa com 20 comprimidos'
+    indicacoes          TEXT,
+    contraindicacoes    TEXT,
+    armazenamento       TEXT,                      -- ex.: 'Temperatura ambiente (15-30 °C)'
+    foto                TEXT,                      -- URL: /uploads/remedios/<arquivo>
+    created_at          TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TEXT
 );
 
 -- ---------------------------------------------------------------------
@@ -194,17 +219,32 @@ CREATE TABLE IF NOT EXISTS remedio_categoria (
 );
 
 -- ---------------------------------------------------------------------
---  3.3 ESTOQUE  (quanto de cada remédio/lote cada farmácia tem)
+--  3.3 ESTOQUE  (quanto de cada remédio cada farmácia tem)
+--  Fluxo:
+--    1. o ADMIN cadastra o remédio no catálogo geral (tabela remedio)
+--    2. o GERENTE adiciona esse remédio no estoque da SUA farmácia
+--       (uma linha por remédio por farmácia) com a quantidade
+--    3. o FUNCIONÁRIO vê o estoque e, ao registrar um serviço,
+--       a quantidade entregue ao paciente é baixada daqui
+--  estoque_minimo: abaixo ou igual a este valor o remédio é "crítico".
+--  lote/validade: dados do lote atual (opcionais). Vencido não pode ser
+--  entregue em serviço.
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS estoque (
-    id_estoque   INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_remedio   INTEGER NOT NULL,
-    id_farmacia  INTEGER NOT NULL,
-    lote         TEXT    NOT NULL,
-    quantidade   INTEGER NOT NULL DEFAULT 0 CHECK (quantidade >= 0),
-    UNIQUE (id_remedio, id_farmacia, lote),
-    FOREIGN KEY (id_remedio)  REFERENCES remedio  (id_remedio)  ON DELETE RESTRICT,
-    FOREIGN KEY (id_farmacia) REFERENCES farmacia (id_farmacia) ON DELETE CASCADE
+    id_estoque           INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_remedio           INTEGER NOT NULL,
+    id_farmacia          INTEGER NOT NULL,
+    quantidade           INTEGER NOT NULL DEFAULT 0  CHECK (quantidade >= 0),
+    estoque_minimo       INTEGER NOT NULL DEFAULT 20 CHECK (estoque_minimo >= 0),
+    lote                 TEXT,
+    validade             TEXT,                 -- 'AAAA-MM-DD'
+    id_gerente_cadastro  INTEGER,
+    created_at           TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at           TEXT,
+    UNIQUE (id_remedio, id_farmacia),
+    FOREIGN KEY (id_remedio)          REFERENCES remedio  (id_remedio)  ON DELETE RESTRICT,
+    FOREIGN KEY (id_farmacia)         REFERENCES farmacia (id_farmacia) ON DELETE CASCADE,
+    FOREIGN KEY (id_gerente_cadastro) REFERENCES gerente  (id_gerente)  ON DELETE SET NULL
 );
 
 
@@ -289,24 +329,44 @@ CREATE TABLE IF NOT EXISTS servico_remedio (
 
 -- =====================================================================
 --  PARTE 6 — REDISTRIBUIÇÃO  (transferência de remédio entre farmácias)
+--  Nasce quando o gerente ACEITA um chamado: para cada remédio do chamado
+--  é criado um pedido para UMA farmácia que tem o remédio sobrando.
+--    origem  = farmácia FORNECEDORA (quem envia)
+--    destino = farmácia SOLICITANTE (dona do chamado)
+--  Fluxo do status:
+--    solicitada -> enviada -> recebida   (fornecedor aceitou; estoque da
+--                                         origem sai na hora e o do destino
+--                                         entra quando chega, após o tempo
+--                                         de entrega)
+--    solicitada -> recusada              (o sistema cria outra linha
+--                                         'solicitada' para a próxima
+--                                         farmácia que tiver o remédio)
+--  'aprovada' e 'cancelada' ficam para uso manual/legado.
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS redistribuicao (
-    id_redistribuicao    INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_remedio           INTEGER NOT NULL,
-    id_farmacia_origem   INTEGER NOT NULL,
-    id_farmacia_destino  INTEGER NOT NULL,
-    quantidade           INTEGER NOT NULL CHECK (quantidade > 0),
-    status               TEXT    NOT NULL DEFAULT 'solicitada'
-                         CHECK (status IN ('solicitada', 'aprovada', 'enviada',
-                                           'recebida', 'recusada', 'cancelada')),
-    data_solicitacao     TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    data_aprovacao       TEXT,
-    data_envio           TEXT,
-    data_recebimento     TEXT,
+    id_redistribuicao      INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_chamado             INTEGER,                 -- chamado que originou o pedido
+    id_remedio             INTEGER NOT NULL,
+    id_farmacia_origem     INTEGER NOT NULL,
+    id_farmacia_destino    INTEGER NOT NULL,
+    quantidade             INTEGER NOT NULL CHECK (quantidade > 0),
+    status                 TEXT    NOT NULL DEFAULT 'solicitada'
+                           CHECK (status IN ('solicitada', 'aprovada', 'enviada',
+                                             'recebida', 'recusada', 'cancelada')),
+    id_gerente_resposta    INTEGER,                 -- gerente da origem que aceitou/recusou
+    motivo_recusa          TEXT,
+    data_solicitacao       TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    data_aprovacao         TEXT,
+    data_recusa            TEXT,
+    data_envio             TEXT,
+    data_prevista_chegada  TEXT,                    -- data_envio + tempo de entrega
+    data_recebimento       TEXT,
     CHECK (id_farmacia_origem <> id_farmacia_destino),
+    FOREIGN KEY (id_chamado)          REFERENCES chamado  (id_chamado)  ON DELETE SET NULL,
     FOREIGN KEY (id_remedio)          REFERENCES remedio  (id_remedio)  ON DELETE RESTRICT,
     FOREIGN KEY (id_farmacia_origem)  REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT,
-    FOREIGN KEY (id_farmacia_destino) REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT
+    FOREIGN KEY (id_farmacia_destino) REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT,
+    FOREIGN KEY (id_gerente_resposta) REFERENCES gerente  (id_gerente)  ON DELETE SET NULL
 );
 
 

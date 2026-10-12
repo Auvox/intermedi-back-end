@@ -51,12 +51,24 @@ function validarDados(db, snapshot) {
     throw new Error("Arquivo main-data.json inválido ou de versão incompatível.");
   }
   for (const tabela of TABELAS) {
-    const campos = colunas(db, tabela).map((coluna) => coluna.name);
+    const info = colunas(db, tabela);
+    const campos = new Set(info.map((coluna) => coluna.name));
     const registros = snapshot.tables[tabela];
-    if (!Array.isArray(registros) || registros.some((registro) =>
-      !registro || Object.keys(registro).length !== campos.length ||
-      campos.some((campo) => !Object.hasOwn(registro, campo)),
-    )) throw new Error(`Dados de ${tabela} incompatíveis com o schema atual.`);
+    if (!Array.isArray(registros) || registros.some((registro) => !registro || typeof registro !== "object")) {
+      throw new Error(`Dados de ${tabela} inválidos no main-data.json.`);
+    }
+    // Coluna que saiu do schema: os dados dela se perderiam -> não sincroniza
+    const removidas = [...new Set(registros.flatMap(Object.keys))].filter((campo) => !campos.has(campo));
+    if (removidas.length) {
+      throw new Error(`Dados de ${tabela} incompatíveis com o schema atual (colunas que não existem mais: ${removidas.join(", ")}).`);
+    }
+    // Coluna nova no schema: aceita se puder ficar vazia ou tiver valor padrão
+    const obrigatorias = info.filter((coluna) => coluna.notnull && coluna.dflt_value === null && !coluna.pk)
+      .map((coluna) => coluna.name);
+    const faltando = obrigatorias.filter((campo) => registros.some((registro) => !Object.hasOwn(registro, campo)));
+    if (faltando.length) {
+      throw new Error(`Dados de ${tabela} incompatíveis com o schema atual (faltam colunas obrigatórias: ${faltando.join(", ")}).`);
+    }
   }
 }
 
@@ -117,9 +129,16 @@ export function sincronizarDados(db, { raiz = raizProjeto, substituir = false, b
       db.exec("DELETE FROM sessao_paciente");
       for (const tabela of [...TABELAS].reverse()) db.exec(`DELETE FROM "${tabela}"`);
       for (const tabela of TABELAS) {
-        const campos = colunas(db, tabela).map((coluna) => coluna.name);
-        const inserir = db.prepare(`INSERT INTO "${tabela}" (${campos.map((c) => `"${c}"`).join(", ")}) VALUES (${campos.map(() => "?").join(", ")})`);
-        for (const registro of snapshot.tables[tabela]) inserir.run(...campos.map((campo) => registro[campo]));
+        // Só as colunas que vieram no arquivo: colunas novas do schema ficam com o valor padrão
+        const inserts = new Map();
+        for (const registro of snapshot.tables[tabela]) {
+          const campos = Object.keys(registro);
+          const chave = campos.join("|");
+          if (!inserts.has(chave)) {
+            inserts.set(chave, db.prepare(`INSERT INTO "${tabela}" (${campos.map((c) => `"${c}"`).join(", ")}) VALUES (${campos.map(() => "?").join(", ")})`));
+          }
+          inserts.get(chave).run(...campos.map((campo) => registro[campo]));
+        }
       }
       if (db.prepare("PRAGMA foreign_key_check").all().length) throw new Error("A publicação contém vínculos inválidos.");
     }

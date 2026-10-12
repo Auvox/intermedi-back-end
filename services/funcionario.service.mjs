@@ -9,6 +9,7 @@ import {
 } from "./endereco.service.mjs";
 import { gerarMatriculaUnica } from "./matricula.service.mjs";
 import { farmaciaDoPayload } from "./farmacia.service.mjs";
+import { baixar as baixarEstoque } from "./estoque.service.mjs";
 
 const CAMPOS_ENDERECO = {
   logradouro: "enderecoFuncionario",
@@ -20,7 +21,7 @@ const CAMPOS_ENDERECO = {
   cep: "cepFuncionario",
 };
 
-const SELECT_FUNCIONARIO = /*sql*/ `
+const SELECT_FUNCIONARIO = `
   SELECT
       fu.id_funcionario      AS idFuncionario,
       fu.nome                AS nomeFuncionario,
@@ -33,6 +34,7 @@ const SELECT_FUNCIONARIO = /*sql*/ `
       fu.id_farmacia         AS fkIdFarmacia,
       f.nome                 AS nomeFarmacia,
       fu.id_gerente_cadastro AS idGerenteCadastro,
+      fu.foto                AS fotoFuncionario,
       fu.created_at          AS createdAtFuncionario,
       fu.id_endereco         AS idEndereco,
       ${colunasEndereco({
@@ -49,23 +51,72 @@ const SELECT_FUNCIONARIO = /*sql*/ `
   LEFT  JOIN endereco e ON e.id_endereco = fu.id_endereco
 `;
 
-const SELECT_SERVICO = /*sql*/ `
+const SELECT_SERVICO = `
   SELECT
-      s.id_servico                    AS idServico,
-      s.data_servico                  AS dataServico,
-      s.observacao                    AS observacao,
-      p.id_paciente                   AS idPaciente,
-      p.nome                          AS nomePaciente,
-      f.nome                          AS nomeFuncionario,
-      s.id_farmacia                   AS idFarmacia,
-      fa.nome                         AS nomeFarmacia,
-      COUNT(sr.id_remedio)            AS totalMedicamentos,
-      COALESCE(SUM(sr.quantidade), 0) AS quantidadeTotal
+      s.id_servico                        AS idServico,
+      s.data_servico                      AS dataServico,
+      s.observacao                        AS observacao,
+      p.id_paciente                       AS idPaciente,
+      p.nome                              AS nomePaciente,
+      f.nome                              AS nomeFuncionario,
+      s.id_farmacia                       AS idFarmacia,
+      fa.nome                             AS nomeFarmacia,
+      COUNT(sr.id_remedio)                AS totalMedicamentos,
+      COALESCE(SUM(sr.quantidade), 0)     AS quantidadeTotal
   FROM servico s
   INNER JOIN paciente p     ON p.id_paciente = s.id_paciente
   INNER JOIN funcionario f  ON f.id_funcionario = s.id_funcionario
   INNER JOIN farmacia fa    ON fa.id_farmacia = s.id_farmacia
   LEFT  JOIN servico_remedio sr ON sr.id_servico = s.id_servico
+`;
+
+// Constante limpa para os detalhes completos do serviço
+const SELECT_DETALHE_SERVICO = `
+  SELECT 
+      s.id_servico AS idServico, 
+      s.data_servico AS dataServico, 
+      s.observacao,
+      p.id_paciente AS idPaciente, 
+      p.nome AS nomePaciente, 
+      p.cpf AS cpfPaciente,
+      p.email AS emailPaciente, 
+      p.telefone AS telPaciente,
+      p.medicamento_frequente AS medicamentoFrequentePaciente,
+      f.id_funcionario AS idFuncionario, 
+      f.nome AS nomeFuncionario, 
+      f.cpf AS cpfFuncionario,
+      f.email AS emailFuncionario, 
+      f.telefone AS telFuncionario, 
+      f.matricula AS matriculaFuncionario,
+      f.cargo AS cargoFuncionario, 
+      f.turno AS turnoFuncionario,
+      fa.id_farmacia AS idFarmacia, 
+      fa.nome AS nomeFarmacia, 
+      fa.cnes AS cnesFarmacia,
+      fa.email AS emailFarmacia, 
+      fa.telefone AS telFarmacia
+  FROM servico s
+  JOIN paciente p ON p.id_paciente = s.id_paciente
+  JOIN funcionario f ON f.id_funcionario = s.id_funcionario
+  JOIN farmacia fa ON fa.id_farmacia = s.id_farmacia
+`;
+
+// Constante limpa para os remédios vinculados ao serviço
+const SELECT_REMEDIOS_SERVICO = `
+  SELECT 
+      r.id_remedio AS idRemedio, 
+      r.nome AS nomeRemedio, 
+      r.dosagem AS dosagemRemedio,
+      r.descricao AS descRemedio, 
+      r.fabricante AS fabricanteRemedio,
+      r.tarja AS tarjaRemedio, 
+      r.foto AS fotoRemedio, 
+      sr.quantidade,
+      (SELECT group_concat(c.nome, ', ') FROM remedio_categoria rc
+        JOIN categoria c ON c.id_categoria = rc.id_categoria
+       WHERE rc.id_remedio = r.id_remedio) AS categorias
+  FROM servico_remedio sr
+  JOIN remedio r ON r.id_remedio = sr.id_remedio
 `;
 
 // "Manhã", "MANHA", "manha" -> "manha"
@@ -90,8 +141,7 @@ function validar(dados) {
 
 function conferirDuplicado(cpf, email, idIgnorar = -1) {
   const existente = db
-    .prepare(
-      /*sql*/ `
+    .prepare(`
     SELECT cpf, email FROM funcionario
     WHERE id_funcionario <> ? AND (cpf = ? OR email = ?)
   `
@@ -129,8 +179,7 @@ export function cadastrar(data) {
     const matriculaFuncionario = gerarMatriculaUnica("funcionario");
 
     const result = db
-      .prepare(
-        /*sql*/ `
+      .prepare(`
       INSERT INTO funcionario
           (nome, cpf, email, senha_hash, matricula, telefone, cargo, turno,
            id_farmacia, id_gerente_cadastro, id_endereco)
@@ -194,8 +243,7 @@ export function editar(id, data) {
     const idEndereco = salvarEndereco(atual.idEndereco, endereco);
 
     const result = db
-      .prepare(
-        /*sql*/ `
+      .prepare(`
       UPDATE funcionario
       SET nome = ?, cpf = ?, email = ?, matricula = ?, telefone = ?,
           cargo = ?, turno = ?, id_farmacia = ?, id_endereco = ?,
@@ -289,7 +337,7 @@ export function novoServico(data) {
     }
 
     // Busca o remédio e a quantidade correspondente na tabela 'estoque' para a farmácia informada
-    const buscarEstoque = db.prepare(/*sql*/ `
+    const buscarEstoque = db.prepare(`
       SELECT r.nome, COALESCE(e.quantidade, 0) AS quantidade
       FROM remedio r
       LEFT JOIN estoque e ON e.id_remedio = r.id_remedio AND e.id_farmacia = ?
@@ -297,13 +345,13 @@ export function novoServico(data) {
     `);
 
     // Atualiza a quantidade na tabela 'estoque'
-    const atualizarEstoque = db.prepare(/*sql*/ `
+    const atualizarEstoque = db.prepare(`
       UPDATE estoque
       SET quantidade = quantidade - ?
       WHERE id_remedio = ? AND id_farmacia = ?
     `);
 
-    const inserirItem = db.prepare(/*sql*/ `
+    const inserirItem = db.prepare(`
       INSERT INTO servico_remedio (id_servico, id_remedio, quantidade) VALUES (?, ?, ?)
     `);
 
@@ -325,8 +373,7 @@ export function novoServico(data) {
 
     // Cria o registro do serviço
     const result = db
-      .prepare(
-        /*sql*/ `
+      .prepare(`
       INSERT INTO servico (id_funcionario, id_paciente, id_farmacia, observacao)
       VALUES (?, ?, ?, ?)
     `
@@ -344,9 +391,12 @@ export function novoServico(data) {
       atualizarEstoque.run(item.quantidade, item.idRemedio, data.idFarmacia);
       inserirItem.run(idServico, item.idRemedio, item.quantidade);
     }
+    // dá baixa no estoque da farmácia (se faltar algo, a transação desfaz tudo)
+    const baixas = baixarEstoque(data.idFarmacia, data.remedios);
 
     return { 
         idServico, 
+        baixas,
         itensBaixados: data.remedios.map(item => ({
           idRemedio: item.idRemedio,
           quantidadeBaixada: item.quantidade
@@ -355,14 +405,34 @@ export function novoServico(data) {
   });
 }
 
-export function listarServicos() {
-  return db
-    .prepare(
-      /*sql*/ `
-      ${SELECT_SERVICO}
-      GROUP BY s.id_servico
-      ORDER BY s.data_servico DESC, s.id_servico DESC
-    `
-    )
-    .all();
+// idFarmacia opcional: só os serviços daquela farmácia
+export function listarServicos(idFarmacia = null) {
+  return db.prepare(`
+    ${SELECT_SERVICO}
+    WHERE (? IS NULL OR s.id_farmacia = ?)
+    GROUP BY s.id_servico
+    ORDER BY s.data_servico DESC, s.id_servico DESC
+  `).all(idFarmacia, idFarmacia);
+}
+
+// detalhe do serviço: paciente, funcionário, farmácia e os remédios entregues
+export function buscarServico(idServico) {
+  const servico = db.prepare(`
+    ${SELECT_DETALHE_SERVICO}
+    WHERE s.id_servico = ?
+  `).get(idServico);
+  if (!servico) return null;
+
+  const remedios = db.prepare(`
+    ${SELECT_REMEDIOS_SERVICO}
+    WHERE sr.id_servico = ?
+    ORDER BY r.nome
+  `).all(idServico).map((item) => ({ ...item, categorias: item.categorias ?? "" }));
+
+  return {
+    ...servico,
+    totalMedicamentos: remedios.length,
+    quantidadeTotal: remedios.reduce((total, item) => total + item.quantidade, 0),
+    remedios,
+  };
 }

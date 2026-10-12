@@ -1,5 +1,5 @@
 import * as serviceChamado from "../services/chamado.service.mjs";
-import { enviarErro, enviarJson, idDaUrl, lerJson } from "../utils/http.mjs";
+import { enviarErro, enviarJson, erro, idDaUrl, lerJson } from "../utils/http.mjs";
 
 // funcionario solicita um chamado para o gerente
 export async function solicitarChamado(req, res) {
@@ -50,17 +50,59 @@ export async function listarChamadosFuncionario(req, res) {
   }
 }
 
-// gerente aceita ou recusa o chamado
+// gerente aceita (abre o chamado para a rede de farmácias) ou recusa
 export async function responderChamado(req, res) {
   try {
     const idChamado = idDaUrl(req, "Chamado");
     const data = await lerJson(req);
-    const chamado = serviceChamado.responder(idChamado, data);
+    const { chamado, despacho } = serviceChamado.responder(idChamado, data);
 
     enviarJson(res, 200, {
-      status: chamado.status === "aceito" ? "CHAMADO ACEITO - PUT" : "CHAMADO RECUSADO - PUT",
+      status: chamado.status === "recusado" ? "CHAMADO RECUSADO - PUT" : "CHAMADO ACEITO - PUT",
       chamado,
+      // para qual farmácia cada remédio foi pedido (enviadoPara null = nenhuma tem)
+      despacho,
     });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+// detalhe do chamado (com a situação de cada remédio e o histórico de pedidos)
+export async function buscarChamado(req, res) {
+  try {
+    const idChamado = idDaUrl(req, "Chamado");
+    const chamado = serviceChamado.buscarPorId(idChamado);
+    if (!chamado) throw erro(404, "Chamado não encontrado");
+
+    enviarJson(res, 200, { status: "Chamado encontrado", chamado });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+// antes de aceitar: quais farmácias têm os remédios do chamado
+// GET /chamado/:id/disponibilidade?idGerente=3
+export async function disponibilidadeChamado(req, res) {
+  try {
+    const idChamado = idDaUrl(req, "Chamado");
+    const idGerente = new URL(req.url, "http://localhost").searchParams.get("idGerente");
+    const resultado = serviceChamado.disponibilidade(idChamado, idGerente);
+
+    enviarJson(res, 200, { mensagem: "DISPONIBILIDADE NA REDE - GET", ...resultado });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+// tenta de novo os remédios que ficaram sem fornecedor
+export async function redistribuirChamado(req, res) {
+  try {
+    const idChamado = idDaUrl(req, "Chamado");
+    const data = await lerJson(req);
+    const { chamado, despacho } = serviceChamado.redistribuir(idChamado, data.idGerente);
+
+    enviarJson(res, 200, { status: "REDISTRIBUIÇÃO REFEITA - POST", chamado, despacho });
   } catch (error) {
     enviarErro(res, error);
   }
