@@ -2,6 +2,8 @@ import {
   listarRedistribuicoesGerente,
   buscarRedistribuicao,
   responderRedistribuicao,
+  iniciarPreparoRedistribuicao,
+  listarPreparosFuncionario,
 } from "../controller/redistribuicao.controller.mjs";
 
 export default function redistribuicaoRoutes(router) {
@@ -11,4 +13,8 @@ export default function redistribuicaoRoutes(router) {
   router.get("/redistribuicao/:id", buscarRedistribuicao);
 
   router.put("/redistribuicao/:id/responder", responderRedistribuicao);
+
+  // preparo pelo funcionário da farmácia fornecedora
+  router.post("/redistribuicao/:id/preparar", iniciarPreparoRedistribuicao);
+  router.get("/funcionario/:id/preparos", listarPreparosFuncionario);
 }

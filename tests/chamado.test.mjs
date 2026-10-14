@@ -84,18 +84,25 @@ test("fluxo completo: aceita -> fornecedor aceita -> estoque sai na hora e entra
   // outra farmácia não pode responder
   assert.throws(() => serviceRedistribuicao.responder(pedido.idRedistribuicao, { idGerente: 4, aceitar: true }), { status: 403 });
 
-  // aceita: sai do estoque da farmácia 3 na hora; farmácia 1 ainda não recebeu
+  // aceita: sai do estoque da farmácia 3 na hora e aguarda o preparo; farmácia 1 ainda não recebeu
   const aceito = serviceRedistribuicao.responder(pedido.idRedistribuicao, { idGerente: 3, aceitar: true });
-  assert.equal(aceito.pedido.status, "enviada");
-  assert.ok(aceito.pedido.segundosParaChegar > 100 && aceito.pedido.segundosParaChegar <= 120);
+  assert.equal(aceito.pedido.status, "aprovada");
+  assert.equal(aceito.pedido.segundosParaChegar, null);
   assert.equal(quantidade(3, 2), antes.f3 - 30);
   assert.equal(quantidade(1, 2), antes.f1);
-  assert.equal(serviceChamado.buscarPorId(idChamado).remedios[0].situacao, "a_caminho");
+  assert.equal(serviceChamado.buscarPorId(idChamado).remedios[0].situacao, "aguardando_fornecedor");
   assert.throws(() => serviceRedistribuicao.responder(pedido.idRedistribuicao, { idGerente: 3, aceitar: true }), { status: 409 });
+
+  // Larissa (farmácia 3) prepara: 30 un. = 1 caixa = 5 s; depois o caminhão sai
+  const preparo = serviceRedistribuicao.iniciarPreparo(pedido.idRedistribuicao, { idFuncionario: 6 });
+  assert.equal(preparo.status, "preparando");
+  assert.ok(preparo.segundosParaChegar > 120 && preparo.segundosParaChegar <= 125);
+  assert.equal(serviceChamado.buscarPorId(idChamado).remedios[0].situacao, "em_preparo");
 
   // antes do prazo nada chega; depois do prazo entra no estoque e o chamado resolve
   assert.equal(serviceRedistribuicao.processarChegadas(daquiA(60)), 0);
-  assert.equal(serviceRedistribuicao.processarChegadas(daquiA(121)), 1);
+  assert.equal(serviceChamado.buscarPorId(idChamado).remedios[0].situacao, "a_caminho");
+  assert.equal(serviceRedistribuicao.processarChegadas(daquiA(126)), 1);
   assert.equal(quantidade(1, 2), antes.f1 + 30);
   const resolvido = serviceChamado.buscarPorId(idChamado);
   assert.equal(resolvido.status, "resolvido");

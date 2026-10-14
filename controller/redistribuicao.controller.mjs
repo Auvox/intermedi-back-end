@@ -41,11 +41,38 @@ export async function responderRedistribuicao(req, res) {
     const { pedido, encaminhadoPara } = serviceRedistribuicao.responder(id, data);
 
     enviarJson(res, 200, {
-      status: pedido.status === "enviada" ? "PEDIDO ACEITO - REMÉDIO A CAMINHO - PUT" : "PEDIDO RECUSADO - PUT",
+      status: pedido.status === "aprovada" ? "PEDIDO ACEITO - AGUARDANDO PREPARO - PUT" : "PEDIDO RECUSADO - PUT",
       pedido,
       // só na recusa: para qual farmácia o pedido foi repassado (null = nenhuma tem)
       encaminhadoPara,
     });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+// funcionário da farmácia fornecedora aperta "Começar" (só o primeiro consegue)
+// POST /redistribuicao/:id/preparar  { idFuncionario }
+export async function iniciarPreparoRedistribuicao(req, res) {
+  try {
+    const id = idDaUrl(req, "Pedido");
+    const data = await lerJson(req);
+    const pedido = serviceRedistribuicao.iniciarPreparo(id, data);
+
+    enviarJson(res, 200, { status: "PREPARO INICIADO - POST", pedido });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+// avisos de preparo para os funcionários da farmácia fornecedora
+// GET /funcionario/:id/preparos
+export async function listarPreparosFuncionario(req, res) {
+  try {
+    const idFuncionario = idDaUrl(req, "Funcionário");
+    const resultado = serviceRedistribuicao.listarPreparosDoFuncionario(idFuncionario);
+
+    enviarJson(res, 200, { mensagem: "PREPAROS DA FARMÁCIA - GET", ...resultado });
   } catch (error) {
     enviarErro(res, error);
   }

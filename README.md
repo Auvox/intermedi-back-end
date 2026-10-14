@@ -24,6 +24,7 @@ Todos os usuários dos dados de teste têm a senha **`senha123`**.
 | Comando | O que faz |
 | --- | --- |
 | `npm run dev` | Sobe o servidor e reinicia sozinho quando um `.mjs` muda |
+| `npm run dev:teste-3d` | Igual ao `dev`, mas no banco próprio da branch `teste/intermedi-3d` (`.env.teste-3d`) |
 | `npm start` | Sobe o servidor sem reiniciar sozinho |
 | `npm run db:reset` | **Apaga** o banco e recria tudo com os dados de teste |
 | `npm run db:init` | Cria as tabelas que faltam (não apaga nada) |
@@ -140,6 +141,8 @@ rodar `npm install` depois de receber esta alteração.
 | Paciente | `GET/POST /paciente` · `GET/PUT/DELETE /paciente/:id` |
 | Remédio | `GET/POST /remedios` · `GET/PUT/DELETE /remedios/:id` · filtro `GET /remedios?categoria=Febre` |
 | Serviço | `POST /servicos` |
+| Pedidos entre farmácias | `GET /gerente/:id/redistribuicoes` · `GET /redistribuicao/:id` · `PUT /redistribuicao/:id/responder` |
+| Preparo do envio | `GET /funcionario/:id/preparos` (avisos da equipe) · `POST /redistribuicao/:id/preparar` `{ idFuncionario }` |
 | App do paciente | `POST /api/auth/register` · `POST /api/auth/login` · `POST /api/auth/logout` · `GET/PUT/DELETE /api/pacientes/me` · `PUT /api/pacientes/:id/foto` |
 
 ### Campos obrigatórios novos
@@ -151,6 +154,19 @@ rodar `npm install` depois de receber esta alteração.
 - **Remédio:** pode mandar `idsCategoria: [1, 2]` para ligar às categorias.
 
 ---
+
+### Preparo dos pedidos entre farmácias
+
+O aceite do gerente fornecedor deixa o pedido `aprovada` (aguardando preparo) e avisa todos os
+funcionários da farmácia. O primeiro que chamar `POST /redistribuicao/:id/preparar` assume
+(`preparando`); os outros recebem **409** com `preparadoPor`. A garantia é o `UPDATE ... WHERE
+status = 'aprovada'`: o SQLite faz uma escrita por vez, então dois cliques no mesmo instante não
+assumem o mesmo pedido (há teste com 6 requisições simultâneas em `tests/preparo.test.mjs`).
+O preparo leva `caixas × 5 s` (caixas de 50 un.); depois o pedido vira `enviada` sozinho.
+
+Bancos criados antes desse status são atualizados ao subir o servidor: a tabela
+`redistribuicao` é recriada com o status novo e **todos os registros são copiados**
+(`migrarRedistribuicao` em `database/setup.mjs`), sem precisar de `db:reset`.
 
 ## Variáveis de ambiente (opcional)
 

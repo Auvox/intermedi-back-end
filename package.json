@@ -7,11 +7,13 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env server.mjs",
     "dev": "node --watch --env-file-if-exists=.env server.mjs",
+    "dev:teste-3d": "node --watch --env-file-if-exists=.env --env-file=.env.teste-3d server.mjs",
     "db:init": "node --env-file-if-exists=.env database/init.mjs",
     "db:seed": "node --env-file-if-exists=.env database/init.mjs --seed",
     "db:reset": "node --env-file-if-exists=.env database/init.mjs --reset",
     "db:publish": "node --env-file-if-exists=.env database/share.mjs publish",
     "db:sync": "node --env-file-if-exists=.env database/share.mjs sync",
+    "funcionarios:teste": "node scripts/criar-funcionarios-teste.mjs",
     "prepare": "node scripts/install-hooks.mjs",
     "test": "node --test \"tests/**/*.test.mjs\""
   },

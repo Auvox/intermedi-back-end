@@ -73,7 +73,7 @@ function situacaoDoItem(statusChamado, pedido) {
   if (!pedido || ["recusada", "cancelada"].includes(pedido.status)) return "sem_fornecedor";
   return {
     solicitada: "aguardando_fornecedor", aprovada: "aguardando_fornecedor",
-    enviada: "a_caminho", recebida: "recebido",
+    preparando: "em_preparo", enviada: "a_caminho", recebida: "recebido",
   }[pedido.status];
 }
 

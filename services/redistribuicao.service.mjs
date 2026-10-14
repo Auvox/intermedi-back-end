@@ -6,10 +6,15 @@ import { texto, textoOuNull } from "../utils/dados.mjs";
 //   origem  = farmácia FORNECEDORA (recebe a notificação e aceita/recusa)
 //   destino = farmácia SOLICITANTE (dona do chamado)
 
-// Tempo que o remédio leva para chegar depois que o fornecedor aceita
+// Tempo que o remédio leva para chegar depois que o caminhão sai
 export const TEMPO_ENTREGA_SEGUNDOS = Number(process.env.INTERMEDI_TEMPO_ENTREGA_SEGUNDOS ?? 120);
+// Preparo: o funcionário leva caixas de 50 unidades até o caminhão, uma ida e
+// volta por caixa. Tempo de preparo = caixas × tempo da viagem.
+export const UNIDADES_POR_CAIXA = Number(process.env.INTERMEDI_UNIDADES_POR_CAIXA ?? 50);
+export const SEGUNDOS_POR_VIAGEM = Number(process.env.INTERMEDI_SEGUNDOS_POR_VIAGEM ?? 5);
+export const caixasDoPedido = (quantidade) => Math.max(1, Math.ceil(quantidade / UNIDADES_POR_CAIXA));
 
-const STATUS = ["solicitada", "aprovada", "enviada", "recebida", "recusada", "cancelada"];
+const STATUS = ["solicitada", "aprovada", "preparando", "enviada", "recebida", "recusada", "cancelada"];
 
 const SELECT_REDISTRIBUICAO = /*sql*/ `
   SELECT
@@ -37,6 +42,9 @@ const SELECT_REDISTRIBUICAO = /*sql*/ `
       rd.data_envio            AS dataEnvio,
       rd.data_prevista_chegada AS dataPrevistaChegada,
       rd.data_recebimento      AS dataRecebimento,
+      rd.id_funcionario_preparo AS idFuncionarioPreparo,
+      fp.nome                  AS nomeFuncionarioPreparo,
+      rd.data_inicio_preparo   AS dataInicioPreparo,
       es.quantidade            AS estoqueOrigem,
       es.estoque_minimo        AS estoqueMinimoOrigem
   FROM redistribuicao rd
@@ -46,6 +54,7 @@ const SELECT_REDISTRIBUICAO = /*sql*/ `
   LEFT  JOIN chamado  ch ON ch.id_chamado  = rd.id_chamado
   LEFT  JOIN gerente  gs ON gs.id_gerente  = ch.id_gerente_resposta
   LEFT  JOIN gerente  gr ON gr.id_gerente  = rd.id_gerente_resposta
+  LEFT  JOIN funcionario fp ON fp.id_funcionario = rd.id_funcionario_preparo
   LEFT  JOIN estoque  es ON es.id_remedio  = rd.id_remedio AND es.id_farmacia = rd.id_farmacia_origem
 `;
 
@@ -57,12 +66,21 @@ const formatar = (linha) => {
   const quem = linha.nomeGerenteSolicitante
     ? `${linha.nomeGerenteSolicitante} (${linha.nomeFarmaciaDestino})`
     : linha.nomeFarmaciaDestino;
+  const remedio = `${linha.quantidade}× ${linha.nomeRemedio} ${linha.dosagemRemedio ?? ""}`.trim();
+  const caixas = caixasDoPedido(linha.quantidade);
   return {
     ...linha,
     // texto pronto para a notificação do gerente fornecedor
-    mensagem: `${quem} está precisando de ${linha.quantidade}× ${linha.nomeRemedio} ${linha.dosagemRemedio ?? ""}`.trim(),
+    mensagem: `${quem} está precisando de ${remedio}`,
+    // texto pronto para o aviso dos funcionários da farmácia fornecedora
+    mensagemPreparo: `Prepare ${remedio} para a ${linha.nomeFarmaciaDestino}`,
+    // preparo: o front anima e conta as caixas com estes números
+    caixas,
+    unidadesPorCaixa: UNIDADES_POR_CAIXA,
+    segundosPorViagem: SEGUNDOS_POR_VIAGEM,
+    segundosPreparo: caixas * SEGUNDOS_POR_VIAGEM,
     // para o front mostrar a contagem regressiva da entrega
-    segundosParaChegar: linha.status === "enviada" && linha.dataPrevistaChegada
+    segundosParaChegar: ["preparando", "enviada"].includes(linha.status) && linha.dataPrevistaChegada
       ? Math.max(0, Math.ceil((emMs(linha.dataPrevistaChegada) - Date.now()) / 1000))
       : null,
   };
@@ -117,7 +135,7 @@ function criarPedido(idChamado, idRemedio, idOrigem, idDestino, quantidade) {
   return Number(lastInsertRowid);
 }
 
-// Item do chamado que ainda não tem pedido ativo (solicitada/aprovada/enviada/recebida)
+// Item do chamado que ainda não tem pedido ativo (solicitada/aprovada/preparando/enviada/recebida)
 function itensSemPedidoAtivo(idChamado) {
   return db.prepare(/*sql*/ `
     SELECT cr.id_remedio AS idRemedio, cr.quantidade, r.nome AS nomeRemedio
@@ -127,7 +145,7 @@ function itensSemPedidoAtivo(idChamado) {
       AND NOT EXISTS (
         SELECT 1 FROM redistribuicao rd
         WHERE rd.id_chamado = cr.id_chamado AND rd.id_remedio = cr.id_remedio
-          AND rd.status IN ('solicitada', 'aprovada', 'enviada', 'recebida'))
+          AND rd.status IN ('solicitada', 'aprovada', 'preparando', 'enviada', 'recebida'))
     ORDER BY r.nome
   `).all(idChamado);
 }
@@ -168,8 +186,9 @@ export function despachar(idChamado) {
 //  Resposta da farmácia fornecedora
 // ---------------------------------------------------------------------
 
-// Gerente da farmácia fornecedora aceita (remédio sai do estoque e fica
-// "a caminho") ou recusa (pedido passa automaticamente para outra farmácia)
+// Gerente da farmácia fornecedora aceita (o remédio sai do estoque e o pedido
+// fica "aprovada", aguardando um funcionário começar o preparo) ou recusa (o
+// pedido passa automaticamente para outra farmácia)
 export function responder(idRedistribuicao, data) {
   const idGerente = Number(data.idGerente);
   if (!Number.isInteger(idGerente) || idGerente <= 0) throw erro(400, "Informe idGerente.");
@@ -199,18 +218,17 @@ export function responder(idRedistribuicao, data) {
       }
       if (estoque.vencido) throw erro(409, "O lote deste remédio está vencido. Recuse o pedido.");
 
-      // sai do estoque do fornecedor na hora (o remédio já foi despachado)
+      // sai do estoque do fornecedor na hora (fica reservado para este pedido)
       db.prepare(/*sql*/ `
         UPDATE estoque SET quantidade = quantidade - ?, updated_at = CURRENT_TIMESTAMP WHERE id_estoque = ?
       `).run(pedido.quantidade, estoque.id_estoque);
 
+      // aguarda um funcionário da farmácia fornecedora começar o preparo
       db.prepare(/*sql*/ `
         UPDATE redistribuicao
-        SET status = 'enviada', id_gerente_resposta = ?, data_aprovacao = CURRENT_TIMESTAMP,
-            data_envio = CURRENT_TIMESTAMP,
-            data_prevista_chegada = datetime('now', ?)
+        SET status = 'aprovada', id_gerente_resposta = ?, data_aprovacao = CURRENT_TIMESTAMP
         WHERE id_redistribuicao = ?
-      `).run(idGerente, `+${TEMPO_ENTREGA_SEGUNDOS} seconds`, idRedistribuicao);
+      `).run(idGerente, idRedistribuicao);
 
       return { pedido: buscarPorId(idRedistribuicao), encaminhadoPara: null };
     }
@@ -236,6 +254,78 @@ export function responder(idRedistribuicao, data) {
 }
 
 // ---------------------------------------------------------------------
+//  Preparo (funcionário da farmácia fornecedora)
+// ---------------------------------------------------------------------
+
+// O funcionário aperta "Começar": o pedido passa a "preparando" em nome dele.
+// Todos os funcionários da farmácia recebem o mesmo aviso; só o PRIMEIRO
+// consegue. A garantia está no UPDATE condicional (... AND status = 'aprovada'):
+// o SQLite executa uma escrita por vez, então, mesmo que dois funcionários
+// apertem no mesmo instante, só um UPDATE encontra o pedido ainda "aprovada" e
+// o outro recebe 409 com o nome de quem assumiu.
+// A saída do caminhão (data_envio) e a chegada já ficam calculadas: todos veem
+// o mesmo andamento pelo relógio, sem consultar a API a cada segundo.
+export function iniciarPreparo(idRedistribuicao, data) {
+  const idFuncionario = Number(data.idFuncionario);
+  if (!Number.isInteger(idFuncionario) || idFuncionario <= 0) throw erro(400, "Informe idFuncionario.");
+
+  return emTransacao(() => {
+    const pedido = db.prepare("SELECT * FROM redistribuicao WHERE id_redistribuicao = ?").get(idRedistribuicao);
+    if (!pedido) throw erro(404, "Pedido não encontrado");
+    const funcionario = db.prepare("SELECT id_farmacia FROM funcionario WHERE id_funcionario = ?").get(idFuncionario);
+    if (!funcionario) throw erro(404, "Funcionário não encontrado");
+    if (funcionario.id_farmacia !== pedido.id_farmacia_origem) {
+      throw erro(403, "Este pedido é de outra farmácia.");
+    }
+
+    const segundos = caixasDoPedido(pedido.quantidade) * SEGUNDOS_POR_VIAGEM;
+    const { changes } = db.prepare(/*sql*/ `
+      UPDATE redistribuicao
+      SET status = 'preparando', id_funcionario_preparo = ?, data_inicio_preparo = datetime('now'),
+          data_envio = datetime('now', ?), data_prevista_chegada = datetime('now', ?)
+      WHERE id_redistribuicao = ? AND status = 'aprovada'
+    `).run(idFuncionario, `+${segundos} seconds`, `+${segundos + TEMPO_ENTREGA_SEGUNDOS} seconds`, idRedistribuicao);
+
+    if (changes === 0) {
+      const atual = buscarPorId(idRedistribuicao);
+      if (atual.idFuncionarioPreparo) {
+        const voce = atual.idFuncionarioPreparo === idFuncionario;
+        throw erro(409, voce
+          ? "Você já está preparando este pedido."
+          : `${atual.nomeFuncionarioPreparo} já aceitou o preparo deste pedido.`, {
+          preparadoPor: { idFuncionario: atual.idFuncionarioPreparo, nomeFuncionario: atual.nomeFuncionarioPreparo },
+          pedido: atual,
+        });
+      }
+      throw erro(409, `Este pedido não está aguardando preparo (status: ${atual.status}).`, { pedido: atual });
+    }
+    return buscarPorId(idRedistribuicao);
+  });
+}
+
+// Avisos de preparo dos funcionários da farmácia (fornecedora): o que aguarda
+// alguém começar, o que está em preparo e o que saiu nos últimos 10 minutos
+// (para quem não assumiu ver "Fulano aceitou o pedido").
+export function listarPreparosDoFuncionario(idFuncionario) {
+  processarChegadas();
+  const funcionario = db.prepare("SELECT id_farmacia FROM funcionario WHERE id_funcionario = ?").get(idFuncionario);
+  if (!funcionario) throw erro(404, "Funcionário não encontrado");
+
+  const pedidos = db.prepare(/*sql*/ `
+    ${SELECT_REDISTRIBUICAO}
+    WHERE rd.id_farmacia_origem = ?
+      AND (rd.status IN ('aprovada', 'preparando')
+        OR (rd.data_inicio_preparo IS NOT NULL AND rd.data_envio >= datetime('now', '-10 minutes')))
+    ORDER BY rd.status = 'aprovada' DESC, rd.status = 'preparando' DESC, rd.data_aprovacao DESC
+  `).all(funcionario.id_farmacia).map((p) => ({ ...formatar(p), voce: p.idFuncionarioPreparo === idFuncionario }));
+
+  return {
+    totalAguardando: pedidos.filter((p) => p.status === "aprovada").length,
+    pedidos,
+  };
+}
+
+// ---------------------------------------------------------------------
 //  Chegada do remédio (depois do tempo de entrega)
 // ---------------------------------------------------------------------
 
@@ -244,6 +334,12 @@ export function responder(idRedistribuicao, data) {
 // resposta nunca mostrar um pedido "atrasado".
 // agora: opcional ("AAAA-MM-DD HH:MM:SS" em UTC), usado nos testes.
 export function processarChegadas(agora = null) {
+  // caminhão carregado: o preparo termina e o pedido sai para entrega
+  db.prepare(/*sql*/ `
+    UPDATE redistribuicao SET status = 'enviada'
+    WHERE status = 'preparando' AND data_envio <= COALESCE(?, datetime('now'))
+  `).run(agora);
+
   const chegaram = db.prepare(/*sql*/ `
     SELECT * FROM redistribuicao
     WHERE status = 'enviada' AND data_prevista_chegada IS NOT NULL
@@ -322,7 +418,7 @@ export function listarDoGerente(idGerente, { tipo, status } = {}) {
   const pedidos = db.prepare(/*sql*/ `
     ${SELECT_REDISTRIBUICAO}
     WHERE ${coluna} = ? AND (? IS NULL OR rd.status = ?)
-    ORDER BY rd.status = 'solicitada' DESC, rd.status = 'enviada' DESC,
+    ORDER BY rd.status = 'solicitada' DESC, rd.status IN ('aprovada', 'preparando', 'enviada') DESC,
              rd.data_solicitacao DESC, rd.id_redistribuicao DESC
   `).all(gerente.id_farmacia, filtro, filtro).map(formatar);
 

@@ -332,14 +332,20 @@ CREATE TABLE IF NOT EXISTS servico_remedio (
 --    origem  = farmácia FORNECEDORA (quem envia)
 --    destino = farmácia SOLICITANTE (dona do chamado)
 --  Fluxo do status:
---    solicitada -> enviada -> recebida   (fornecedor aceitou; estoque da
---                                         origem sai na hora e o do destino
---                                         entra quando chega, após o tempo
---                                         de entrega)
+--    solicitada -> aprovada -> preparando -> enviada -> recebida
+--      aprovada:   o gerente fornecedor aceitou; o estoque da origem sai na
+--                  hora e os funcionários da origem recebem o aviso de preparo
+--      preparando: UM funcionário da origem assumiu o preparo (o primeiro que
+--                  apertar "Começar"; para os demais a API responde 409). Ele
+--                  leva caixas de 50 unidades até o caminhão, uma viagem por
+--                  caixa: data_envio = início + caixas × tempo da viagem
+--      enviada:    o caminhão saiu (automático quando data_envio passa)
+--      recebida:   chegou (automático em data_prevista_chegada); o estoque
+--                  do destino entra nessa hora
 --    solicitada -> recusada              (o sistema cria outra linha
 --                                         'solicitada' para a próxima
 --                                         farmácia que tiver o remédio)
---  'aprovada' e 'cancelada' ficam para uso manual/legado.
+--  'cancelada' fica para uso manual/legado.
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS redistribuicao (
     id_redistribuicao      INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -349,7 +355,7 @@ CREATE TABLE IF NOT EXISTS redistribuicao (
     id_farmacia_destino    INTEGER NOT NULL,
     quantidade             INTEGER NOT NULL CHECK (quantidade > 0),
     status                 TEXT    NOT NULL DEFAULT 'solicitada'
-                           CHECK (status IN ('solicitada', 'aprovada', 'enviada',
+                           CHECK (status IN ('solicitada', 'aprovada', 'preparando', 'enviada',
                                              'recebida', 'recusada', 'cancelada')),
     id_gerente_resposta    INTEGER,                 -- gerente da origem que aceitou/recusou
     motivo_recusa          TEXT,
@@ -359,12 +365,15 @@ CREATE TABLE IF NOT EXISTS redistribuicao (
     data_envio             TEXT,
     data_prevista_chegada  TEXT,                    -- data_envio + tempo de entrega
     data_recebimento       TEXT,
+    id_funcionario_preparo INTEGER,                 -- funcionário da origem que preparou o envio
+    data_inicio_preparo    TEXT,
     CHECK (id_farmacia_origem <> id_farmacia_destino),
     FOREIGN KEY (id_chamado)          REFERENCES chamado  (id_chamado)  ON DELETE SET NULL,
     FOREIGN KEY (id_remedio)          REFERENCES remedio  (id_remedio)  ON DELETE RESTRICT,
     FOREIGN KEY (id_farmacia_origem)  REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT,
     FOREIGN KEY (id_farmacia_destino) REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT,
-    FOREIGN KEY (id_gerente_resposta) REFERENCES gerente  (id_gerente)  ON DELETE SET NULL
+    FOREIGN KEY (id_gerente_resposta) REFERENCES gerente  (id_gerente)  ON DELETE SET NULL,
+    FOREIGN KEY (id_funcionario_preparo) REFERENCES funcionario (id_funcionario) ON DELETE SET NULL
 );
 
 

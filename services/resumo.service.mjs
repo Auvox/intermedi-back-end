@@ -134,7 +134,7 @@ function blocoRede(idFarmacia, periodo, idGerente = null) {
   const p = { id: idFarmacia, de: periodo.de, ate: periodo.ate };
   const comoFornecedora = db.prepare(/*sql*/ `
     SELECT COUNT(*) AS total,
-           SUM(status IN ('aprovada', 'enviada', 'recebida')) AS aceitos,
+           SUM(status IN ('aprovada', 'preparando', 'enviada', 'recebida')) AS aceitos,
            SUM(status = 'recusada')                           AS recusados,
            COALESCE(SUM(CASE WHEN status IN ('enviada', 'recebida') THEN quantidade END), 0) AS unidadesEnviadas
     FROM redistribuicao WHERE id_farmacia_origem = $id AND ${no("data_solicitacao")}
@@ -143,7 +143,7 @@ function blocoRede(idFarmacia, periodo, idGerente = null) {
     SELECT COUNT(*) AS total,
            SUM(status = 'recebida')   AS entregues,
            SUM(status = 'enviada')    AS aCaminho,
-           SUM(status = 'solicitada') AS aguardando,
+           SUM(status IN ('solicitada', 'aprovada', 'preparando')) AS aguardando,
            SUM(status = 'recusada')   AS recusados,
            COALESCE(SUM(CASE WHEN status = 'recebida' THEN quantidade END), 0) AS unidadesRecebidas
     FROM redistribuicao WHERE id_farmacia_destino = $id AND ${no("data_solicitacao")}
