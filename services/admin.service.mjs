@@ -128,3 +128,145 @@ export function pesquisarPacientesAdmin(termoBusca) {
 
   return pacientes;
 }
+
+// Receber e armazenar chamado externo
+export function receberChamadoExternoAdmin(data) {
+  const titulo = texto(data?.titulo);
+  const descricao = texto(data?.descricao);
+  const prioridade = texto(data?.prioridade) || "media";
+  const idFuncionario = data?.idFuncionario ? Number(data.idFuncionario) : null;
+  const idFarmacia = data?.idFarmacia ? Number(data.idFarmacia) : null;
+
+  if (!titulo || !descricao || !idFuncionario || !idFarmacia) {
+    throw erro(400, "Preencha os campos obrigatórios do chamado (titulo, descricao, idFuncionario, idFarmacia).");
+  }
+
+  const status = "pendente";
+  const dataAbertura = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+  const resultado = db.prepare(`
+    INSERT INTO chamado (titulo, descricao, status, prioridade, data_abertura, id_funcionario, id_farmacia, id_gerente_resposta, data_resposta, resposta_gerente)
+    VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)
+  `).run(titulo, descricao, status, prioridade, dataAbertura, idFuncionario, idFarmacia);
+
+  return {
+    mensagem: "Chamado externo recebido e armazenado com sucesso.",
+    idChamado: resultado.lastInsertRowid
+  };
+}
+
+// Desativar farmácia com verificação de vínculos
+export function desativarFarmaciaAdmin(idFarmaciaParam) {
+  const idFarmacia = Number(idFarmaciaParam);
+
+  if (!idFarmacia || isNaN(idFarmacia)) {
+    throw erro(400, "ID da farmácia inválido ou não informado.");
+  }
+
+  const farmacia = db.prepare(`SELECT id_farmacia AS idFarmacia, nome FROM farmacia WHERE id_farmacia = ?`).get(idFarmacia);
+  if (!farmacia) {
+    throw erro(404, "Farmácia não encontrada.");
+  }
+
+  const gerentesVinculados = db.prepare(`SELECT COUNT(*) as total FROM gerente WHERE id_farmacia = ?`).get(idFarmacia);
+  if (gerentesVinculados.total > 0) {
+    throw erro(400, `Não é possível desativar a farmácia. Existem ${gerentesVinculados.total} gerente(s) vinculado(s).`);
+  }
+
+  const funcionariosVinculados = db.prepare(`SELECT COUNT(*) as total FROM funcionario WHERE id_farmacia = ?`).get(idFarmacia);
+  if (funcionariosVinculados.total > 0) {
+    throw erro(400, `Não é possível desativar a farmácia. Existem ${funcionariosVinculados.total} funcionário(s) vinculado(s).`);
+  }
+
+  const estoquesVinculados = db.prepare(`SELECT COUNT(*) as total FROM estoque WHERE id_farmacia = ?`).get(idFarmacia);
+  if (estoquesVinculados.total > 0) {
+    throw erro(400, `Não é possível desativar a farmácia. Existem registros de estoque vinculados.`);
+  }
+
+  const resultado = db.prepare(`
+    UPDATE farmacia 
+    SET ativo = 0 
+    WHERE id_farmacia = ?
+  `).run(idFarmacia);
+
+  return {
+    mensagem: `Farmácia '${farmacia.nome}' desativada com sucesso.`,
+    idFarmacia
+  };
+}
+
+// Consultar histórico completo de chamados
+export function listarHistoricoChamadosAdmin() {
+  const chamados = db.prepare(`
+    SELECT 
+        id_chamado AS idChamado,
+        titulo,
+        descricao,
+        status,
+        prioridade,
+        data_abertura AS dataAbertura,
+        id_funcionario AS idFuncionario,
+        id_farmacia AS idFarmacia,
+        id_gerente_resposta AS idGerenteResposta,
+        data_resposta AS dataResposta,
+        resposta_gerente AS respostaGerente
+    FROM chamado
+  `).all();
+
+  return chamados;
+}
+
+// Editar remédio com validação e atualização de todos os campos
+export function editarRemedioAdmin(idRemedioParam, data) {
+  const idRemedio = Number(idRemedioParam);
+
+  if (!idRemedio || isNaN(idRemedio)) {
+    throw erro(400, "ID do remédio inválido ou não informado.");
+  }
+
+  const remedioExistente = db.prepare(`SELECT id_remedio AS idRemedio FROM remedio WHERE id_remedio = ?`).get(idRemedio);
+  if (!remedioExistente) {
+    throw erro(404, "Remédio não encontrado.");
+  }
+
+  const nome = texto(data?.nome);
+  const principioAtivo = texto(data?.principioAtivo) || texto(data?.principio_ativo) || null;
+  const descricao = texto(data?.descricao) || null;
+  const dosagem = texto(data?.dosagem) || null;
+  const fabricante = texto(data?.fabricante) || null;
+  const registroAnvisa = texto(data?.registroAnvisa) || texto(data?.registro_anvisa) || null;
+  const tipo = texto(data?.tipo) || "generico";
+  const tarja = texto(data?.tarja);
+  const formaFarmaceutica = texto(data?.formaFarmaceutica) || texto(data?.forma_farmaceutica) || null;
+  const viaAdministracao = texto(data?.viaAdministracao) || texto(data?.via_administracao) || null;
+  const apresentacao = texto(data?.apresentacao) || null;
+  const indicacoes = texto(data?.indicacoes) || null;
+  const contraindicacoes = texto(data?.contraindicacoes) || null;
+  const armazenamento = texto(data?.armazenamento) || null;
+
+  if (!nome) {
+    throw erro(400, "Campo obrigatório não informado (nome).");
+  }
+
+  if (!tarja) {
+    throw erro(400, "Campo obrigatório não informado (tarja).");
+  }
+
+  const resultado = db.prepare(`
+    UPDATE remedio 
+    SET nome = ?, principio_ativo = ?, descricao = ?, dosagem = ?, fabricante = ?, 
+        registro_anvisa = ?, tipo = ?, tarja = ?, forma_farmaceutica = ?, 
+        via_administracao = ?, apresentacao = ?, indicacoes = ?, contraindicacoes = ?, armazenamento = ?
+    WHERE id_remedio = ?
+  `).run(
+    nome, principioAtivo, descricao, dosagem, fabricante, 
+    registroAnvisa, tipo, tarja, formaFarmaceutica, 
+    viaAdministracao, apresentacao, indicacoes, contraindicacoes, armazenamento, 
+    idRemedio
+  );
+
+  return {
+    mensagem: "Remédio atualizado com sucesso.",
+    idRemedio
+  };
+}

@@ -41,13 +41,52 @@ export async function listarPacientes(req, res) {
 
 export async function pesquisarPacientes(req, res) {
   try {
-    // Extrai o parâmetro "termo" de forma segura usando a URL da requisição
     const baseUrl = `http://${req.headers.host || "localhost"}`;
     const parsedUrl = new URL(req.url, baseUrl);
     const termo = parsedUrl.searchParams.get("termo") || "";
 
     const pacientes = adminService.pesquisarPacientesAdmin(termo);
     enviarJson(res, 200, pacientes);
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+export async function receberChamadoExterno(req, res) {
+  try {
+    const data = await lerJson(req);
+    const resultado = await adminService.receberChamadoExternoAdmin(data);
+    enviarJson(res, 201, resultado);
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+export async function desativarFarmacia(req, res) {
+  try {
+    const idFarmacia = req.params?.id || req.pathParams?.id; 
+    const resultado = adminService.desativarFarmaciaAdmin(idFarmacia);
+    enviarJson(res, 200, resultado);
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+export async function listarHistoricoChamados(req, res) {
+  try {
+    const historico = adminService.listarHistoricoChamadosAdmin();
+    enviarJson(res, 200, historico);
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+export async function editarRemedio(req, res) {
+  try {
+    const idRemedio = req.params?.id || req.pathParams?.id;
+    const data = await lerJson(req);
+    const resultado = adminService.editarRemedioAdmin(idRemedio, data);
+    enviarJson(res, 200, resultado);
   } catch (error) {
     enviarErro(res, error);
   }

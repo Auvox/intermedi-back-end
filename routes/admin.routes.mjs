@@ -3,7 +3,11 @@ import {
     listarGerentes,
     cadastrarGerente,
     listarPacientes,
-    pesquisarPacientes
+    pesquisarPacientes,
+    receberChamadoExterno,
+    desativarFarmacia,
+    listarHistoricoChamados,
+    editarRemedio
 } from "../controller/admin.controller.mjs";
 
 export function registrarRotasAdmin(router) {
@@ -12,4 +16,8 @@ export function registrarRotasAdmin(router) {
   router.post("/admin/gerentes", cadastrarGerente);
   router.get("/admin/pacientes", listarPacientes);
   router.get("/admin/pacientes/pesquisar", pesquisarPacientes);
+  router.post("/admin/chamados", receberChamadoExterno);
+  router.post("/admin/farmacias/:id/desativar", desativarFarmacia);
+  router.get("/admin/chamados/historico", listarHistoricoChamados);
+  router.post("/admin/remedios/:id/editar", editarRemedio);
 }
