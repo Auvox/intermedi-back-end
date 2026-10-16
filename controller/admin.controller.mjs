@@ -81,6 +81,15 @@ export async function listarHistoricoChamados(req, res) {
   }
 }
 
+export async function listarHistoricoChamadosInternos(req, res) {
+  try {
+    const historicoInterno = adminService.listarHistoricoChamadosInternosAdmin();
+    enviarJson(res, 200, historicoInterno);
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
 export async function editarRemedio(req, res) {
   try {
     const idRemedio = req.params?.id || req.pathParams?.id;

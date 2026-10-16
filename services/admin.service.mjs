@@ -195,7 +195,7 @@ export function desativarFarmaciaAdmin(idFarmaciaParam) {
   };
 }
 
-// Consultar histórico completo de chamados
+// Consultar histórico completo de chamados (externos/geral)
 export function listarHistoricoChamadosAdmin() {
   const chamados = db.prepare(`
     SELECT 
@@ -216,7 +216,28 @@ export function listarHistoricoChamadosAdmin() {
   return chamados;
 }
 
-// Editar remédio com validação e atualização de todos os campos
+// Consultar histórico completo de chamados internos (específico para chamados internos)
+export function listarHistoricoChamadosInternosAdmin() {
+  const chamadosInternos = db.prepare(`
+    SELECT 
+        id_chamado AS idChamado,
+        titulo,
+        descricao,
+        status,
+        prioridade,
+        data_abertura AS dataAbertura,
+        id_funcionario AS idFuncionario,
+        id_farmacia AS idFarmacia,
+        id_gerente_resposta AS idGerenteResposta,
+        data_resposta AS dataResposta,
+        resposta_gerente AS respostaGerente
+    FROM chamado
+  `).all();
+
+  return chamadosInternos;
+}
+
+// Editar remédio
 export function editarRemedioAdmin(idRemedioParam, data) {
   const idRemedio = Number(idRemedioParam);
 

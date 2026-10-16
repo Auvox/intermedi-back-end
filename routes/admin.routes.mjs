@@ -7,6 +7,7 @@ import {
     receberChamadoExterno,
     desativarFarmacia,
     listarHistoricoChamados,
+    listarHistoricoChamadosInternos,
     editarRemedio
 } from "../controller/admin.controller.mjs";
 
@@ -19,5 +20,6 @@ export function registrarRotasAdmin(router) {
   router.post("/admin/chamados", receberChamadoExterno);
   router.post("/admin/farmacias/:id/desativar", desativarFarmacia);
   router.get("/admin/chamados/historico", listarHistoricoChamados);
+  router.get("/admin/chamados/internos/historico", listarHistoricoChamadosInternos);
   router.post("/admin/remedios/:id/editar", editarRemedio);
 }
