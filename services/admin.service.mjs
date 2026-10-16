@@ -273,6 +273,17 @@ export function editarRemedioAdmin(idRemedioParam, data) {
     throw erro(400, "Campo obrigatório não informado (tarja).");
   }
 
+  // Verifica se o registro ANVISA informado já pertence a OUTRO remédio no banco
+  if (registroAnvisa) {
+    const conflitoAnvisa = db.prepare(`
+      SELECT id_remedio FROM remedio WHERE registro_anvisa = ? AND id_remedio != ?
+    `).get(registroAnvisa, idRemedio);
+
+    if (conflitoAnvisa) {
+      throw erro(409, "Já existe outro remédio cadastrado com este registro ANVISA.");
+    }
+  }
+
   const resultado = db.prepare(`
     UPDATE remedio 
     SET nome = ?, principio_ativo = ?, descricao = ?, dosagem = ?, fabricante = ?, 

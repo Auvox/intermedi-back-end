@@ -21,5 +21,5 @@ export function registrarRotasAdmin(router) {
   router.post("/admin/farmacias/:id/desativar", desativarFarmacia);
   router.get("/admin/chamados/historico", listarHistoricoChamados);
   router.get("/admin/chamados/internos/historico", listarHistoricoChamadosInternos);
-  router.post("/admin/remedios/:id/editar", editarRemedio);
+  router.put("/admin/remedios/:id/editar", editarRemedio);
 }
