@@ -18,7 +18,7 @@
 --    PARTE 4 — Chamados (chamado, chamado_remedio)
 --    PARTE 5 — Serviços (servico, servico_remedio)
 --    PARTE 6 — Redistribuição
---    PARTE 7 — Sessões do app do paciente
+--    PARTE 7 — Sessões (app do paciente e login da equipe)
 --    PARTE 8 — Índices
 --
 --  Dados de teste ficam em database/seed.sql
@@ -54,6 +54,10 @@ CREATE TABLE IF NOT EXISTS endereco (
 
 -- ---------------------------------------------------------------------
 --  1.2 ADMIN
+--  cpf + matricula (+ senha) são o login. Ficam vazios em admins criados
+--  antes do login por matrícula: rode npm run admin:criar para preencher.
+--  Os índices UNIQUE de cpf e matricula são criados em database/setup.mjs
+--  (bancos antigos recebem as colunas por ALTER TABLE).
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS admin (
     id_admin     INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,6 +65,8 @@ CREATE TABLE IF NOT EXISTS admin (
     email        TEXT    NOT NULL UNIQUE COLLATE NOCASE,
     senha_hash   TEXT    NOT NULL,          -- nunca salvar senha pura
     telefone     TEXT,
+    cpf          TEXT,
+    matricula    TEXT,                      -- ex.: 'A000001'
     id_endereco  INTEGER,
     FOREIGN KEY (id_endereco) REFERENCES endereco (id_endereco)
         ON DELETE SET NULL
@@ -389,6 +395,23 @@ CREATE TABLE IF NOT EXISTS sessao_paciente (
     FOREIGN KEY (id_paciente) REFERENCES paciente (id_paciente) ON DELETE CASCADE
 );
 
+-- ---------------------------------------------------------------------
+--  7.1 SESSÕES DA EQUIPE  (admin, gerente e funcionário; login com JWT)
+--  Cada login gera um JWT com o jti desta linha. O token só vale enquanto
+--  a sessão não foi encerrada (Sair) e a senha não mudou.
+--  Sem FK: id_usuario aponta para admin, gerente ou funcionario conforme
+--  o papel. Pessoa apagada -> o token deixa de valer na hora.
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sessao_usuario (
+    jti               TEXT    PRIMARY KEY,
+    papel             TEXT    NOT NULL CHECK (papel IN ('admin', 'gerente', 'funcionario')),
+    id_usuario        INTEGER NOT NULL,
+    senha_fingerprint TEXT    NOT NULL,      -- muda quando a senha muda -> derruba a sessão
+    criada_em         INTEGER NOT NULL,      -- timestamp em ms
+    expira_em         INTEGER NOT NULL,      -- timestamp em ms
+    encerrada_em      INTEGER                -- preenchido no logout
+);
+
 
 -- =====================================================================
 --  PARTE 8 — ÍNDICES  (deixam os filtros por farmácia mais rápidos)
@@ -400,3 +423,4 @@ CREATE INDEX IF NOT EXISTS idx_chamado_farmacia      ON chamado (id_farmacia, st
 CREATE INDEX IF NOT EXISTS idx_servico_farmacia      ON servico (id_farmacia);
 CREATE INDEX IF NOT EXISTS idx_remcat_categoria      ON remedio_categoria (id_categoria);
 CREATE INDEX IF NOT EXISTS idx_sessao_paciente       ON sessao_paciente (id_paciente);
+CREATE INDEX IF NOT EXISTS idx_sessao_usuario        ON sessao_usuario (papel, id_usuario);

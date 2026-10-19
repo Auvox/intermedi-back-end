@@ -38,6 +38,8 @@ export async function responderRedistribuicao(req, res) {
   try {
     const id = idDaUrl(req, "Pedido");
     const data = await lerJson(req);
+    // o gerente responde em nome dele (o id vem do login, não do corpo)
+    if (req.usuario?.papel === "gerente") data.idGerente = req.usuario.id;
     const { pedido, encaminhadoPara } = serviceRedistribuicao.responder(id, data);
 
     enviarJson(res, 200, {
@@ -57,6 +59,8 @@ export async function iniciarPreparoRedistribuicao(req, res) {
   try {
     const id = idDaUrl(req, "Pedido");
     const data = await lerJson(req);
+    // o funcionário assume o preparo em nome dele (o id vem do login, não do corpo)
+    if (req.usuario?.papel === "funcionario") data.idFuncionario = req.usuario.id;
     const pedido = serviceRedistribuicao.iniciarPreparo(id, data);
 
     enviarJson(res, 200, { status: "PREPARO INICIADO - POST", pedido });

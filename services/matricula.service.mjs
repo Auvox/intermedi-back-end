@@ -1,6 +1,7 @@
 import db from "../database/database.mjs";
 
-const TABELAS = new Set(["funcionario", "gerente"]);
+// Prefixo de cada papel: admin A000001, gerente G000001, funcionário 000001
+const TABELAS = new Set(["admin", "funcionario", "gerente"]);
 
 // Gera uma matrícula de 6 dígitos (com prefixo opcional) que ainda não existe
 export function gerarMatriculaUnica(tabela, prefixo = "") {

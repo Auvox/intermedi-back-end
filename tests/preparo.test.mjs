@@ -128,12 +128,17 @@ test("cliques simultâneos pela API: só uma requisição assume o preparo", asy
       if (achou) { clearTimeout(timer); resolve(`http://127.0.0.1:${achou[1]}`); }
     });
   });
+  // as rotas exigem login da equipe: usa o admin do seed (CPF + matrícula + senha)
+  let token;
   const api = async (rota, method = "GET", corpo) => {
     const resposta = await fetch(url + rota, {
-      method, headers: { "Content-Type": "application/json" }, body: corpo && JSON.stringify(corpo),
+      method, body: corpo && JSON.stringify(corpo),
+      headers: { "Content-Type": "application/json", ...(token && { Authorization: `Bearer ${token}` }) },
     });
     return { status: resposta.status, dados: await resposta.json() };
   };
+  ({ dados: { token } } = await api("/auth/login", "POST", { cpf: "999.999.999-99", matricula: "A000001", senha: "senha123" }));
+  assert.ok(token);
 
   const { dados: { chamado: { idChamado } } } = await api("/funcionario/2/chamado", "POST", { remedios: [{ idRemedio: 1, quantidade: 50 }] });
   const { dados: { despacho } } = await api(`/chamado/${idChamado}/responder`, "PUT", { idGerente: 2, aceitar: true });

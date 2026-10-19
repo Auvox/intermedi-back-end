@@ -15,12 +15,17 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
+import { randomBytes } from 'node:crypto';
+import { DatabaseSync } from 'node:sqlite';
+import { gerarHashSenha } from '../utils/senha.mjs';
 
 test('backend unificado: app e contratos do site no mesmo banco isolado', async (t) => {
   const temp = await mkdtemp(path.join(tmpdir(), 'intermedi-test-'));
   // o servidor cria as tabelas sozinho ao subir (database/database.mjs)
   const dbPath = path.join(temp, 'test.db');
-  const env = { ...process.env, INTERMEDI_DB_PATH: dbPath, INTERMEDI_UPLOAD_DIR: path.join(temp, 'uploads'), PORT: '0', HOST: '127.0.0.1' };
+  // JWT_SECRET fixo: o login da equipe continua valendo depois do reinício
+  const env = { ...process.env, INTERMEDI_DB_PATH: dbPath, INTERMEDI_UPLOAD_DIR: path.join(temp, 'uploads'),
+    INTERMEDI_EMAIL_DIR: path.join(temp, 'emails'), JWT_SECRET: randomBytes(32).toString('hex'), PORT: '0', HOST: '127.0.0.1' };
   let child;
   async function start() {
     child = spawn(process.execPath, [fileURLToPath(new URL('../server.mjs', import.meta.url))], { cwd: temp, env, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -41,12 +46,21 @@ test('backend unificado: app e contratos do site no mesmo banco isolado', async 
   async function stop() { const exited = once(child, 'exit'); child.kill(); await exited; }
   t.after(async () => { if (child?.exitCode === null && !child.killed) await stop(); await rm(temp, { recursive: true, force: true }); });
   let url = await start();
-  async function request(route, method = 'GET', data, token) {
+  // as rotas do site exigem login da equipe: entra como um admin criado no banco de teste
+  const banco = new DatabaseSync(dbPath);
+  banco.prepare('INSERT INTO admin (nome, email, senha_hash, cpf, matricula) VALUES (?, ?, ?, ?, ?)')
+    .run('Admin do teste', 'admin@example.test', gerarHashSenha('senha-admin'), '999.999.999-99', 'A000001');
+  banco.close();
+  let equipe;
+  // rotas /api/* são do app do paciente (token próprio); as demais usam o token da equipe
+  async function request(route, method = 'GET', data, token = route.startsWith('/api/') ? undefined : equipe) {
     const response = await fetch(url + route, { method,
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: data === undefined ? undefined : JSON.stringify(data) });
     return { status: response.status, data: await response.json() };
   }
+  equipe = (await request('/auth/login', 'POST', { cpf: '99999999999', matricula: 'A000001', senha: 'senha-admin' })).data.token;
+  assert.ok(equipe);
   const payload = { nomePaciente: 'Pessoa de teste', cpfPaciente: '123.456.789-00', telPaciente: '11912345678',
     emailPaciente: 'teste@example.com', senhaPaciente: 'teste-senha', medicamentoFrequentePaciente: '',
     cepPaciente: '01001000', ruaPaciente: 'Rua preservada', numeroPaciente: '12', bairroPaciente: 'Centro',

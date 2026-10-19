@@ -1,3 +1,4 @@
+import "./utils/ambiente.mjs";
 import { createServer } from "node:http";
 import { Router } from "./router.mjs";
 
@@ -13,11 +14,19 @@ import categoriaRoutes from "./routes/categoria.routes.mjs";
 import redistribuicaoRoutes from "./routes/redistribuicao.routes.mjs";
 import resumoRoutes from "./routes/resumo.routes.mjs";
 import fotoRoutes from "./routes/foto.routes.mjs";
+import authRoutes from "./routes/auth.routes.mjs";
 import { iniciarEntregas } from "./services/redistribuicao.service.mjs";
+import { autorizar } from "./services/acesso.service.mjs";
 import rotaRoutes from "./sistema-rota/rota.routes.mjs";
+import { enviarErro } from "./utils/http.mjs";
+import { segredoJwt } from "./utils/jwt.mjs";
+
+// sem JWT_SECRET em produção o servidor não sobe (em dev, só avisa)
+segredoJwt();
 
 const router = new Router();
 
+authRoutes(router);
 remedioRoutes(router);
 farmaciaRoutes(router);
 funcionarioRoutes(router);
@@ -51,9 +60,17 @@ const server = createServer(async (req, res) => {
 
   const url = new URL(req.url, "http://localhost");
   console.log(req.method, url.pathname);
-  const handle = router.find(req.method, url.pathname);
-  if (handle) {
-    await handle(req, res);
+  const rota = router.match(req.method, url.pathname);
+  if (rota) {
+    req.params = rota.params;
+    // login e permissão de cada rota: services/acesso.service.mjs
+    try {
+      autorizar(req, `${req.method} ${rota.rota}`, rota.params);
+    } catch (error) {
+      enviarErro(res, error);
+      return;
+    }
+    await rota.handler(req, res);
   } else {
     res.statusCode = 404;
     res.setHeader("Content-Type", "application/json");

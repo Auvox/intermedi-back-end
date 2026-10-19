@@ -38,6 +38,18 @@ export function aplicarSchema(db) {
     );
   }
   migrarRedistribuicao(db);
+  migrarLoginAdmin(db, temColuna);
+}
+
+// Bancos criados antes do login por matrícula: o admin ganha cpf e matricula
+// (vazios; npm run admin:criar preenche). Os índices UNIQUE ficam aqui porque
+// o schema.sql roda antes do ALTER TABLE nos bancos antigos.
+function migrarLoginAdmin(db, temColuna) {
+  for (const coluna of ["cpf", "matricula"]) {
+    if (!temColuna("admin", coluna)) db.exec(`ALTER TABLE admin ADD COLUMN ${coluna} TEXT`);
+  }
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_admin_cpf ON admin (cpf)");
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_admin_matricula ON admin (matricula)");
 }
 
 // Bancos criados antes do status "preparando": o SQLite não altera o CHECK de

@@ -30,9 +30,44 @@ Todos os usuários dos dados de teste têm a senha **`senha123`**.
 | `npm run db:init` | Cria as tabelas que faltam (não apaga nada) |
 | `npm run db:seed` | Coloca os dados de teste num banco vazio |
 | `npm test` | Roda os testes num banco temporário (não mexe no seu) |
+| `npm run admin:criar -- --nome "Nome" --email x@y.com --cpf 000.000.000-00` | Cria um admin com matrícula e senha provisória (manda o e-mail). Com `--id 1` completa um admin antigo |
+| `npm run acesso:reenviar -- --matricula G000123` | Gera uma senha provisória nova e manda de novo o e-mail com a matrícula (a senha antiga e as sessões abertas deixam de valer). No banco da `teste/intermedi-3d`: `node --env-file-if-exists=.env --env-file=.env.teste-3d scripts/reenviar-acesso.mjs --matricula G000123` |
 
 > Antes de rodar `db:reset`, pare o servidor (Ctrl+C) e feche o banco se ele
 > estiver aberto no VS Code ou no DB Browser.
+
+---
+
+## Login da equipe (JWT)
+
+Admin, gerente e funcionário entram com **CPF + matrícula + senha** em
+`POST /auth/login`. A resposta traz um JWT (`token`) e a pessoa logada
+(`usuario`: papel, id, farmácia). O front manda o token em
+`Authorization: Bearer <token>` em todas as chamadas.
+
+- **Cadastro:** o admin cadastra o gerente (`POST /gerente`) e o gerente cadastra
+  o funcionário (`POST /funcionario`, sempre na farmácia dele). O back gera a
+  matrícula (`G000123` gerente, `000123` funcionário, `A000123` admin) e uma
+  senha provisória, e manda as duas por e-mail ("Intermedi x Auvox"). A senha
+  não volta na resposta, só no e-mail; se o envio falhar, a resposta traz
+  `senhaProvisoria` para quem cadastrou entregar pessoalmente.
+- **Sessão:** cada login cria uma linha em `sessao_usuario` (o `jti` do token).
+  `POST /auth/logout` encerra a sessão; trocar a senha derruba todas.
+  `GET /auth/me` devolve quem está logado. Duração: `JWT_EXPIRA_HORAS` (8 h).
+- **Permissões:** `services/acesso.service.mjs` diz quem pode chamar cada rota.
+  Sem token: 401. Perfil ou farmácia errados: 403. O admin acessa tudo; gerente
+  e funcionário só os dados da farmácia deles. Rota nova sem regra fica só para
+  o admin. Continuam públicos: catálogo de remédios, categorias, lista de
+  farmácias, fotos (`/uploads/...`) e o app do paciente (`/api/*`, login próprio).
+- **Primeiro admin:** `npm run admin:criar` (ninguém cadastra o admin pela tela).
+  No seed, o admin é CPF `999.999.999-99`, matrícula `A000001`, senha `senha123`;
+  os gerentes são `G000001`...`G000005` e os funcionários `000001`...`000009`
+  (veja os CPFs em `database/seed.sql`).
+- **E-mail:** sem `SMTP_HOST` no `.env`, nada é enviado: o e-mail fica salvo como
+  `.html` em `tmp/emails/` e o caminho aparece no terminal. As cores ficam em
+  `services/email/paleta.mjs` (ainda provisórias, em cinza).
+- **`.env`** (fora do Git): `JWT_SECRET` (obrigatório em produção, 32+ caracteres)
+  e as variáveis `SMTP_*`. Veja `.env.example`.
 
 ---
 
@@ -135,6 +170,7 @@ rodar `npm install` depois de receber esta alteração.
 
 | Recurso | Rotas |
 | --- | --- |
+| Login da equipe | `POST /auth/login` `{ cpf, matricula, senha }` · `GET /auth/me` · `POST /auth/logout` |
 | Farmácia | `GET/POST /farmacia` · `GET/PUT/DELETE /farmacia/:id` |
 | Gerente | `GET/POST /gerente` · `GET/PUT/DELETE /gerente/:id` |
 | Funcionário | `GET/POST /funcionario` · `GET/PUT/DELETE /funcionario/:id` |
@@ -148,8 +184,11 @@ rodar `npm install` depois de receber esta alteração.
 ### Campos obrigatórios novos
 
 - **Gerente:** `fkIdFarmacia` (a farmácia dele). A matrícula é gerada pelo back.
-- **Funcionário:** `fkIdFarmacia`. Pode mandar `senhaFuncionario`; se não
-  mandar, a resposta traz uma `senhaProvisoria`. O turno aceita
+  A resposta traz `matricula` e `email` (`{ status: "enviado" | "teste" | "falhou", para }`).
+- **Funcionário:** quando o gerente cadastra, a farmácia é a dele (o
+  `fkIdFarmacia` enviado é ignorado); o admin precisa mandar `fkIdFarmacia`.
+  Pode mandar `senhaFuncionario`; se não mandar, uma senha provisória vai por
+  e-mail junto com a matrícula. O turno aceita
   `manha`, `tarde`, `noite` ou `integral` ("Manhã" também funciona e vira `manha`).
 - **Remédio:** pode mandar `idsCategoria: [1, 2]` para ligar às categorias.
 
