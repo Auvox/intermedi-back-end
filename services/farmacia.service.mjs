@@ -26,8 +26,8 @@ const SELECT_FARMACIA = /*sql*/ `
       f.foto        AS fotoFarmacia,
       f.created_at  AS createdAtFarmacia,
       f.id_endereco AS idEndereco,
-      e.latitude AS latitude,
-      e.longitude AS longitude,
+      COALESCE(f.latitude, e.latitude) AS latitude,
+      COALESCE(f.longitude, e.longitude) AS longitude,
       ${colunasEndereco({
         cep: "cepFarmacia", logradouro: "enderecoFarmacia", numero: "numeroFarmacia",
         complemento: "complementoFarmacia", bairro: "bairroFarmacia",
@@ -41,6 +41,22 @@ function validar(dados) {
   if (!texto(dados.nomeFarmacia) || !texto(dados.cnesFarmacia)) {
     throw erro(400, "Informe nomeFarmacia e cnesFarmacia.");
   }
+}
+
+// Coordenadas são um par. Valores ausentes não viram o ponto (0, 0).
+function lerCoordenadas(data, atual, enderecoMudou = false) {
+  const temLatitude = Object.hasOwn(data, "latitude");
+  const temLongitude = Object.hasOwn(data, "longitude");
+  if (!temLatitude && !temLongitude) return enderecoMudou ? [null, null] : [atual?.latitude ?? null, atual?.longitude ?? null];
+  if (!temLatitude || !temLongitude) throw erro(400, "Informe latitude e longitude juntas.");
+  if (data.latitude === null && data.longitude === null) return [null, null];
+  const numero = valor => (typeof valor === "number" || (typeof valor === "string" && valor.trim())) ? Number(valor) : NaN;
+  const latitude = numero(data.latitude), longitude = numero(data.longitude);
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+      !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    throw erro(400, "Latitude ou longitude inválida.");
+  }
+  return [latitude, longitude];
 }
 
 // O vínculo fica em gerente/funcionario.id_farmacia, sempre com um ID real.
@@ -63,20 +79,26 @@ export function farmaciaDoPayload(data, idAtual = null) {
 export async function cadastrar(data) {
   validar(data);
   const endereco = lerEndereco(data, CAMPOS_ENDERECO);
-  const coordenadas = endereco ? await geocodificarEndereco(endereco) : null;
+  const pontoExplicito = Object.hasOwn(data, "latitude") || Object.hasOwn(data, "longitude");
+  const par = lerCoordenadas(data);
+  const coordenadas = pontoExplicito
+    ? { latitude: par[0], longitude: par[1] }
+    : (endereco ? await geocodificarEndereco(endereco) : null);
+  const latitude = coordenadas?.latitude ?? null;
+  const longitude = coordenadas?.longitude ?? null;
 
   return emTransacao(() => {
     const idEndereco = salvarEndereco(null, endereco, coordenadas);
 
     const result = db.prepare(/*sql*/ `
-      INSERT INTO farmacia (nome, email, telefone, cnes, id_endereco)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO farmacia (nome, email, telefone, cnes, id_endereco, latitude, longitude)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(
       texto(data.nomeFarmacia),
       textoOuNull(data.emailFarmacia),
       textoOuNull(data.telFarmacia),
       texto(data.cnesFarmacia),
-      idEndereco,
+      idEndereco, latitude, longitude,
     );
 
     return { idFarmacia: Number(result.lastInsertRowid), idEndereco };
@@ -103,26 +125,28 @@ export async function editar(id, data) {
   const endereco = lerEndereco(dados, CAMPOS_ENDERECO);
   const enderecoAnterior = lerEndereco(atual, CAMPOS_ENDERECO);
   const camposLocalizacao = ["logradouro", "numero", "bairro", "cidade", "uf", "cep"];
-  const mudouEndereco = camposLocalizacao.some((campo) =>
-    endereco?.[campo] !== enderecoAnterior?.[campo]);
-  // Complemento, nome e telefone não exigem uma nova consulta.
-  const coordenadas = mudouEndereco
-    ? (endereco ? await geocodificarEndereco(endereco) : null)
-    : undefined;
+  const mudouEndereco = camposLocalizacao.some(campo => endereco?.[campo] !== enderecoAnterior?.[campo]);
+  const pontoExplicito = Object.hasOwn(data, "latitude") || Object.hasOwn(data, "longitude");
+  const par = lerCoordenadas(data, atual, mudouEndereco);
+  const coordenadas = pontoExplicito
+    ? { latitude: par[0], longitude: par[1] }
+    : mudouEndereco ? (endereco ? await geocodificarEndereco(endereco) : null) : undefined;
+  const latitude = coordenadas === undefined ? atual.latitude : coordenadas?.latitude ?? null;
+  const longitude = coordenadas === undefined ? atual.longitude : coordenadas?.longitude ?? null;
 
   return emTransacao(() => {
     const idEndereco = salvarEndereco(atual.idEndereco, endereco, coordenadas);
 
     const result = db.prepare(/*sql*/ `
       UPDATE farmacia
-      SET nome = ?, email = ?, telefone = ?, cnes = ?, id_endereco = ?
+      SET nome = ?, email = ?, telefone = ?, cnes = ?, id_endereco = ?, latitude = ?, longitude = ?
       WHERE id_farmacia = ?
     `).run(
       texto(dados.nomeFarmacia),
       textoOuNull(dados.emailFarmacia),
       textoOuNull(dados.telFarmacia),
       texto(dados.cnesFarmacia),
-      idEndereco,
+      idEndereco, latitude, longitude,
       id,
     );
 

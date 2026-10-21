@@ -156,3 +156,16 @@ rodar `npm install` depois de receber esta alteração.
 
 Copie `.env.example` para `.env` se quiser mudar a porta ou o caminho do banco.
 O `.env` não vai para o Git.
+
+### Farmácias corrigidas para demonstração
+
+Depois de baixar esta branch, execute `npm install`, `npm run db:init` e
+`npm run db:farmacias`. O último comando faz backup do SQLite e aplica os sete
+cadastros de `database/farmacias-publicas.json`, com endereço e coordenadas.
+Pode ser repetido: mantém os IDs, estoques e demais cadastros. Somente os quatro
+exemplos reconhecidos pelo nome e CNES antigos são substituídos; outros cadastros
+são preservados. Não é necessário `db:reset` nem `db:sync`.
+
+O JSON contém apenas dados públicos das farmácias. Não exporta pacientes, senhas
+ou estoques locais. Estoques exibidos são de demonstração, não das unidades reais.
+O comando é manual: apenas baixar o código não altera um banco já existente.

@@ -1,0 +1,116 @@
+[
+  {
+    "nome": "UBS Guaianases II",
+    "cnes": "4050010",
+    "telefone": "(11) 5237-1665",
+    "logradouro": "Rua Comandante Carlos Ruhl",
+    "numero": "189",
+    "complemento": null,
+    "bairro": "Guaianases",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "08410-120",
+    "latitude": -23.54548,
+    "longitude": -46.41554,
+    "substituiExemplo": {
+      "nome": "Farmácia Pedro João Neto",
+      "cnes": "1234567"
+    }
+  },
+  {
+    "nome": "UBS Guaianazes",
+    "cnes": "2787083",
+    "telefone": "(11) 5237-1545",
+    "logradouro": "Rua Professor Cosme Deodato Tadeu",
+    "numero": "90",
+    "complemento": null,
+    "bairro": "Guaianases",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "08450-380",
+    "latitude": -23.54346,
+    "longitude": -46.40936,
+    "substituiExemplo": {
+      "nome": "Farmácia Vida",
+      "cnes": "7654321"
+    }
+  },
+  {
+    "nome": "UBS Jardim Aurora",
+    "cnes": "2787202",
+    "telefone": "(11) 5237-1800",
+    "logradouro": "Avenida Claudio da Costa",
+    "numero": "54",
+    "complemento": null,
+    "bairro": "Guaianases",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "08431-160",
+    "latitude": -23.53657,
+    "longitude": -46.41752,
+    "substituiExemplo": {
+      "nome": "Farmácia Saúde Leste",
+      "cnes": "2345678"
+    }
+  },
+  {
+    "nome": "UBS Jardim Bandeirantes",
+    "cnes": "3016935",
+    "telefone": "(11) 5237-2040",
+    "logradouro": "Rua Pacheco Aranha",
+    "numero": "4",
+    "complemento": null,
+    "bairro": "Guaianases",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "08451-410",
+    "latitude": -23.54343,
+    "longitude": -46.39248,
+    "substituiExemplo": {
+      "nome": "Drogaria Bem Estar",
+      "cnes": "8765432"
+    }
+  },
+  {
+    "nome": "UBS Jardim Soares",
+    "cnes": "4050045",
+    "telefone": "(11) 5178-1204",
+    "logradouro": "Rua Feliciano de Mendonça",
+    "numero": "496",
+    "complemento": null,
+    "bairro": "Jardim Soares",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "08460-365",
+    "latitude": -23.55371,
+    "longitude": -46.39838
+  },
+  {
+    "nome": "Drogalis Guaianazes",
+    "cnes": "4741730",
+    "telefone": "(11) 4652-3945",
+    "logradouro": "Rua Salvador Gianetti",
+    "numero": "570",
+    "complemento": null,
+    "bairro": "Guaianases",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "08410-000",
+    "latitude": -23.5426007,
+    "longitude": -46.416915
+  },
+  {
+    "nome": "Drogaria São Paulo — Guaianases",
+    "cnes": "4173686",
+    "telefone": "1132747400",
+    "logradouro": "Estrada Itaquera-Guaianases",
+    "numero": "2542",
+    "complemento": "Térreo, 2546 e 2548",
+    "bairro": "Jardim Helena",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "08420-000",
+    "latitude": -23.5424037,
+    "longitude": -46.4251393
+  }
+]
