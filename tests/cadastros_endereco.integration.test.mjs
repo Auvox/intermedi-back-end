@@ -1,10 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { Router } from "../router.mjs";
 
 // Toda a validação usa um banco em memória, sem alterar os cadastros reais.
 process.env.INTERMEDI_DB_PATH = ":memory:";
+// os e-mails de boas-vindas (sem SMTP) vão para a pasta temporária do sistema
+process.env.INTERMEDI_EMAIL_DIR = path.join(tmpdir(), "intermedi-emails-teste");
+delete process.env.SMTP_HOST;
 const { default: db } = await import("../database/database.mjs");
 const { default: farmaciaRoutes } = await import("../routes/farmacia.routes.mjs");
 const { default: gerenteRoutes } = await import("../routes/gerente.routes.mjs");
@@ -24,6 +29,20 @@ function endereco(sufixo, logradouro = "endereco") {
 }
 
 test("POSTs separam os endereços e mantêm os vínculos com rollback em erros", async (t) => {
+  const fetchOriginal = globalThis.fetch;
+  const chaveOriginal = process.env.GEOAPIFY_API_KEY;
+  process.env.GEOAPIFY_API_KEY = "chave-de-teste";
+  globalThis.fetch = async (url, options) => {
+    if (new URL(url).hostname === "api.geoapify.com") {
+      return { ok: true, json: async () => ({ results: [{ lat: -19.92, lon: -43.94, housenumber: "23" }] }) };
+    }
+    return fetchOriginal(url, options);
+  };
+  t.after(() => {
+    globalThis.fetch = fetchOriginal;
+    if (chaveOriginal === undefined) delete process.env.GEOAPIFY_API_KEY;
+    else process.env.GEOAPIFY_API_KEY = chaveOriginal;
+  });
   const router = new Router();
   for (const registrar of [farmaciaRoutes, gerenteRoutes, funcionarioRoutes, pacienteRoutes]) registrar(router);
   const server = createServer((req, res) => {
@@ -123,7 +142,8 @@ test("POSTs separam os endereços e mantêm os vínculos com rollback em erros",
 
   await t.test("vínculos inválidos não criam pessoas nem endereços órfãos", async () => {
     const antes = contagem();
-    for (const [route, dados] of [["/gerente", gerente], ["/funcionario", funcionario]]) {
+    // funcionário sem gerente: com gerente, a farmácia vem do cadastro dele e a do corpo é ignorada
+    for (const [route, dados] of [["/gerente", gerente], ["/funcionario", { ...funcionario, idGerenteCadastro: undefined }]]) {
       for (const vinculo of [
         { fkIdFarmacia: "" }, { fkIdFarmacia: 999999 }, { fkIdFarmacia: "abc" },
         { fkIdFarmacia: idFarmacia, idFarmacia: outroId },

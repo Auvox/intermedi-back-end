@@ -1,5 +1,6 @@
 # dependências (cada um instala com npm install)
 node_modules/
+.runtime/
 
 # banco de dados local (cada um gera com npm run db:reset)
 *.db
@@ -19,3 +20,6 @@ uploads/
 
 # variáveis de ambiente locais
 .env
+
+# e-mails de teste (sem SMTP no .env)
+tmp/

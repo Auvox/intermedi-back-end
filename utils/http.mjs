@@ -1,6 +1,7 @@
 // Erro com status HTTP (ex.: throw erro(400, "CPF inválido"))
-export function erro(status, mensagem) {
-  return Object.assign(new Error(mensagem), { status });
+// dados (opcional): campos extras na resposta, ex.: quem já assumiu o pedido
+export function erro(status, mensagem, dados) {
+  return Object.assign(new Error(mensagem), { status, ...(dados && { dados }) });
 }
 
 // Lê o corpo da requisição como JSON (objeto)
@@ -63,7 +64,9 @@ export function traduzirErro(error) {
 // Responde um erro no formato que o front já usa: { error: "..." }
 export function enviarErro(res, error) {
   const { status, mensagem } = traduzirErro(error);
-  enviarJson(res, status, { error: mensagem });
+  // erro 500: o server.mjs grava a mensagem original em erro_log (aba Desempenho)
+  if (status >= 500) res.erroOriginal = error;
+  enviarJson(res, status, { error: mensagem, ...(error.status && error.dados) });
 }
 
 // Converte o id da URL em número (404 se não for válido)

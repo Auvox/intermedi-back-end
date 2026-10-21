@@ -5,7 +5,7 @@ import { processarChegadas } from "./redistribuicao.service.mjs";
 
 // Estoque de cada farmácia. O gerente só pode adicionar remédios que
 // já existem no catálogo do admin (tabela remedio).
-const SELECT_ESTOQUE = /*sql*/ `
+const SELECT_ESTOQUE = `
   SELECT
       es.id_estoque          AS idEstoque,
       es.id_farmacia         AS idFarmacia,
@@ -92,7 +92,7 @@ export function listarDaFarmacia(idFarmacia, { busca, situacao } = {}) {
   }
 
   const termo = texto(busca) ? `%${texto(busca).toLowerCase()}%` : null;
-  const todos = db.prepare(/*sql*/ `
+  const todos = db.prepare(`
     ${SELECT_ESTOQUE}
     WHERE es.id_farmacia = ?
       AND (? IS NULL OR LOWER(r.nome) LIKE ? OR LOWER(r.principio_ativo) LIKE ?)
@@ -133,7 +133,7 @@ export function cadastrar(idGerente, data) {
     throw erro(409, `${remedio.nome} já está no estoque desta farmácia. Use PUT para ajustar a quantidade.`);
   }
 
-  db.prepare(/*sql*/ `
+  db.prepare(`
     INSERT INTO estoque (id_remedio, id_farmacia, quantidade, estoque_minimo, lote, validade, id_gerente_cadastro)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `).run(
@@ -169,7 +169,7 @@ export function editar(idGerente, idRemedio, data) {
     ? atual.quantidade + inteiro(data.entrada, "entrada", 1)
     : data.quantidade !== undefined ? inteiro(data.quantidade, "quantidade") : atual.quantidade;
 
-  db.prepare(/*sql*/ `
+  db.prepare(`
     UPDATE estoque
     SET quantidade = ?, estoque_minimo = ?, lote = ?, validade = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id_estoque = ?
@@ -212,7 +212,7 @@ export function baixar(idFarmacia, itens) {
     }
 
     // "quantidade >= ?" protege contra dois serviços baixando ao mesmo tempo
-    const { changes } = db.prepare(/*sql*/ `
+    const { changes } = db.prepare(`
       UPDATE estoque SET quantidade = quantidade - ?, updated_at = CURRENT_TIMESTAMP
       WHERE id_estoque = ? AND quantidade >= ?
     `).run(quantidade, item.idEstoque, quantidade);

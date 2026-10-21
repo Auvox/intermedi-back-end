@@ -6,7 +6,7 @@ import { apagarArquivoDaFoto } from "./foto.controller.mjs";
 export async function cadastrarFarmacia(req, res) {
   try {
     const data = await lerJson(req);
-    const farmacia = serviceFarmacia.cadastrar(data);
+    const farmacia = await serviceFarmacia.cadastrar(data);
 
     enviarJson(res, 201, {
       status: "CADASTRADO COM SUCESSO - POST",
@@ -51,7 +51,7 @@ export async function editarFarmacia(req, res) {
   try {
     const id = idDaUrl(req, "Farmacia");
     const data = await lerJson(req);
-    const farmacia = serviceFarmacia.editar(id, data);
+    const farmacia = await serviceFarmacia.editar(id, data);
     if (farmacia.changes === 0) throw erro(404, "Farmacia não encontrado");
 
     enviarJson(res, 201, {

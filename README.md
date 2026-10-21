@@ -24,14 +24,54 @@ Todos os usuários dos dados de teste têm a senha **`senha123`**.
 | Comando | O que faz |
 | --- | --- |
 | `npm run dev` | Sobe o servidor e reinicia sozinho quando um `.mjs` muda |
+| `npm run dev:teste-3d` | Igual ao `dev`, mas no banco próprio da branch `teste/intermedi-3d` (`.env.teste-3d`) |
 | `npm start` | Sobe o servidor sem reiniciar sozinho |
 | `npm run db:reset` | **Apaga** o banco e recria tudo com os dados de teste |
 | `npm run db:init` | Cria as tabelas que faltam (não apaga nada) |
 | `npm run db:seed` | Coloca os dados de teste num banco vazio |
 | `npm test` | Roda os testes num banco temporário (não mexe no seu) |
+| `npm run desempenho:seed` | Preenche a aba Desempenho do admin com 30 dias de uso de exemplo (cliques, telas, requisições e alertas). Apaga só os dados do Desempenho e não roda em produção. Pare o servidor antes; `-- --dias 7` gera menos dias |
+| `npm run admin:criar -- --nome "Nome" --email x@y.com --cpf 000.000.000-00` | Cria um admin com matrícula e senha provisória (manda o e-mail). Com `--id 1` completa um admin antigo |
+| `npm run acesso:reenviar -- --matricula G000123` | Gera uma senha provisória nova e manda de novo o e-mail com a matrícula (a senha antiga e as sessões abertas deixam de valer). No banco da `teste/intermedi-3d`: `node --env-file-if-exists=.env --env-file=.env.teste-3d scripts/reenviar-acesso.mjs --matricula G000123` |
 
 > Antes de rodar `db:reset`, pare o servidor (Ctrl+C) e feche o banco se ele
 > estiver aberto no VS Code ou no DB Browser.
+
+---
+
+## Login da equipe (JWT)
+
+Admin, gerente e funcionário entram com **CPF + matrícula + senha** em
+`POST /auth/login`. A resposta traz um JWT (`token`) e a pessoa logada
+(`usuario`: papel, id, farmácia). O front manda o token em
+`Authorization: Bearer <token>` em todas as chamadas.
+
+- **Cadastro:** o admin cadastra o gerente (`POST /gerente`) e o gerente cadastra
+  o funcionário (`POST /funcionario`, sempre na farmácia dele). O back gera a
+  matrícula (`G000123` gerente, `000123` funcionário, `A000123` admin) e uma
+  senha provisória, e manda as duas por e-mail ("Intermedi x Auvox"). A senha
+  não volta na resposta, só no e-mail; se o envio falhar, a resposta traz
+  `senhaProvisoria` para quem cadastrou entregar pessoalmente.
+- **Sessão:** cada login cria uma linha em `sessao_usuario` (o `jti` do token).
+  `POST /auth/logout` encerra a sessão; trocar a senha derruba todas.
+  `GET /auth/me` devolve quem está logado. Duração: `JWT_EXPIRA_HORAS` (8 h).
+- **Permissões:** `services/acesso.service.mjs` diz quem pode chamar cada rota.
+  Sem token: 401. Perfil ou farmácia errados: 403. O admin acessa tudo; gerente
+  e funcionário só os dados da farmácia deles. Rota nova sem regra fica só para
+  o admin. Continuam públicos: catálogo de remédios, categorias, lista de
+  farmácias, fotos (`/uploads/...`) e o app do paciente (`/api/*`, login próprio).
+- **Primeiro admin:** `npm run admin:criar` (ninguém cadastra o admin pela tela).
+  No seed, o admin é CPF `999.999.999-99`, matrícula `A000001`, senha `senha123`;
+  os gerentes são `G000001`...`G000005` e os funcionários `000001`...`000009`
+  (veja os CPFs em `database/seed.sql`).
+- **E-mail:** sem `SMTP_HOST` no `.env`, nada é enviado: o e-mail fica salvo como
+  `.html` em `tmp/emails/` (com as imagens embutidas) e o caminho aparece no
+  terminal. O e-mail de boas-vindas usa a cor da plataforma de quem foi
+  cadastrado (`services/email/paleta.mjs`: admin preto, gerente verde,
+  funcionário azul); marcas e ícones são desenhados em `services/email/imagens.mjs`
+  e vão anexados (`cid:`), porque os clientes de e-mail não mostram SVG.
+- **`.env`** (fora do Git): `JWT_SECRET` (obrigatório em produção, 32+ caracteres)
+  e as variáveis `SMTP_*`. Veja `.env.example`.
 
 ---
 
@@ -134,23 +174,59 @@ rodar `npm install` depois de receber esta alteração.
 
 | Recurso | Rotas |
 | --- | --- |
+| Login da equipe | `POST /auth/login` `{ cpf, matricula, senha }` · `GET /auth/me` · `POST /auth/logout` |
 | Farmácia | `GET/POST /farmacia` · `GET/PUT/DELETE /farmacia/:id` |
 | Gerente | `GET/POST /gerente` · `GET/PUT/DELETE /gerente/:id` |
 | Funcionário | `GET/POST /funcionario` · `GET/PUT/DELETE /funcionario/:id` |
 | Paciente | `GET/POST /paciente` · `GET/PUT/DELETE /paciente/:id` |
 | Remédio | `GET/POST /remedios` · `GET/PUT/DELETE /remedios/:id` · filtro `GET /remedios?categoria=Febre` |
 | Serviço | `POST /servicos` |
+| Pedidos entre farmácias | `GET /gerente/:id/redistribuicoes` · `GET /redistribuicao/:id` · `PUT /redistribuicao/:id/responder` |
+| Preparo do envio | `GET /funcionario/:id/preparos` (avisos da equipe) · `POST /redistribuicao/:id/preparar` `{ idFuncionario }` |
+| Desempenho (só admin) | `GET /analytics/resumo` · `GET /analytics/rotas` · `GET /analytics/cliques?rota=/x&dispositivo=celular` · `GET /analytics/telas` · `GET /saude` · `GET /alertas?status=ativo` · `PUT /alertas/:id/resolver` · `PUT /alertas/:id/silenciar` (filtros: `periodo=hoje|7d|30d|personalizado`, `plataforma=app|web`, `farmacia=3`) |
+| Desempenho (público) | `POST /analytics/cliques` (lote do web e do app) · `POST /analytics/telas` (captura da tela do app, só fora de produção) |
 | App do paciente | `POST /api/auth/register` · `POST /api/auth/login` · `POST /api/auth/logout` · `GET/PUT/DELETE /api/pacientes/me` · `PUT /api/pacientes/:id/foto` |
 
 ### Campos obrigatórios novos
 
 - **Gerente:** `fkIdFarmacia` (a farmácia dele). A matrícula é gerada pelo back.
-- **Funcionário:** `fkIdFarmacia`. Pode mandar `senhaFuncionario`; se não
-  mandar, a resposta traz uma `senhaProvisoria`. O turno aceita
+  A resposta traz `matricula` e `email` (`{ status: "enviado" | "teste" | "falhou", para }`).
+- **Funcionário:** quando o gerente cadastra, a farmácia é a dele (o
+  `fkIdFarmacia` enviado é ignorado); o admin precisa mandar `fkIdFarmacia`.
+  Pode mandar `senhaFuncionario`; se não mandar, uma senha provisória vai por
+  e-mail junto com a matrícula. O turno aceita
   `manha`, `tarde`, `noite` ou `integral` ("Manhã" também funciona e vira `manha`).
 - **Remédio:** pode mandar `idsCategoria: [1, 2]` para ligar às categorias.
 
 ---
+
+### Preparo dos pedidos entre farmácias
+
+O aceite do gerente fornecedor deixa o pedido `aprovada` (aguardando preparo) e avisa todos os
+funcionários da farmácia. O primeiro que chamar `POST /redistribuicao/:id/preparar` assume
+(`preparando`); os outros recebem **409** com `preparadoPor`. A garantia é o `UPDATE ... WHERE
+status = 'aprovada'`: o SQLite faz uma escrita por vez, então dois cliques no mesmo instante não
+assumem o mesmo pedido (há teste com 6 requisições simultâneas em `tests/preparo.test.mjs`).
+O preparo leva `caixas × 5 s` (caixas de 50 un.); depois o pedido vira `enviada` sozinho.
+
+Bancos criados antes desse status são atualizados ao subir o servidor: a tabela
+`redistribuicao` é recriada com o status novo e **todos os registros são copiados**
+(`migrarRedistribuicao` em `database/setup.mjs`), sem precisar de `db:reset`.
+
+### Aba Desempenho (admin)
+
+- **Só o admin**, mesmo com o login desligado: as rotas de analytics, `/saude` e
+  `/alertas` pedem o token do admin (o front pede o login na própria aba).
+- **Cliques:** o web e o app mandam lotes a cada 10 s (ou ao sair da tela) para
+  `POST /analytics/cliques`, com a posição em fração da tela (0 a 1), o tamanho da
+  tela, o aparelho e o `data-track` do elemento. **Nunca** o texto digitado.
+- **Monitor** (`services/monitor.service.mjs`): o servidor registra toda requisição
+  (`requisicao_log`) e os erros 500 (`erro_log`). A cada 1 minuto confere as regras
+  (taxa de erro > 5%, p95 > 1 s, rota caindo seguida, banco travado ou lento,
+  login errado, lote de cliques falhando) e abre um `alerta` com o que está
+  acontecendo, a causa provável e como resolver. As últimas requisições ficam em
+  memória, então o alerta de banco travado aparece mesmo sem conseguir gravar.
+- **Limpeza:** requisições e erros ficam 30 dias; cliques e visitas, 180 dias.
 
 ## Variáveis de ambiente (opcional)
 

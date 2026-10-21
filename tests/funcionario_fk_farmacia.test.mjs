@@ -17,12 +17,12 @@ test.after(async () => {
   await rm(temp, { recursive: true, force: true });
 });
 
-const farmaciaTeste = () =>
-  serviceFarmacia.cadastrar({
+const farmaciaTeste = async () =>
+  (await serviceFarmacia.cadastrar({
     nomeFarmacia: `Farmacia Teste ${Date.now()}`,
     cnesFarmacia: `CNES-${Date.now()}-${Math.random()}`,
     telFarmacia: "(11) 1111-2222",
-  }).idFarmacia;
+  })).idFarmacia;
 
 const payload = (idFarmacia, extra = {}) => ({
   nomeFuncionario: "Funcionario Teste",
@@ -35,8 +35,8 @@ const payload = (idFarmacia, extra = {}) => ({
   ...extra,
 });
 
-test("cadastrar funcionario grava id_farmacia, normaliza o turno e gera matrícula e senha", () => {
-  const idFarmacia = farmaciaTeste();
+test("cadastrar funcionario grava id_farmacia, normaliza o turno e gera matrícula e senha", async () => {
+  const idFarmacia = await farmaciaTeste();
   const criado = serviceFuncionario.cadastrar(payload(idFarmacia));
 
   const funcionario = serviceFuncionario.buscarPorId(criado.idFuncionario);
@@ -50,15 +50,37 @@ test("cadastrar funcionario grava id_farmacia, normaliza o turno e gera matrícu
   assert.match(salvo.senha_hash, /^scrypt\$/);
 });
 
-test("funcionario sem farmácia ou com farmácia inexistente é recusado", () => {
+test("funcionario sem farmácia ou com farmácia inexistente é recusado", async () => {
   assert.throws(() => serviceFuncionario.cadastrar(payload(undefined)), { status: 400 });
   assert.throws(() => serviceFuncionario.cadastrar(payload(999999)), {
     status: 400, message: "A farmácia selecionada não existe.",
   });
 });
 
-test("CPF duplicado retorna 409", () => {
-  const idFarmacia = farmaciaTeste();
+test("funcionário cadastrado por um gerente fica na farmácia desse gerente", async () => {
+  const farmaciaDoGerente = await farmaciaTeste();
+  const outraFarmacia = await farmaciaTeste();
+  const sufixo = `${Date.now()}${Math.round(Math.random() * 1000)}`;
+  const idGerente = Number(db.prepare(`
+    INSERT INTO gerente (nome, cpf, email, senha_hash, crf, matricula, id_farmacia)
+    VALUES ('Gerente Teste', ?, ?, 'scrypt$x$y', ?, ?, ?)
+  `).run(`g${sufixo}`, `g${sufixo}@mail.com`, `CRF-${sufixo}`, `G${sufixo}`, farmaciaDoGerente).lastInsertRowid);
+
+  // sem farmácia no formulário
+  const semFarmacia = serviceFuncionario.cadastrar(payload(undefined, { idGerenteCadastro: idGerente }));
+  assert.equal(serviceFuncionario.buscarPorId(semFarmacia.idFuncionario).fkIdFarmacia, farmaciaDoGerente);
+
+  // farmácia de outra unidade no formulário: vale a do gerente
+  const comOutra = serviceFuncionario.cadastrar(payload(outraFarmacia, { idGerenteCadastro: idGerente }));
+  assert.equal(serviceFuncionario.buscarPorId(comOutra.idFuncionario).fkIdFarmacia, farmaciaDoGerente);
+
+  assert.throws(() => serviceFuncionario.cadastrar(payload(undefined, { idGerenteCadastro: 999999 })), {
+    status: 400, message: "O gerente informado não existe.",
+  });
+});
+
+test("CPF duplicado retorna 409", async () => {
+  const idFarmacia = await farmaciaTeste();
   const dados = payload(idFarmacia);
   serviceFuncionario.cadastrar(dados);
   assert.throws(
@@ -67,8 +89,8 @@ test("CPF duplicado retorna 409", () => {
   );
 });
 
-test("farmácia com funcionários não pode ser apagada", () => {
-  const idFarmacia = farmaciaTeste();
+test("farmácia com funcionários não pode ser apagada", async () => {
+  const idFarmacia = await farmaciaTeste();
   serviceFuncionario.cadastrar(payload(idFarmacia));
   assert.throws(() => serviceFarmacia.deletar(idFarmacia), /FOREIGN KEY/);
 });

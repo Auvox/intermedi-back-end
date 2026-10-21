@@ -18,7 +18,7 @@
 --    PARTE 4 — Chamados (chamado, chamado_remedio)
 --    PARTE 5 — Serviços (servico, servico_remedio)
 --    PARTE 6 — Redistribuição
---    PARTE 7 — Sessões do app do paciente
+--    PARTE 7 — Sessões (app do paciente e login da equipe)
 --    PARTE 8 — Índices
 --
 --  Dados de teste ficam em database/seed.sql
@@ -49,11 +49,17 @@ CREATE TABLE IF NOT EXISTS endereco (
     bairro       TEXT    NOT NULL,
     cidade       TEXT    NOT NULL,
     uf           TEXT    NOT NULL CHECK (length(uf) = 2),
-    cep          TEXT    NOT NULL
+    cep          TEXT    NOT NULL,
+    latitude     REAL CHECK (latitude BETWEEN -90 AND 90),
+    longitude    REAL CHECK (longitude BETWEEN -180 AND 180)
 );
 
 -- ---------------------------------------------------------------------
 --  1.2 ADMIN
+--  cpf + matricula (+ senha) são o login. Ficam vazios em admins criados
+--  antes do login por matrícula: rode npm run admin:criar para preencher.
+--  Os índices UNIQUE de cpf e matricula são criados em database/setup.mjs
+--  (bancos antigos recebem as colunas por ALTER TABLE).
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS admin (
     id_admin     INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,6 +67,8 @@ CREATE TABLE IF NOT EXISTS admin (
     email        TEXT    NOT NULL UNIQUE COLLATE NOCASE,
     senha_hash   TEXT    NOT NULL,          -- nunca salvar senha pura
     telefone     TEXT,
+    cpf          TEXT,
+    matricula    TEXT,                      -- ex.: 'A000001'
     id_endereco  INTEGER,
     FOREIGN KEY (id_endereco) REFERENCES endereco (id_endereco)
         ON DELETE SET NULL
@@ -332,14 +340,20 @@ CREATE TABLE IF NOT EXISTS servico_remedio (
 --    origem  = farmácia FORNECEDORA (quem envia)
 --    destino = farmácia SOLICITANTE (dona do chamado)
 --  Fluxo do status:
---    solicitada -> enviada -> recebida   (fornecedor aceitou; estoque da
---                                         origem sai na hora e o do destino
---                                         entra quando chega, após o tempo
---                                         de entrega)
+--    solicitada -> aprovada -> preparando -> enviada -> recebida
+--      aprovada:   o gerente fornecedor aceitou; o estoque da origem sai na
+--                  hora e os funcionários da origem recebem o aviso de preparo
+--      preparando: UM funcionário da origem assumiu o preparo (o primeiro que
+--                  apertar "Começar"; para os demais a API responde 409). Ele
+--                  leva caixas de 50 unidades até o caminhão, uma viagem por
+--                  caixa: data_envio = início + caixas × tempo da viagem
+--      enviada:    o caminhão saiu (automático quando data_envio passa)
+--      recebida:   chegou (automático em data_prevista_chegada); o estoque
+--                  do destino entra nessa hora
 --    solicitada -> recusada              (o sistema cria outra linha
 --                                         'solicitada' para a próxima
 --                                         farmácia que tiver o remédio)
---  'aprovada' e 'cancelada' ficam para uso manual/legado.
+--  'cancelada' fica para uso manual/legado.
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS redistribuicao (
     id_redistribuicao      INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -349,7 +363,7 @@ CREATE TABLE IF NOT EXISTS redistribuicao (
     id_farmacia_destino    INTEGER NOT NULL,
     quantidade             INTEGER NOT NULL CHECK (quantidade > 0),
     status                 TEXT    NOT NULL DEFAULT 'solicitada'
-                           CHECK (status IN ('solicitada', 'aprovada', 'enviada',
+                           CHECK (status IN ('solicitada', 'aprovada', 'preparando', 'enviada',
                                              'recebida', 'recusada', 'cancelada')),
     id_gerente_resposta    INTEGER,                 -- gerente da origem que aceitou/recusou
     motivo_recusa          TEXT,
@@ -359,12 +373,15 @@ CREATE TABLE IF NOT EXISTS redistribuicao (
     data_envio             TEXT,
     data_prevista_chegada  TEXT,                    -- data_envio + tempo de entrega
     data_recebimento       TEXT,
+    id_funcionario_preparo INTEGER,                 -- funcionário da origem que preparou o envio
+    data_inicio_preparo    TEXT,
     CHECK (id_farmacia_origem <> id_farmacia_destino),
     FOREIGN KEY (id_chamado)          REFERENCES chamado  (id_chamado)  ON DELETE SET NULL,
     FOREIGN KEY (id_remedio)          REFERENCES remedio  (id_remedio)  ON DELETE RESTRICT,
     FOREIGN KEY (id_farmacia_origem)  REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT,
     FOREIGN KEY (id_farmacia_destino) REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT,
-    FOREIGN KEY (id_gerente_resposta) REFERENCES gerente  (id_gerente)  ON DELETE SET NULL
+    FOREIGN KEY (id_gerente_resposta) REFERENCES gerente  (id_gerente)  ON DELETE SET NULL,
+    FOREIGN KEY (id_funcionario_preparo) REFERENCES funcionario (id_funcionario) ON DELETE SET NULL
 );
 
 
@@ -380,6 +397,23 @@ CREATE TABLE IF NOT EXISTS sessao_paciente (
     FOREIGN KEY (id_paciente) REFERENCES paciente (id_paciente) ON DELETE CASCADE
 );
 
+-- ---------------------------------------------------------------------
+--  7.1 SESSÕES DA EQUIPE  (admin, gerente e funcionário; login com JWT)
+--  Cada login gera um JWT com o jti desta linha. O token só vale enquanto
+--  a sessão não foi encerrada (Sair) e a senha não mudou.
+--  Sem FK: id_usuario aponta para admin, gerente ou funcionario conforme
+--  o papel. Pessoa apagada -> o token deixa de valer na hora.
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sessao_usuario (
+    jti               TEXT    PRIMARY KEY,
+    papel             TEXT    NOT NULL CHECK (papel IN ('admin', 'gerente', 'funcionario')),
+    id_usuario        INTEGER NOT NULL,
+    senha_fingerprint TEXT    NOT NULL,      -- muda quando a senha muda -> derruba a sessão
+    criada_em         INTEGER NOT NULL,      -- timestamp em ms
+    expira_em         INTEGER NOT NULL,      -- timestamp em ms
+    encerrada_em      INTEGER                -- preenchido no logout
+);
+
 
 -- =====================================================================
 --  PARTE 8 — ÍNDICES  (deixam os filtros por farmácia mais rápidos)
@@ -391,3 +425,123 @@ CREATE INDEX IF NOT EXISTS idx_chamado_farmacia      ON chamado (id_farmacia, st
 CREATE INDEX IF NOT EXISTS idx_servico_farmacia      ON servico (id_farmacia);
 CREATE INDEX IF NOT EXISTS idx_remcat_categoria      ON remedio_categoria (id_categoria);
 CREATE INDEX IF NOT EXISTS idx_sessao_paciente       ON sessao_paciente (id_paciente);
+CREATE INDEX IF NOT EXISTS idx_sessao_usuario        ON sessao_usuario (papel, id_usuario);
+
+
+-- =====================================================================
+--  PARTE 9 — DESEMPENHO  (aba "Desempenho" do admin)
+--  Ficam fora do main-data.json (shared-data.mjs): são dados de uso de
+--  cada máquina, não cadastros. Datas em timestamp ms (como sessao_usuario).
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+--  9.1 CLIQUES  (mapa de calor)
+--  x e y em fração da tela (0 a 1), para valer em qualquer tamanho.
+--  Nunca guarda o que foi digitado: só a posição e o identificador do
+--  elemento (atributo data-track no web).
+--  interativo: 1 = botão/link, 0 = algo que não responde ao clique,
+--  NULL = o app não sabe dizer.
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS clique_evento (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    rota          TEXT    NOT NULL,                  -- ex.: '/gerente/chamados'
+    x             REAL    NOT NULL CHECK (x BETWEEN 0 AND 1),
+    y             REAL    NOT NULL CHECK (y BETWEEN 0 AND 1),
+    elemento      TEXT,                              -- ex.: 'novo-remedio'
+    interativo    INTEGER CHECK (interativo IN (0, 1)),
+    plataforma    TEXT    NOT NULL CHECK (plataforma IN ('app', 'web')),
+    persona       TEXT    NOT NULL CHECK (persona IN ('paciente', 'funcionario', 'gerente', 'admin')),
+    usuario_id    INTEGER,
+    farmacia_id   INTEGER,
+    largura_tela  INTEGER NOT NULL,
+    altura_tela   INTEGER NOT NULL,
+    dispositivo   TEXT    NOT NULL CHECK (dispositivo IN ('desktop', 'tablet', 'celular')),
+    sessao        TEXT,                              -- id aleatório da aba/app aberto
+    criado_em     INTEGER NOT NULL                   -- timestamp em ms
+);
+
+-- ---------------------------------------------------------------------
+--  9.2 VISITAS ÀS TELAS  (tempo na tela e abandono)
+--  saida = 1 quando a pessoa fechou o sistema estando nesta tela.
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tela_visita (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    rota          TEXT    NOT NULL,
+    plataforma    TEXT    NOT NULL CHECK (plataforma IN ('app', 'web')),
+    persona       TEXT    NOT NULL CHECK (persona IN ('paciente', 'funcionario', 'gerente', 'admin')),
+    usuario_id    INTEGER,
+    farmacia_id   INTEGER,
+    dispositivo   TEXT    NOT NULL CHECK (dispositivo IN ('desktop', 'tablet', 'celular')),
+    sessao        TEXT,
+    duracao_ms    INTEGER NOT NULL CHECK (duracao_ms >= 0),
+    saida         INTEGER NOT NULL DEFAULT 0 CHECK (saida IN (0, 1)),
+    criado_em     INTEGER NOT NULL                   -- quando a pessoa entrou na tela
+);
+
+-- ---------------------------------------------------------------------
+--  9.3 CAPTURAS DAS TELAS DO APP  (fundo do mapa de calor do app)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tela_captura (
+    rota          TEXT    PRIMARY KEY,
+    arquivo       TEXT    NOT NULL,                  -- uploads/telas/<arquivo>
+    largura       INTEGER,
+    altura        INTEGER,
+    atualizado_em INTEGER NOT NULL
+);
+
+-- ---------------------------------------------------------------------
+--  9.4 REQUISIÇÕES E ERROS DA API  (saúde do sistema; 30 dias)
+--  rota = como foi cadastrada no Router (ex.: '/gerente/:id/estoque').
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS requisicao_log (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    rota          TEXT    NOT NULL,
+    metodo        TEXT    NOT NULL,
+    status        INTEGER NOT NULL,
+    duracao_ms    REAL    NOT NULL,
+    usuario       TEXT,                              -- ex.: 'gerente:3'
+    plataforma    TEXT    CHECK (plataforma IN ('app', 'web')),
+    criado_em     INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS erro_log (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    mensagem      TEXT    NOT NULL,
+    stack         TEXT,                              -- só as primeiras linhas
+    rota          TEXT,
+    metodo        TEXT,
+    criado_em     INTEGER NOT NULL
+);
+
+-- ---------------------------------------------------------------------
+--  9.5 ALERTAS  (services/monitor.service.mjs verifica a cada 1 minuto)
+--  chave evita repetir o mesmo alerta (ex.: 'erro-rota:GET /remedios').
+--  como_resolver: um passo por linha.
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS alerta (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    tipo           TEXT    NOT NULL,
+    chave          TEXT    NOT NULL,
+    severidade     TEXT    NOT NULL CHECK (severidade IN ('critico', 'atencao', 'info')),
+    titulo         TEXT    NOT NULL,
+    o_que          TEXT    NOT NULL,
+    causa          TEXT    NOT NULL,
+    como_resolver  TEXT    NOT NULL,
+    rota           TEXT,
+    status         TEXT    NOT NULL DEFAULT 'ativo' CHECK (status IN ('ativo', 'resolvido', 'silenciado')),
+    silenciado_ate INTEGER,
+    ocorrencias    INTEGER NOT NULL DEFAULT 1,
+    criado_em      INTEGER NOT NULL,
+    atualizado_em  INTEGER NOT NULL,
+    resolvido_em   INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_clique_rota_data      ON clique_evento (rota, criado_em);
+-- índices de cobertura: os resumos do período leem só o índice
+CREATE INDEX IF NOT EXISTS idx_clique_resumo         ON clique_evento (criado_em, rota, plataforma, farmacia_id, interativo);
+CREATE INDEX IF NOT EXISTS idx_visita_rota_data      ON tela_visita (rota, criado_em);
+CREATE INDEX IF NOT EXISTS idx_visita_resumo         ON tela_visita (criado_em, rota, plataforma, farmacia_id, duracao_ms, saida);
+CREATE INDEX IF NOT EXISTS idx_requisicao_resumo     ON requisicao_log (criado_em, plataforma, status, duracao_ms);
+CREATE INDEX IF NOT EXISTS idx_requisicao_rota_data  ON requisicao_log (rota, criado_em);
+CREATE INDEX IF NOT EXISTS idx_erro_data             ON erro_log (criado_em);
+CREATE INDEX IF NOT EXISTS idx_alerta_status         ON alerta (status, chave);

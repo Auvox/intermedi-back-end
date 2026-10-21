@@ -1,16 +1,38 @@
 import * as serviceGerente from "../services/gerente.service.mjs";
+import { enviarBoasVindas } from "../services/email.service.mjs";
 import { enviarErro, enviarJson, erro, idDaUrl, lerJson } from "../utils/http.mjs";
 import { apagarArquivoDaFoto } from "./foto.controller.mjs";
 
-// cadastrar gerente
+// req.usuario vem do login (services/acesso.service.mjs); sem ele, nada é filtrado
+const ehAdmin = (req) => !req.usuario || req.usuario.papel === "admin";
+
+// cadastrar gerente (só o admin): gera a matrícula e manda o e-mail de boas-vindas
 export async function cadastrarGerente(req, res) {
   try {
     const data = await lerJson(req);
-    const gerente = serviceGerente.cadastrar(data);
+    if (req.usuario?.papel === "admin") data.idAdminCadastro = req.usuario.id;
+    const { senhaProvisoria, ...gerente } = serviceGerente.cadastrar(data);
+
+    const criado = serviceGerente.buscarPorId(gerente.idGerente);
+    const email = await enviarBoasVindas({
+      papel: "gerente",
+      nome: criado.nomeGerente,
+      email: criado.emailGerente,
+      cpf: criado.cpfGerente,
+      matricula: gerente.matriculaGerente,
+      senhaProvisoria,
+      idFarmacia: gerente.fkIdFarmacia,
+      cadastradoPor: req.usuario?.nome,
+    });
 
     enviarJson(res, 201, {
       status: "CADASTRADO COM SUCESSO - POST",
       recebido: gerente,
+      matricula: gerente.matriculaGerente,
+      email,
+      // a senha provisória só vai por e-mail; se o envio falhou, quem
+      // cadastrou recebe a senha para entregar pessoalmente
+      ...(email.status === "falhou" && senhaProvisoria && { senhaProvisoria }),
     });
   } catch (error) {
     enviarErro(res, error);
@@ -45,6 +67,11 @@ export async function consultarGerente(req, res) {
         throw erro(400, "ID do funcionário inválido.");
       }
 
+      // só consulta como um gerente da própria farmácia
+      if (!ehAdmin(req) && serviceGerente.buscarPorId(idGerente)?.fkIdFarmacia !== req.usuario.idFarmacia) {
+        throw erro(403, "Acesso negado: este gerente não é da sua farmácia.");
+      }
+
       // Executa a busca com a verificação de permissão
       const funcionario = serviceGerente.consultarFuncionarioDoGerente(idGerente, idFuncionario);
 
@@ -55,10 +82,31 @@ export async function consultarGerente(req, res) {
     }
 
     // Caso não passe o parâmetro funcionario, faz a listagem normal de gerentes
-    const gerente = serviceGerente.listar();
+    // (o admin vê todos; gerente e funcionário, só os da farmácia deles)
+    const gerente = serviceGerente.listar()
+      .filter((g) => ehAdmin(req) || g.fkIdFarmacia === req.usuario.idFarmacia);
     enviarJson(res, 200, {
       mensagem: "TODOS OS GERENTES CADASTRADOS - GET",
       gerente,
+    });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+// busca pela farmácia do gerente atual, onde ele está cadastrado.
+export async function consultarFarmaciaDoGerente(req, res) {
+  try {
+    const idGerente = idDaUrl(req, "Gerente"); // extrai o ID da URL (:id)
+    
+    const farmacia = serviceGerente.consultarFarmaciaDoGerente(idGerente);
+    if (!farmacia) {
+      throw erro(404, "Farmácia do gerente não encontrada.");
+    }
+
+    enviarJson(res, 200, {
+      status: "Farmácia do gerente encontrada com sucesso",
+      resultado: farmacia,
     });
   } catch (error) {
     enviarErro(res, error);
@@ -81,17 +129,74 @@ export async function buscarGerente(req, res) {
   }
 }
 
+// consultar serviços do funcionário
+export async function consultarServicosDoFuncionario(req, res) {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    const idGerente = Number(url.searchParams.get("idGerente"));
+    const idFuncionario = Number(url.searchParams.get("idFuncionario"));
+
+    if (!idGerente || Number.isNaN(idGerente)) {
+      throw erro(400, "ID do gerente inválido.");
+    }
+    if (!idFuncionario || Number.isNaN(idFuncionario)) {
+      throw erro(400, "ID do funcionário inválido.");
+    }
+
+    const servicos = serviceGerente.consultarServicosDoFuncionario(idGerente, idFuncionario);
+
+    enviarJson(res, 200, {
+      status: "Serviços do funcionário encontrados com sucesso",
+      resultado: servicos,
+    });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
 // editar gerente
 export async function editarGerente(req, res) {
   try {
     const id = idDaUrl(req, "Gerente");
     const data = await lerJson(req);
+    // o próprio gerente edita o perfil, mas não troca de farmácia nem de matrícula
+    if (!ehAdmin(req)) {
+      delete data.fkIdFarmacia;
+      delete data.idFarmacia;
+      delete data.matriculaGerente;
+    }
     const gerente = serviceGerente.editar(id, data);
     if (gerente.changes === 0) throw erro(404, "Gerente não encontrado");
 
     enviarJson(res, 201, {
       status: "gerente atualizado",
       alterados: gerente.changes,
+    });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+export async function alterarEstoqueGerente(req, res) {
+  try {
+    const idGerente = idDaUrl(req, "Gerente");
+    // /gerente/:id/estoque/registro/:idEstoque
+    const idEstoque = Number(req.params?.idEstoque);
+
+    if (!idEstoque || Number.isNaN(idEstoque)) {
+      throw erro(400, "ID do estoque inválido na URL.");
+    }
+
+    const data = await lerJson(req);
+    const resultado = serviceGerente.alterarEstoque(idGerente, idEstoque, data);
+
+    if (resultado.changes === 0) {
+      throw erro(404, "Estoque não encontrado ou sem alterações realizadas.");
+    }
+
+    enviarJson(res, 200, {
+      status: "ESTOQUE ATUALIZADO COM SUCESSO",
+      alterados: resultado.changes,
     });
   } catch (error) {
     enviarErro(res, error);
@@ -110,6 +215,17 @@ export async function deletarGerente(req, res) {
     enviarJson(res, 200, {
       mensagem: "Gerente Deletado!",
       deletado,
+    });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+// deslogar da conta
+export async function logoutGerente(req, res) {
+  try {
+    enviarJson(res, 200, {
+      mensagem: "Sessão encerrada com sucesso.",
     });
   } catch (error) {
     enviarErro(res, error);

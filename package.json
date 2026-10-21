@@ -5,21 +5,30 @@
     "node": ">=22.13"
   },
   "scripts": {
-    "start": "node --env-file-if-exists=.env server.mjs",
-    "dev": "node --watch --env-file-if-exists=.env server.mjs",
-    "db:init": "node --env-file-if-exists=.env database/init.mjs",
-    "db:seed": "node --env-file-if-exists=.env database/init.mjs --seed",
-    "db:reset": "node --env-file-if-exists=.env database/init.mjs --reset",
-    "db:publish": "node --env-file-if-exists=.env database/share.mjs publish",
-    "db:sync": "node --env-file-if-exists=.env database/share.mjs sync",
-    "prepare": "node scripts/install-hooks.mjs",
-    "test": "node --test \"tests/**/*.test.mjs\""
+    "start": "node scripts/executar-node.cjs --env-file-if-exists=.env server.mjs",
+    "email:verificar": "node scripts/executar-node.cjs scripts/verificar-email.mjs",
+    "dev": "node scripts/executar-node.cjs --watch --env-file-if-exists=.env server.mjs",
+    "dev:teste-3d": "node scripts/executar-node.cjs --watch --env-file-if-exists=.env --env-file=.env.teste-3d server.mjs",
+    "db:init": "node scripts/executar-node.cjs --env-file-if-exists=.env database/init.mjs",
+    "db:seed": "node scripts/executar-node.cjs --env-file-if-exists=.env database/init.mjs --seed",
+    "db:reset": "node scripts/executar-node.cjs --env-file-if-exists=.env database/init.mjs --reset",
+    "db:publish": "node scripts/executar-node.cjs --env-file-if-exists=.env database/share.mjs publish",
+    "db:sync": "node scripts/executar-node.cjs --env-file-if-exists=.env database/share.mjs sync",
+    "funcionarios:teste": "node scripts/executar-node.cjs scripts/criar-funcionarios-teste.mjs",
+    "admin:criar": "node scripts/executar-node.cjs --env-file-if-exists=.env scripts/criar-admin.mjs",
+    "acesso:reenviar": "node scripts/executar-node.cjs --env-file-if-exists=.env scripts/reenviar-acesso.mjs",
+    "desempenho:seed": "node scripts/executar-node.cjs --env-file-if-exists=.env scripts/seed-desempenho.mjs",
+    "prepare": "node scripts/executar-node.cjs scripts/install-hooks.mjs",
+    "test": "node scripts/executar-node.cjs --test \"tests/**/*.test.mjs\""
   },
   "devDependencies": {
     "@types/node": "^26.1.2"
   },
   "dependencies": {
     "msnodesqlv8": "^5.3.0",
-    "mssql": "^12.7.0"
+    "mssql": "^12.7.0",
+    "nodemailer": "^7.0.13",
+    "sharp": "^0.35.5",
+    "tesseract.js": "^7.0.0"
   }
 }

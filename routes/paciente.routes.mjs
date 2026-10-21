@@ -4,10 +4,13 @@ import {
   buscarPaciente,
   editarPaciente,
   deletarPaciente,
+  logoutPaciente,
 } from "../controller/paciente.controller.mjs";
 
 export default function pacienteRoutes(router) {
   router.post("/paciente", cadastrarPaciente);
+
+  router.post("/paciente/logout", logoutPaciente);
 
   router.get("/paciente", listarOuBuscarPacientes);
 

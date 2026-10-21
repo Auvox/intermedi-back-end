@@ -1,5 +1,6 @@
 import {
   cadastrarFuncionario,
+  cadastrarServicoFuncionario,
   cadastrarServico,
   consultarServicos,
   buscarServico,
@@ -7,14 +8,18 @@ import {
   buscarFuncionario,
   editarFuncionario,
   deletarFuncionario,
+  logoutFuncionario,
 } from "../controller/funcionario.controller.mjs";
 
 export default function funcionarioRoutes(router) {
   router.post("/servicos", cadastrarServico);
+  router.post("/funcionario/servico", cadastrarServicoFuncionario);
   router.get("/servicos", consultarServicos);
   router.get("/servicos/:id", buscarServico);
 
   router.post("/funcionario", cadastrarFuncionario);
+
+  router.post("/funcionario/logout", logoutFuncionario);
 
   router.get("/funcionario", consultarFuncionario);
 

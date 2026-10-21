@@ -55,6 +55,8 @@ export async function responderChamado(req, res) {
   try {
     const idChamado = idDaUrl(req, "Chamado");
     const data = await lerJson(req);
+    // o gerente responde em nome dele (o id vem do login, não do corpo)
+    if (req.usuario?.papel === "gerente") data.idGerente = req.usuario.id;
     const { chamado, despacho } = serviceChamado.responder(idChamado, data);
 
     enviarJson(res, 200, {
@@ -86,7 +88,9 @@ export async function buscarChamado(req, res) {
 export async function disponibilidadeChamado(req, res) {
   try {
     const idChamado = idDaUrl(req, "Chamado");
-    const idGerente = new URL(req.url, "http://localhost").searchParams.get("idGerente");
+    const idGerente = req.usuario?.papel === "gerente"
+      ? req.usuario.id
+      : new URL(req.url, "http://localhost").searchParams.get("idGerente");
     const resultado = serviceChamado.disponibilidade(idChamado, idGerente);
 
     enviarJson(res, 200, { mensagem: "DISPONIBILIDADE NA REDE - GET", ...resultado });
@@ -100,6 +104,7 @@ export async function redistribuirChamado(req, res) {
   try {
     const idChamado = idDaUrl(req, "Chamado");
     const data = await lerJson(req);
+    if (req.usuario?.papel === "gerente") data.idGerente = req.usuario.id;
     const { chamado, despacho } = serviceChamado.redistribuir(idChamado, data.idGerente);
 
     enviarJson(res, 200, { status: "REDISTRIBUIÇÃO REFEITA - POST", chamado, despacho });
