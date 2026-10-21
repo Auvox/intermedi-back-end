@@ -10,7 +10,9 @@
         "bairro": "Guaianases",
         "cidade": "São Paulo",
         "uf": "SP",
-        "cep": "08410-000"
+        "cep": "08410-000",
+        "latitude": null,
+        "longitude": null
       },
       {
         "id_endereco": 2,
@@ -20,7 +22,9 @@
         "bairro": "Itaquera",
         "cidade": "São Paulo",
         "uf": "SP",
-        "cep": "08210-000"
+        "cep": "08210-000",
+        "latitude": null,
+        "longitude": null
       },
       {
         "id_endereco": 3,
@@ -30,7 +34,9 @@
         "bairro": "Consolação",
         "cidade": "São Paulo",
         "uf": "SP",
-        "cep": "01304-001"
+        "cep": "01304-001",
+        "latitude": null,
+        "longitude": null
       },
       {
         "id_endereco": 4,
@@ -40,7 +46,9 @@
         "bairro": "Bela Vista",
         "cidade": "São Paulo",
         "uf": "SP",
-        "cep": "01310-100"
+        "cep": "01310-100",
+        "latitude": null,
+        "longitude": null
       },
       {
         "id_endereco": 5,
@@ -50,7 +58,9 @@
         "bairro": "Vila Mariana",
         "cidade": "São Paulo",
         "uf": "SP",
-        "cep": "04101-300"
+        "cep": "04101-300",
+        "latitude": null,
+        "longitude": null
       },
       {
         "id_endereco": 6,
@@ -60,7 +70,9 @@
         "bairro": "Tatuapé",
         "cidade": "São Paulo",
         "uf": "SP",
-        "cep": "03307-000"
+        "cep": "03307-000",
+        "latitude": null,
+        "longitude": null
       },
       {
         "id_endereco": 7,
@@ -70,7 +82,9 @@
         "bairro": "Tatuapé",
         "cidade": "São Paulo",
         "uf": "SP",
-        "cep": "03318-000"
+        "cep": "03318-000",
+        "latitude": null,
+        "longitude": null
       },
       {
         "id_endereco": 8,
@@ -80,7 +94,9 @@
         "bairro": "Vila Mariana",
         "cidade": "São Paulo",
         "uf": "SP",
-        "cep": "04010-100"
+        "cep": "04010-100",
+        "latitude": null,
+        "longitude": null
       },
       {
         "id_endereco": 9,
@@ -90,7 +106,9 @@
         "bairro": "Tatuapé",
         "cidade": "São Paulo",
         "uf": "SP",
-        "cep": "03310-000"
+        "cep": "03310-000",
+        "latitude": null,
+        "longitude": null
       },
       {
         "id_endereco": 10,
@@ -100,7 +118,9 @@
         "bairro": "Itaquera",
         "cidade": "São Paulo",
         "uf": "SP",
-        "cep": "08260-000"
+        "cep": "08260-000",
+        "latitude": null,
+        "longitude": null
       },
       {
         "id_endereco": 11,
@@ -110,7 +130,9 @@
         "bairro": "Centro",
         "cidade": "São Paulo",
         "uf": "SP",
-        "cep": "01024-000"
+        "cep": "01024-000",
+        "latitude": null,
+        "longitude": null
       }
     ],
     "admin": [

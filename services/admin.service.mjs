@@ -1,7 +1,7 @@
 import db from "../database/database.mjs";
 import { erro } from "../utils/http.mjs";
 import { texto } from "../utils/dados.mjs";
-import { verificarSenha, gerarSenhaProvisoria } from "../utils/senha.mjs";
+import { verificarSenha, gerarHashSenha } from "../utils/senha.mjs";
 
 const SELECT_ADMIN = /*sql*/ `
   SELECT
@@ -72,7 +72,7 @@ export function cadastrarGerenteAdmin(data) {
     throw erro(400, "Este e-mail já está cadastrado para outro gerente.");
   }
 
-  const senhaHash = gerarSenhaProvisoria(senha);
+  const senhaHash = gerarHashSenha(senha);
 
   const resultado = db.prepare(`
     INSERT INTO gerente (nome, cpf, email, senha_hash, crf, matricula, telefone, id_farmacia, id_admin_cadastro, id_endereco)

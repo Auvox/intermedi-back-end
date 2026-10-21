@@ -26,8 +26,7 @@ INSERT INTO endereco (logradouro, numero, complemento, bairro, cidade, uf, cep) 
 
 INSERT INTO admin (nome, email, senha_hash) VALUES
     ('Admin Geral', 'admin@intermedi.com',
-     'scrypt$800e6ffd71fb3ebd305635624e23ce24$f35fa0237daea254b7ce7641271ba2c566a6ad0439f05e748a5c38ec5b49456b40d938bf30bd5de4ed30b5f2ceb17ce9ec
-5ed4058174dcfca8cff38a6ccbc6a1n');
+     'scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26');
 
 INSERT INTO farmacia (nome, email, telefone, cnes, id_endereco) VALUES
     ('Farmácia Pedro João Neto', 'pjn@intermedi.com',       '1111-1111', '1234567', 1),
