@@ -1,5 +1,6 @@
 import {
   cadastrarFuncionario,
+  cadastrarServicoFuncionario,
   cadastrarServico,
   consultarServicos,
   buscarServico,
@@ -12,7 +13,7 @@ import {
 
 export default function funcionarioRoutes(router) {
   router.post("/servicos", cadastrarServico);
-
+  router.post("/funcionario/servico", cadastrarServicoFuncionario);
   router.get("/servicos", consultarServicos);
   router.get("/servicos/:id", buscarServico);
 

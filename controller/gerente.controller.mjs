@@ -142,6 +142,32 @@ export async function editarGerente(req, res) {
   }
 }
 
+export async function alterarEstoqueGerente(req, res) {
+  try {
+    const idGerente = idDaUrl(req, "Gerente");
+    // /gerente/:id/estoque/registro/:idEstoque
+    const idEstoque = Number(req.params?.idEstoque);
+
+    if (!idEstoque || Number.isNaN(idEstoque)) {
+      throw erro(400, "ID do estoque inválido na URL.");
+    }
+
+    const data = await lerJson(req);
+    const resultado = serviceGerente.alterarEstoque(idGerente, idEstoque, data);
+
+    if (resultado.changes === 0) {
+      throw erro(404, "Estoque não encontrado ou sem alterações realizadas.");
+    }
+
+    enviarJson(res, 200, {
+      status: "ESTOQUE ATUALIZADO COM SUCESSO",
+      alterados: resultado.changes,
+    });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
 // deletar gerente
 export async function deletarGerente(req, res) {
   try {

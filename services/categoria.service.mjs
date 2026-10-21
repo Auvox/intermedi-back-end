@@ -2,7 +2,7 @@ import db from "../database/database.mjs";
 
 // listar categorias (usadas no cadastro de remédio: idsCategoria)
 export function listar() {
-  return db.prepare(/*sql*/ `
+  return db.prepare(`
     SELECT
         c.id_categoria AS idCategoria,
         c.nome         AS nomeCategoria,
