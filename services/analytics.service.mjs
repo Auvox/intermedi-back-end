@@ -101,6 +101,7 @@ export function registrarLote(dados, agora = Date.now()) {
     }
   });
 
+  limparCacheAnalytics();
   return {
     cliques: validosCliques.length,
     visitas: validasVisitas.length,
@@ -109,6 +110,25 @@ export function registrarLote(dados, agora = Date.now()) {
 }
 
 // ---------------------------------------------------------------- consultas
+
+// Os resumos do período leem dezenas de milhares de linhas e o painel consulta
+// de tempos em tempos: guardam o resultado por 15 s (os alertas nunca).
+// Um lote novo de cliques limpa o cache.
+const CACHE_MS = 15000;
+const cache = new Map();
+export function emCache(nome, filtros, calcular) {
+  const chave = [nome, filtros.periodo, filtros.periodo === "personalizado" ? `${filtros.inicio}-${filtros.fim}` : "",
+    filtros.plataforma ?? "", filtros.farmacia ?? ""].join("|");
+  const salvo = cache.get(chave);
+  if (salvo && Date.now() - salvo.em < CACHE_MS) return salvo.valor;
+  const valor = calcular();
+  cache.set(chave, { em: Date.now(), valor });
+  if (cache.size > 300) cache.delete(cache.keys().next().value);
+  return valor;
+}
+export function limparCacheAnalytics() {
+  cache.clear();
+}
 
 const periodoSql = (inicio, fim) => ({ sql: " AND criado_em >= ? AND criado_em < ?", valores: [inicio, fim] });
 
@@ -175,6 +195,10 @@ export function pontosDoMapa(filtros, { rota, persona, dispositivo } = {}) {
 
 // Ranking de rotas: visitas, cliques, tempo médio e abandono
 export function rankingRotas(filtros) {
+  return emCache("ranking", filtros, () => calcularRanking(filtros));
+}
+
+function calcularRanking(filtros) {
   const w = onde(filtros);
   const visitas = db.prepare(/*sql*/ `
     SELECT rota, plataforma, COUNT(*) AS visitas, AVG(duracao_ms) AS tempoMedio, SUM(saida) AS saidas
@@ -238,6 +262,9 @@ function requisicoes(filtros, intervalo) {
 }
 
 // grade de horários do gráfico (por hora ou por dia, conforme o período)
+// faixa que termina depois do fim do período ainda está acontecendo (ex.: hoje)
+export const faixaParcial = (inicio, filtros) => inicio + filtros.passo > filtros.fim;
+
 export function grade(filtros) {
   const pontos = [];
   for (let t = filtros.inicio; t < filtros.fim; t += filtros.passo) pontos.push(t);
@@ -254,6 +281,7 @@ export function serieRequisicoes(filtros) {
   const porFaixa = new Map(linhas.map((l) => [Number(l.faixa), l]));
   return grade(filtros).map((inicio, i) => ({
     inicio,
+    parcial: faixaParcial(inicio, filtros),
     requisicoes: porFaixa.get(i)?.requisicoes ?? 0,
     erros: porFaixa.get(i)?.erros ?? 0,
   }));
@@ -261,6 +289,15 @@ export function serieRequisicoes(filtros) {
 
 // Visão geral: 4 indicadores (com o período anterior), 2 gráficos e alertas
 export function resumoGeral(filtros) {
+  const { alertas } = listarAlertas({ status: "ativo" });
+  return {
+    ...emCache("resumo", filtros, () => calcularResumo(filtros)),
+    alertas: alertas.slice(0, 3),
+    totalAlertas: alertas.length,
+  };
+}
+
+function calcularResumo(filtros) {
   const anterior = filtros.anterior;
   const atualReq = requisicoes(filtros);
   const antesReq = requisicoes(filtros, anterior);
@@ -269,7 +306,6 @@ export function resumoGeral(filtros) {
   const usuarios = usuariosAtivos(filtros);
   const cliques = totalCliques(filtros);
   const maisAcessadas = rankingRotas(filtros).slice(0, 5).map(({ rota, plataforma, visitas, cliques: c }) => ({ rota, plataforma, visitas, cliques: c }));
-  const { alertas } = listarAlertas({ status: "ativo" });
 
   return {
     comparacao: filtros.comparacao,
@@ -283,8 +319,6 @@ export function resumoGeral(filtros) {
     serie: serieRequisicoes(filtros),
     passo: filtros.passo,
     maisAcessadas,
-    alertas: alertas.slice(0, 3),
-    totalAlertas: alertas.length,
   };
 }
 

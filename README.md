@@ -30,6 +30,7 @@ Todos os usuários dos dados de teste têm a senha **`senha123`**.
 | `npm run db:init` | Cria as tabelas que faltam (não apaga nada) |
 | `npm run db:seed` | Coloca os dados de teste num banco vazio |
 | `npm test` | Roda os testes num banco temporário (não mexe no seu) |
+| `npm run desempenho:seed` | Preenche a aba Desempenho do admin com 30 dias de uso de exemplo (cliques, telas, requisições e alertas). Apaga só os dados do Desempenho e não roda em produção. Pare o servidor antes; `-- --dias 7` gera menos dias |
 | `npm run admin:criar -- --nome "Nome" --email x@y.com --cpf 000.000.000-00` | Cria um admin com matrícula e senha provisória (manda o e-mail). Com `--id 1` completa um admin antigo |
 | `npm run acesso:reenviar -- --matricula G000123` | Gera uma senha provisória nova e manda de novo o e-mail com a matrícula (a senha antiga e as sessões abertas deixam de valer). No banco da `teste/intermedi-3d`: `node --env-file-if-exists=.env --env-file=.env.teste-3d scripts/reenviar-acesso.mjs --matricula G000123` |
 
@@ -182,6 +183,8 @@ rodar `npm install` depois de receber esta alteração.
 | Serviço | `POST /servicos` |
 | Pedidos entre farmácias | `GET /gerente/:id/redistribuicoes` · `GET /redistribuicao/:id` · `PUT /redistribuicao/:id/responder` |
 | Preparo do envio | `GET /funcionario/:id/preparos` (avisos da equipe) · `POST /redistribuicao/:id/preparar` `{ idFuncionario }` |
+| Desempenho (só admin) | `GET /analytics/resumo` · `GET /analytics/rotas` · `GET /analytics/cliques?rota=/x&dispositivo=celular` · `GET /analytics/telas` · `GET /saude` · `GET /alertas?status=ativo` · `PUT /alertas/:id/resolver` · `PUT /alertas/:id/silenciar` (filtros: `periodo=hoje|7d|30d|personalizado`, `plataforma=app|web`, `farmacia=3`) |
+| Desempenho (público) | `POST /analytics/cliques` (lote do web e do app) · `POST /analytics/telas` (captura da tela do app, só fora de produção) |
 | App do paciente | `POST /api/auth/register` · `POST /api/auth/login` · `POST /api/auth/logout` · `GET/PUT/DELETE /api/pacientes/me` · `PUT /api/pacientes/:id/foto` |
 
 ### Campos obrigatórios novos
@@ -209,6 +212,21 @@ O preparo leva `caixas × 5 s` (caixas de 50 un.); depois o pedido vira `enviada
 Bancos criados antes desse status são atualizados ao subir o servidor: a tabela
 `redistribuicao` é recriada com o status novo e **todos os registros são copiados**
 (`migrarRedistribuicao` em `database/setup.mjs`), sem precisar de `db:reset`.
+
+### Aba Desempenho (admin)
+
+- **Só o admin**, mesmo com o login desligado: as rotas de analytics, `/saude` e
+  `/alertas` pedem o token do admin (o front pede o login na própria aba).
+- **Cliques:** o web e o app mandam lotes a cada 10 s (ou ao sair da tela) para
+  `POST /analytics/cliques`, com a posição em fração da tela (0 a 1), o tamanho da
+  tela, o aparelho e o `data-track` do elemento. **Nunca** o texto digitado.
+- **Monitor** (`services/monitor.service.mjs`): o servidor registra toda requisição
+  (`requisicao_log`) e os erros 500 (`erro_log`). A cada 1 minuto confere as regras
+  (taxa de erro > 5%, p95 > 1 s, rota caindo seguida, banco travado ou lento,
+  login errado, lote de cliques falhando) e abre um `alerta` com o que está
+  acontecendo, a causa provável e como resolver. As últimas requisições ficam em
+  memória, então o alerta de banco travado aparece mesmo sem conseguir gravar.
+- **Limpeza:** requisições e erros ficam 30 dias; cliques e visitas, 180 dias.
 
 ## Variáveis de ambiente (opcional)
 

@@ -537,10 +537,11 @@ CREATE TABLE IF NOT EXISTS alerta (
 );
 
 CREATE INDEX IF NOT EXISTS idx_clique_rota_data      ON clique_evento (rota, criado_em);
-CREATE INDEX IF NOT EXISTS idx_clique_data           ON clique_evento (criado_em);
+-- índices de cobertura: os resumos do período leem só o índice
+CREATE INDEX IF NOT EXISTS idx_clique_resumo         ON clique_evento (criado_em, rota, plataforma, farmacia_id, interativo);
 CREATE INDEX IF NOT EXISTS idx_visita_rota_data      ON tela_visita (rota, criado_em);
-CREATE INDEX IF NOT EXISTS idx_visita_data           ON tela_visita (criado_em);
-CREATE INDEX IF NOT EXISTS idx_requisicao_data       ON requisicao_log (criado_em);
+CREATE INDEX IF NOT EXISTS idx_visita_resumo         ON tela_visita (criado_em, rota, plataforma, farmacia_id, duracao_ms, saida);
+CREATE INDEX IF NOT EXISTS idx_requisicao_resumo     ON requisicao_log (criado_em, plataforma, status, duracao_ms);
 CREATE INDEX IF NOT EXISTS idx_requisicao_rota_data  ON requisicao_log (rota, criado_em);
 CREATE INDEX IF NOT EXISTS idx_erro_data             ON erro_log (criado_em);
 CREATE INDEX IF NOT EXISTS idx_alerta_status         ON alerta (status, chave);

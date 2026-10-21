@@ -17,6 +17,7 @@
     "funcionarios:teste": "node scripts/executar-node.cjs scripts/criar-funcionarios-teste.mjs",
     "admin:criar": "node scripts/executar-node.cjs --env-file-if-exists=.env scripts/criar-admin.mjs",
     "acesso:reenviar": "node scripts/executar-node.cjs --env-file-if-exists=.env scripts/reenviar-acesso.mjs",
+    "desempenho:seed": "node scripts/executar-node.cjs --env-file-if-exists=.env scripts/seed-desempenho.mjs",
     "prepare": "node scripts/executar-node.cjs scripts/install-hooks.mjs",
     "test": "node scripts/executar-node.cjs --test \"tests/**/*.test.mjs\""
   },

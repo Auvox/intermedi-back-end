@@ -8,6 +8,9 @@ import { erro } from "../utils/http.mjs";
 
 const ORDEM = { info: 0, atencao: 1, critico: 2 };
 const emMemoria = new Map(); // chave -> alerta ainda não gravado
+// última lista lida do banco, por status: com o banco travado o admin
+// continua vendo os alertas que já existiam (e não "0 alertas")
+const ultimaLeitura = new Map();
 
 const SELECT_ALERTA = /*sql*/ `
   SELECT id, tipo, chave, severidade, titulo, o_que AS oQue, causa,
@@ -109,8 +112,10 @@ export function listarAlertas({ status = "ativo", limite = 100 } = {}, agora = D
     doBanco = db.prepare(`${SELECT_ALERTA} ${onde} ORDER BY ${ordem} LIMIT ?`)
       .all(...(status === "todos" ? [] : [status]), limite)
       .map(paraResposta);
+    ultimaLeitura.set(status, doBanco);
   } catch {
     bancoDisponivel = false;
+    doBanco = (ultimaLeitura.get(status) ?? []).filter((a) => !emMemoria.has(a.chave));
   }
   const daMemoria = ["ativo", "todos"].includes(status) ? [...emMemoria.values()].map(paraResposta) : [];
   const alertas = [...daMemoria, ...doBanco].sort((a, b) =>

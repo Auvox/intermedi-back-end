@@ -16,12 +16,15 @@ const analytics = await import("../services/analytics.service.mjs");
 const monitor = await import("../services/monitor.service.mjs");
 const alertas = await import("../services/alerta.service.mjs");
 const { autorizar } = await import("../services/acesso.service.mjs");
+const { assinarJwt } = await import("../utils/jwt.mjs");
+const { painelSaude } = await import("../services/saude.service.mjs");
 const { lerFiltros } = await import("../utils/periodo-desempenho.mjs");
 
 test.after(async () => {
   db.close();
   await rm(temp, { recursive: true, force: true });
 });
+test.beforeEach(() => analytics.limparCacheAnalytics());
 
 const AGORA = Date.now();
 const filtros = (query = "periodo=7d") => lerFiltros(new URL(`http://x/?${query}`), AGORA + 1000);
@@ -156,6 +159,9 @@ test("taxa de erro, lentidão e falhas de login", () => {
 
 test("banco travado por outro programa: o alerta aparece mesmo sem conseguir gravar", () => {
   monitor.reiniciarMonitorParaTeste();
+  db.prepare(`INSERT INTO alerta (tipo, chave, severidade, titulo, o_que, causa, como_resolver, criado_em, atualizado_em)
+    VALUES ('login', 'login:teste', 'atencao', 'Já existia', 'o que', 'causa', '1. passo', ?, ?)`).run(AGORA, AGORA);
+  const jaExistia = alertas.listarAlertas({ status: "ativo" }).alertas.find((a) => a.chave === "login:teste");
   const outroPrograma = new DatabaseSync(dbPath);
   outroPrograma.exec("BEGIN EXCLUSIVE");
   try {
@@ -165,7 +171,19 @@ test("banco travado por outro programa: o alerta aparece mesmo sem conseguir gra
     assert.equal(banco.severidade, "critico");
     assert.equal(banco.titulo, "O banco de dados está travado");
     assert.ok(banco.naoGravado, "ficou em memória");
-    assert.ok(alertas.listarAlertas({ status: "ativo" }).alertas.some((a) => a.tipo === "banco"));
+    const travado = alertas.listarAlertas({ status: "ativo" });
+    assert.equal(travado.bancoDisponivel, false);
+    assert.ok(travado.alertas.some((a) => a.tipo === "banco"));
+    assert.ok(travado.alertas.some((a) => a.id === jaExistia.id), "o alerta que já existia continua na lista");
+
+    // o admin continua vendo os alertas (a sessão não dá pra conferir, vale a assinatura)
+    const token = (papel) => ({ headers: { authorization: `Bearer ${assinarJwt({ papel, id: 1, jti: "teste", exp: Math.floor(Date.now() / 1000) + 60 })}` } });
+    assert.doesNotThrow(() => autorizar(token("admin"), "GET /alertas"));
+    assert.doesNotThrow(() => autorizar(token("admin"), "GET /saude"));
+    assert.throws(() => autorizar(token("gerente"), "GET /alertas"), /locked/);
+    assert.throws(() => autorizar({ headers: { authorization: "Bearer falso" } }, "GET /alertas"), { status: 401 });
+    assert.throws(() => autorizar(token("admin"), "PUT /alertas/:id/resolver"), /locked/);
+    assert.throws(() => autorizar(token("admin"), "GET /analytics/resumo"), /locked/);
   } finally {
     outroPrograma.exec("ROLLBACK");
     outroPrograma.close();
@@ -183,4 +201,25 @@ test("só o admin vê o desempenho, mesmo com o login desligado; os cliques cont
   assert.throws(() => autorizar({ headers: { authorization: "Bearer falso" } }, "GET /saude"), { status: 401 });
   assert.doesNotThrow(() => autorizar({ headers: {} }, "POST /analytics/cliques"));
   assert.doesNotThrow(() => autorizar({ headers: {} }, "GET /remedios"));
+});
+
+test("os resumos ficam 15 s em cache e um lote novo de cliques limpa o cache", () => {
+  const antes = analytics.rankingRotas(filtros("periodo=30d"));
+  assert.equal(analytics.rankingRotas(filtros("periodo=30d")), antes);
+  analytics.registrarLote({ cliques: [clique({ rota: "/gerente/estoque" })] });
+  const depois = analytics.rankingRotas(filtros("periodo=30d"));
+  assert.notEqual(depois, antes);
+  assert.ok(depois.some((r) => r.rota === "/gerente/estoque"));
+});
+
+test("saúde do sistema: média e p95 do tempo de resposta por faixa", () => {
+  db.exec("DELETE FROM requisicao_log");
+  const inserir = db.prepare("INSERT INTO requisicao_log (rota, metodo, status, duracao_ms, plataforma, criado_em) VALUES (?, ?, ?, ?, ?, ?)");
+  for (let ms = 1; ms <= 100; ms++) inserir.run("/remedios", "GET", ms === 100 ? 500 : 200, ms, "web", AGORA - 1000);
+  const painel = painelSaude(filtros("periodo=hoje"));
+  const faixa = painel.tempoResposta.find((t) => t.p95Ms !== null);
+  assert.equal(faixa.p95Ms, 95);
+  assert.equal(faixa.mediaMs, 51);
+  assert.equal(painel.totais.requisicoes, 100);
+  assert.deepEqual(painel.rotasComErro.map((r) => [r.rota, r.erros, r.taxa]), [["/remedios", 1, 1]]);
 });

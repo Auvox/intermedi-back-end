@@ -1,5 +1,6 @@
 import db from "../database/database.mjs";
 import { erro } from "../utils/http.mjs";
+import { verificarJwt } from "../utils/jwt.mjs";
 import { autenticar, tokenDaRequisicao } from "./auth.service.mjs";
 
 // Quem pode chamar cada rota da API.
@@ -196,6 +197,21 @@ const SO_ADMIN = new Set([
   "PUT /alertas/:id/silenciar",
 ]);
 
+// Banco travado: a sessão do admin não dá pra conferir, mas é justamente aí que
+// ele precisa ver os alertas. Só para LER a saúde do sistema, vale a assinatura
+// do token (o servidor que assinou); resolver/silenciar continuam exigindo o banco.
+const SAUDE_SEM_BANCO = new Set(["GET /saude", "GET /alertas"]);
+
+function sessaoDoAdmin(req, chave) {
+  try {
+    return autenticar(tokenDaRequisicao(req));
+  } catch (error) {
+    const dados = SAUDE_SEM_BANCO.has(chave) ? verificarJwt(tokenDaRequisicao(req)) : null;
+    if (dados?.papel !== "admin") throw error;
+    return { usuario: { papel: "admin", id: dados.id }, jti: dados.jti };
+  }
+}
+
 // O login só é exigido com INTERMEDI_EXIGIR_LOGIN=true. Desligado (padrão),
 // ninguém é barrado: quem manda um token válido ainda vem em req.usuario, e
 // sem token as rotas funcionam como antes do JWT (o front ainda não manda token).
@@ -211,7 +227,7 @@ export function autorizar(req, chave, params = {}) {
     return;
   }
 
-  const sessao = autenticar(tokenDaRequisicao(req));
+  const sessao = SO_ADMIN.has(chave) ? sessaoDoAdmin(req, chave) : autenticar(tokenDaRequisicao(req));
   if (sessao) {
     req.usuario = sessao.usuario;
     req.sessao = { jti: sessao.jti };
