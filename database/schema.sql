@@ -426,3 +426,121 @@ CREATE INDEX IF NOT EXISTS idx_servico_farmacia      ON servico (id_farmacia);
 CREATE INDEX IF NOT EXISTS idx_remcat_categoria      ON remedio_categoria (id_categoria);
 CREATE INDEX IF NOT EXISTS idx_sessao_paciente       ON sessao_paciente (id_paciente);
 CREATE INDEX IF NOT EXISTS idx_sessao_usuario        ON sessao_usuario (papel, id_usuario);
+
+
+-- =====================================================================
+--  PARTE 9 — DESEMPENHO  (aba "Desempenho" do admin)
+--  Ficam fora do main-data.json (shared-data.mjs): são dados de uso de
+--  cada máquina, não cadastros. Datas em timestamp ms (como sessao_usuario).
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+--  9.1 CLIQUES  (mapa de calor)
+--  x e y em fração da tela (0 a 1), para valer em qualquer tamanho.
+--  Nunca guarda o que foi digitado: só a posição e o identificador do
+--  elemento (atributo data-track no web).
+--  interativo: 1 = botão/link, 0 = algo que não responde ao clique,
+--  NULL = o app não sabe dizer.
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS clique_evento (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    rota          TEXT    NOT NULL,                  -- ex.: '/gerente/chamados'
+    x             REAL    NOT NULL CHECK (x BETWEEN 0 AND 1),
+    y             REAL    NOT NULL CHECK (y BETWEEN 0 AND 1),
+    elemento      TEXT,                              -- ex.: 'novo-remedio'
+    interativo    INTEGER CHECK (interativo IN (0, 1)),
+    plataforma    TEXT    NOT NULL CHECK (plataforma IN ('app', 'web')),
+    persona       TEXT    NOT NULL CHECK (persona IN ('paciente', 'funcionario', 'gerente', 'admin')),
+    usuario_id    INTEGER,
+    farmacia_id   INTEGER,
+    largura_tela  INTEGER NOT NULL,
+    altura_tela   INTEGER NOT NULL,
+    dispositivo   TEXT    NOT NULL CHECK (dispositivo IN ('desktop', 'tablet', 'celular')),
+    sessao        TEXT,                              -- id aleatório da aba/app aberto
+    criado_em     INTEGER NOT NULL                   -- timestamp em ms
+);
+
+-- ---------------------------------------------------------------------
+--  9.2 VISITAS ÀS TELAS  (tempo na tela e abandono)
+--  saida = 1 quando a pessoa fechou o sistema estando nesta tela.
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tela_visita (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    rota          TEXT    NOT NULL,
+    plataforma    TEXT    NOT NULL CHECK (plataforma IN ('app', 'web')),
+    persona       TEXT    NOT NULL CHECK (persona IN ('paciente', 'funcionario', 'gerente', 'admin')),
+    usuario_id    INTEGER,
+    farmacia_id   INTEGER,
+    dispositivo   TEXT    NOT NULL CHECK (dispositivo IN ('desktop', 'tablet', 'celular')),
+    sessao        TEXT,
+    duracao_ms    INTEGER NOT NULL CHECK (duracao_ms >= 0),
+    saida         INTEGER NOT NULL DEFAULT 0 CHECK (saida IN (0, 1)),
+    criado_em     INTEGER NOT NULL                   -- quando a pessoa entrou na tela
+);
+
+-- ---------------------------------------------------------------------
+--  9.3 CAPTURAS DAS TELAS DO APP  (fundo do mapa de calor do app)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tela_captura (
+    rota          TEXT    PRIMARY KEY,
+    arquivo       TEXT    NOT NULL,                  -- uploads/telas/<arquivo>
+    largura       INTEGER,
+    altura        INTEGER,
+    atualizado_em INTEGER NOT NULL
+);
+
+-- ---------------------------------------------------------------------
+--  9.4 REQUISIÇÕES E ERROS DA API  (saúde do sistema; 30 dias)
+--  rota = como foi cadastrada no Router (ex.: '/gerente/:id/estoque').
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS requisicao_log (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    rota          TEXT    NOT NULL,
+    metodo        TEXT    NOT NULL,
+    status        INTEGER NOT NULL,
+    duracao_ms    REAL    NOT NULL,
+    usuario       TEXT,                              -- ex.: 'gerente:3'
+    plataforma    TEXT    CHECK (plataforma IN ('app', 'web')),
+    criado_em     INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS erro_log (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    mensagem      TEXT    NOT NULL,
+    stack         TEXT,                              -- só as primeiras linhas
+    rota          TEXT,
+    metodo        TEXT,
+    criado_em     INTEGER NOT NULL
+);
+
+-- ---------------------------------------------------------------------
+--  9.5 ALERTAS  (services/monitor.service.mjs verifica a cada 1 minuto)
+--  chave evita repetir o mesmo alerta (ex.: 'erro-rota:GET /remedios').
+--  como_resolver: um passo por linha.
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS alerta (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    tipo           TEXT    NOT NULL,
+    chave          TEXT    NOT NULL,
+    severidade     TEXT    NOT NULL CHECK (severidade IN ('critico', 'atencao', 'info')),
+    titulo         TEXT    NOT NULL,
+    o_que          TEXT    NOT NULL,
+    causa          TEXT    NOT NULL,
+    como_resolver  TEXT    NOT NULL,
+    rota           TEXT,
+    status         TEXT    NOT NULL DEFAULT 'ativo' CHECK (status IN ('ativo', 'resolvido', 'silenciado')),
+    silenciado_ate INTEGER,
+    ocorrencias    INTEGER NOT NULL DEFAULT 1,
+    criado_em      INTEGER NOT NULL,
+    atualizado_em  INTEGER NOT NULL,
+    resolvido_em   INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_clique_rota_data      ON clique_evento (rota, criado_em);
+CREATE INDEX IF NOT EXISTS idx_clique_data           ON clique_evento (criado_em);
+CREATE INDEX IF NOT EXISTS idx_visita_rota_data      ON tela_visita (rota, criado_em);
+CREATE INDEX IF NOT EXISTS idx_visita_data           ON tela_visita (criado_em);
+CREATE INDEX IF NOT EXISTS idx_requisicao_data       ON requisicao_log (criado_em);
+CREATE INDEX IF NOT EXISTS idx_requisicao_rota_data  ON requisicao_log (rota, criado_em);
+CREATE INDEX IF NOT EXISTS idx_erro_data             ON erro_log (criado_em);
+CREATE INDEX IF NOT EXISTS idx_alerta_status         ON alerta (status, chave);
