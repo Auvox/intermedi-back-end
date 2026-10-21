@@ -175,7 +175,26 @@ const REGRAS = {
   "GET /gerente/funcionario/servicos": papel("gerente"),
   "PUT /gerente/:id/estoque/registro/:idEstoque": gerenteDaFarmacia("gerente"),
   "POST /funcionario/servico": papel("funcionario", "gerente"),
+
+  // aba Desempenho: o web e o app mandam os cliques sem login; a captura de
+  // tela do app só é aceita sem login fora de produção (analytics.controller)
+  "POST /analytics/cliques": PUBLICO,
+  "POST /analytics/telas": PUBLICO,
+  "GET /uploads/telas/:arquivo": PUBLICO,
 };
+
+// Dados de uso e saúde do sistema: só o admin, MESMO com o login desligado
+// (INTERMEDI_EXIGIR_LOGIN). O front pede o login do admin na própria aba.
+const SO_ADMIN = new Set([
+  "GET /analytics/cliques",
+  "GET /analytics/rotas",
+  "GET /analytics/resumo",
+  "GET /analytics/telas",
+  "GET /saude",
+  "GET /alertas",
+  "PUT /alertas/:id/resolver",
+  "PUT /alertas/:id/silenciar",
+]);
 
 // O login só é exigido com INTERMEDI_EXIGIR_LOGIN=true. Desligado (padrão),
 // ninguém é barrado: quem manda um token válido ainda vem em req.usuario, e
@@ -186,13 +205,24 @@ export const loginExigido = () => process.env.INTERMEDI_EXIGIR_LOGIN === "true";
 // Preenche req.usuario quando há login. Lança 401 (sem login) ou 403 (sem permissão).
 export function autorizar(req, chave, params = {}) {
   const regra = REGRAS[chave];
-  if (regra === PUBLICO) return;
+  if (regra === PUBLICO) {
+    // rota pública: só identifica quem mandou um token (não barra ninguém)
+    if (tokenDaRequisicao(req)) req.usuario = autenticar(tokenDaRequisicao(req))?.usuario;
+    return;
+  }
 
   const sessao = autenticar(tokenDaRequisicao(req));
   if (sessao) {
     req.usuario = sessao.usuario;
     req.sessao = { jti: sessao.jti };
   }
+
+  if (SO_ADMIN.has(chave)) {
+    if (!sessao) throw erro(401, "Entre como admin para ver o desempenho do sistema.");
+    if (sessao.usuario.papel !== "admin") throw erro(403, "Só o admin vê o desempenho do sistema.");
+    return;
+  }
+
   // GET /auth/me sem sessão é sempre 401: é como o front descobre que não está logado
   if (!loginExigido() && chave !== "GET /auth/me") return;
 

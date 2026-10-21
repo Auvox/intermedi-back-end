@@ -64,6 +64,8 @@ export function traduzirErro(error) {
 // Responde um erro no formato que o front já usa: { error: "..." }
 export function enviarErro(res, error) {
   const { status, mensagem } = traduzirErro(error);
+  // erro 500: o server.mjs grava a mensagem original em erro_log (aba Desempenho)
+  if (status >= 500) res.erroOriginal = error;
   enviarJson(res, status, { error: mensagem, ...(error.status && error.dados) });
 }
 

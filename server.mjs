@@ -16,8 +16,11 @@ import redistribuicaoRoutes from "./routes/redistribuicao.routes.mjs";
 import resumoRoutes from "./routes/resumo.routes.mjs";
 import fotoRoutes from "./routes/foto.routes.mjs";
 import authRoutes from "./routes/auth.routes.mjs";
+import analyticsRoutes from "./routes/analytics.routes.mjs";
 import { iniciarEntregas } from "./services/redistribuicao.service.mjs";
 import { autorizar } from "./services/acesso.service.mjs";
+import { iniciarMonitor, plataformaDaRequisicao, registrarErro, registrarRequisicao } from "./services/monitor.service.mjs";
+import { performance } from "node:perf_hooks";
 import rotaRoutes from "./sistema-rota/rota.routes.mjs";
 import ocrRoutes from "./sistema-foto/ocr.routes.mjs";
 import { enviarErro } from "./utils/http.mjs";
@@ -44,9 +47,12 @@ resumoRoutes(router);
 fotoRoutes(router);
 rotaRoutes(router);
 ocrRoutes(router);
+analyticsRoutes(router);
 
 // confere a cada 5s os remédios que já chegaram (tempo de entrega das redistribuições)
 iniciarEntregas();
+// saúde do sistema: grava as requisições e verifica os alertas a cada 1 minuto
+iniciarMonitor();
 
 const server = createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -54,7 +60,7 @@ const server = createServer(async (req, res) => {
     "Access-Control-Allow-Methods",
     "GET, POST, OPTIONS, PUT, DELETE",
   );
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Intermedi-Plataforma");
 
   if (req.method === "OPTIONS") {
     res.writeHead(204);
@@ -67,6 +73,21 @@ const server = createServer(async (req, res) => {
   const rota = router.match(req.method, url.pathname);
   if (rota) {
     req.params = rota.params;
+    // registra cada requisição para a aba Desempenho (rota, status e tempo)
+    const inicio = performance.now();
+    res.on("finish", () => {
+      registrarRequisicao({
+        rota: rota.rota,
+        metodo: req.method,
+        status: res.statusCode,
+        duracaoMs: performance.now() - inicio,
+        usuario: req.usuario ? `${req.usuario.papel}:${req.usuario.id}` : null,
+        plataforma: plataformaDaRequisicao(req, url.pathname),
+      });
+      if (res.statusCode >= 500) {
+        registrarErro({ error: res.erroOriginal ?? `Resposta ${res.statusCode}`, rota: rota.rota, metodo: req.method });
+      }
+    });
     // login e permissão de cada rota: services/acesso.service.mjs
     try {
       autorizar(req, `${req.method} ${rota.rota}`, rota.params);
@@ -74,7 +95,13 @@ const server = createServer(async (req, res) => {
       enviarErro(res, error);
       return;
     }
-    await rota.handler(req, res);
+    try {
+      await rota.handler(req, res);
+    } catch (error) {
+      // erro que o controller não tratou: responde 500 em vez de deixar a requisição pendurada
+      if (!res.headersSent) enviarErro(res, error);
+      else res.end();
+    }
   } else {
     res.statusCode = 404;
     res.setHeader("Content-Type", "application/json");
