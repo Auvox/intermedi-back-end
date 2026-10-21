@@ -142,7 +142,8 @@ test("POSTs separam os endereços e mantêm os vínculos com rollback em erros",
 
   await t.test("vínculos inválidos não criam pessoas nem endereços órfãos", async () => {
     const antes = contagem();
-    for (const [route, dados] of [["/gerente", gerente], ["/funcionario", funcionario]]) {
+    // funcionário sem gerente: com gerente, a farmácia vem do cadastro dele e a do corpo é ignorada
+    for (const [route, dados] of [["/gerente", gerente], ["/funcionario", { ...funcionario, idGerenteCadastro: undefined }]]) {
       for (const vinculo of [
         { fkIdFarmacia: "" }, { fkIdFarmacia: 999999 }, { fkIdFarmacia: "abc" },
         { fkIdFarmacia: idFarmacia, idFarmacia: outroId },

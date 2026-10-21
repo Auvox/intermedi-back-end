@@ -152,13 +152,15 @@ function conferirDuplicado(cpf, email, idIgnorar = -1) {
 
 // cadastrar
 export function cadastrar(data) {
-  const idFarmacia = farmaciaDoPayload(data);
   const idGerente = idOuNull(data.idGerenteCadastro);
-  validar(data);
   if (Number.isNaN(idGerente)) throw erro(400, "idGerenteCadastro inválido.");
-  if (idGerente && !db.prepare("SELECT 1 FROM gerente WHERE id_gerente = ?").get(idGerente)) {
-    throw erro(400, "O gerente informado não existe.");
-  }
+  const gerente = idGerente
+    ? db.prepare("SELECT id_farmacia FROM gerente WHERE id_gerente = ?").get(idGerente)
+    : null;
+  if (idGerente && !gerente) throw erro(400, "O gerente informado não existe.");
+  // cadastrado por um gerente: o funcionário é sempre da farmácia dele
+  const idFarmacia = gerente ? gerente.id_farmacia : farmaciaDoPayload(data);
+  validar(data);
 
   const cpf = texto(data.cpfFuncionario);
   const email = texto(data.emailFuncionario);
