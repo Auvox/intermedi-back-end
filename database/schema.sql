@@ -78,6 +78,8 @@ CREATE TABLE IF NOT EXISTS farmacia (
     telefone     TEXT,
     cnes         TEXT    NOT NULL UNIQUE,
     id_endereco  INTEGER,
+    latitude     REAL CHECK (latitude BETWEEN -90 AND 90),
+    longitude    REAL CHECK (longitude BETWEEN -180 AND 180),
     foto         TEXT,                     -- URL: /uploads/fotos/<arquivo> (fachada/logo)
     created_at   TEXT    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_endereco) REFERENCES endereco (id_endereco)
