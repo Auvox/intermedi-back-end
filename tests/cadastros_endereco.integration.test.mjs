@@ -1,10 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { Router } from "../router.mjs";
 
 // Toda a validação usa um banco em memória, sem alterar os cadastros reais.
 process.env.INTERMEDI_DB_PATH = ":memory:";
+// os e-mails de boas-vindas (sem SMTP) vão para a pasta temporária do sistema
+process.env.INTERMEDI_EMAIL_DIR = path.join(tmpdir(), "intermedi-emails-teste");
+delete process.env.SMTP_HOST;
 const { default: db } = await import("../database/database.mjs");
 const { default: farmaciaRoutes } = await import("../routes/farmacia.routes.mjs");
 const { default: gerenteRoutes } = await import("../routes/gerente.routes.mjs");

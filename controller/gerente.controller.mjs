@@ -1,16 +1,38 @@
 import * as serviceGerente from "../services/gerente.service.mjs";
+import { enviarBoasVindas } from "../services/email.service.mjs";
 import { enviarErro, enviarJson, erro, idDaUrl, lerJson } from "../utils/http.mjs";
 import { apagarArquivoDaFoto } from "./foto.controller.mjs";
 
-// cadastrar gerente
+// req.usuario vem do login (services/acesso.service.mjs); sem ele, nada é filtrado
+const ehAdmin = (req) => !req.usuario || req.usuario.papel === "admin";
+
+// cadastrar gerente (só o admin): gera a matrícula e manda o e-mail de boas-vindas
 export async function cadastrarGerente(req, res) {
   try {
     const data = await lerJson(req);
-    const gerente = serviceGerente.cadastrar(data);
+    if (req.usuario?.papel === "admin") data.idAdminCadastro = req.usuario.id;
+    const { senhaProvisoria, ...gerente } = serviceGerente.cadastrar(data);
+
+    const criado = serviceGerente.buscarPorId(gerente.idGerente);
+    const email = await enviarBoasVindas({
+      papel: "gerente",
+      nome: criado.nomeGerente,
+      email: criado.emailGerente,
+      cpf: criado.cpfGerente,
+      matricula: gerente.matriculaGerente,
+      senhaProvisoria,
+      idFarmacia: gerente.fkIdFarmacia,
+      cadastradoPor: req.usuario?.nome,
+    });
 
     enviarJson(res, 201, {
       status: "CADASTRADO COM SUCESSO - POST",
       recebido: gerente,
+      matricula: gerente.matriculaGerente,
+      email,
+      // a senha provisória só vai por e-mail; se o envio falhou, quem
+      // cadastrou recebe a senha para entregar pessoalmente
+      ...(email.status === "falhou" && senhaProvisoria && { senhaProvisoria }),
     });
   } catch (error) {
     enviarErro(res, error);
@@ -45,6 +67,11 @@ export async function consultarGerente(req, res) {
         throw erro(400, "ID do funcionário inválido.");
       }
 
+      // só consulta como um gerente da própria farmácia
+      if (!ehAdmin(req) && serviceGerente.buscarPorId(idGerente)?.fkIdFarmacia !== req.usuario.idFarmacia) {
+        throw erro(403, "Acesso negado: este gerente não é da sua farmácia.");
+      }
+
       // Executa a busca com a verificação de permissão
       const funcionario = serviceGerente.consultarFuncionarioDoGerente(idGerente, idFuncionario);
 
@@ -55,7 +82,9 @@ export async function consultarGerente(req, res) {
     }
 
     // Caso não passe o parâmetro funcionario, faz a listagem normal de gerentes
-    const gerente = serviceGerente.listar();
+    // (o admin vê todos; gerente e funcionário, só os da farmácia deles)
+    const gerente = serviceGerente.listar()
+      .filter((g) => ehAdmin(req) || g.fkIdFarmacia === req.usuario.idFarmacia);
     enviarJson(res, 200, {
       mensagem: "TODOS OS GERENTES CADASTRADOS - GET",
       gerente,
@@ -130,6 +159,12 @@ export async function editarGerente(req, res) {
   try {
     const id = idDaUrl(req, "Gerente");
     const data = await lerJson(req);
+    // o próprio gerente edita o perfil, mas não troca de farmácia nem de matrícula
+    if (!ehAdmin(req)) {
+      delete data.fkIdFarmacia;
+      delete data.idFarmacia;
+      delete data.matriculaGerente;
+    }
     const gerente = serviceGerente.editar(id, data);
     if (gerente.changes === 0) throw erro(404, "Gerente não encontrado");
 

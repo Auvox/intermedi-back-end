@@ -24,9 +24,11 @@ INSERT INTO endereco (logradouro, numero, complemento, bairro, cidade, uf, cep) 
     ('Av. Jacu-Pêssego',        '1800', NULL,       'Itaquera',     'São Paulo', 'SP', '08260-000'),  -- 10 paciente Camila
     ('Rua Cantareira',          '50',   NULL,       'Centro',       'São Paulo', 'SP', '01024-000');  -- 11 paciente Roberto
 
-INSERT INTO admin (nome, email, senha_hash) VALUES
+-- Login da equipe: CPF + matrícula + senha (ex.: admin 999.999.999-99 / A000001 / senha123)
+INSERT INTO admin (nome, email, senha_hash, cpf, matricula) VALUES
     ('Admin Geral', 'admin@intermedi.com',
-     'scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26');
+     'scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26',
+     '999.999.999-99', 'A000001');
 
 INSERT INTO farmacia (nome, email, telefone, cnes, id_endereco) VALUES
     ('Farmácia Pedro João Neto', 'pjn@intermedi.com',       '1111-1111', '1234567', 1),
