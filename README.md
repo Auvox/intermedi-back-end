@@ -64,8 +64,11 @@ Admin, gerente e funcionário entram com **CPF + matrícula + senha** em
   os gerentes são `G000001`...`G000005` e os funcionários `000001`...`000009`
   (veja os CPFs em `database/seed.sql`).
 - **E-mail:** sem `SMTP_HOST` no `.env`, nada é enviado: o e-mail fica salvo como
-  `.html` em `tmp/emails/` e o caminho aparece no terminal. As cores ficam em
-  `services/email/paleta.mjs` (ainda provisórias, em cinza).
+  `.html` em `tmp/emails/` (com as imagens embutidas) e o caminho aparece no
+  terminal. O e-mail de boas-vindas usa a cor da plataforma de quem foi
+  cadastrado (`services/email/paleta.mjs`: admin preto, gerente verde,
+  funcionário azul); marcas e ícones são desenhados em `services/email/imagens.mjs`
+  e vão anexados (`cid:`), porque os clientes de e-mail não mostram SVG.
 - **`.env`** (fora do Git): `JWT_SECRET` (obrigatório em produção, 32+ caracteres)
   e as variáveis `SMTP_*`. Veja `.env.example`.
 

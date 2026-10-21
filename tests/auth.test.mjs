@@ -138,7 +138,9 @@ test("login por CPF + matrícula + senha, permissões por perfil e farmácia, ca
   assert.ok(arquivo, `e-mail salvo em ${pastaEmails}`);
   const html = await readFile(path.join(pastaEmails, arquivo), "utf8");
   assert.ok(html.includes("Auvox") && html.includes(criado.dados.matricula));
-  const senhaProvisoria = html.match(/Senha provisória<\/td>\s*<\/tr>\s*<tr>\s*<td[^>]*>([^<]+)</)?.[1];
+  assert.ok(html.includes("Bem-vindo(a) à equipe") && html.includes("#0071e3"), "boas-vindas na cor do funcionário (azul)");
+  assert.ok(html.includes("data:image/png;base64,"), "marcas e ícones embutidos no .html de teste");
+  const senhaProvisoria = html.match(/data-campo="senha"[^>]*>([^<]+)</)?.[1];
   assert.ok(senhaProvisoria);
   const novo = await entrar("98765432100", criado.dados.matricula, senhaProvisoria);
   assert.equal(novo.status, 200);

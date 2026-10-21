@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import db from "../database/database.mjs";
 import { montarBoasVindas } from "./email/boas-vindas.mjs";
-import { PALETA } from "./email/paleta.mjs";
+import { imagensDoEmail } from "./email/imagens.mjs";
 
 // Envio de e-mails.
 //   • Com SMTP_HOST no .env: envia de verdade (pacote nodemailer).
@@ -39,12 +39,13 @@ async function transporteSmtp() {
 
 const nomeDeArquivo = (texto) => String(texto).normalize("NFD").replace(/[^\w.-]+/g, "_").slice(0, 60);
 
-export async function enviarEmail({ para, assunto, html, texto }) {
+// anexos: imagens usadas no HTML como <img src="cid:...">
+export async function enviarEmail({ para, assunto, html, texto, anexos = [] }) {
   const remetente = process.env.EMAIL_REMETENTE || "Intermedi <nao-responda@intermedi.local>";
 
   if (process.env.SMTP_HOST) {
     const smtp = await transporteSmtp();
-    const info = await smtp.sendMail({ from: remetente, to: para, subject: assunto, html, text: texto });
+    const info = await smtp.sendMail({ from: remetente, to: para, subject: assunto, html, text: texto, attachments: anexos });
     // resposta do servidor (ex.: "250 2.0.0 OK ... gsmtp"): prova de que ele aceitou a mensagem
     console.log(`E-mail para ${para}: ${info.response} (id ${info.messageId})`);
     if (info.rejected?.length) throw new Error(`Destinatário recusado pelo servidor: ${info.rejected.join(", ")}`);
@@ -55,7 +56,13 @@ export async function enviarEmail({ para, assunto, html, texto }) {
   await mkdir(pasta, { recursive: true });
   const arquivo = `${new Date().toISOString().replace(/[:.]/g, "-")}_${nomeDeArquivo(para)}.html`;
   const cabecalho = `<!--\nDe: ${remetente}\nPara: ${para}\nAssunto: ${assunto}\n(e-mail de teste: SMTP_HOST não configurado)\n-->\n`;
-  await writeFile(path.join(pasta, arquivo), cabecalho + html, { flag: "wx" });
+  // o .html de teste abre sozinho no navegador: as imagens vão embutidas
+  const comImagens = anexos.reduce(
+    (pagina, { cid, content, contentType }) =>
+      pagina.replaceAll(`cid:${cid}`, `data:${contentType};base64,${content.toString("base64")}`),
+    html,
+  );
+  await writeFile(path.join(pasta, arquivo), cabecalho + comImagens, { flag: "wx" });
   console.log(`E-mail de teste (sem SMTP) para ${para}: ${path.join(pasta, arquivo)}`);
   return { status: "teste", para, arquivo };
 }
@@ -67,14 +74,16 @@ export async function enviarBoasVindas({ papel, nome, email, cpf, matricula, sen
       ? db.prepare("SELECT nome FROM farmacia WHERE id_farmacia = ?").get(idFarmacia)?.nome
       : null;
     const front = (process.env.INTERMEDI_FRONT_URL || "http://localhost:5173").replace(/\/$/, "");
-    const mensagem = montarBoasVindas({
+    const { imagens, cor, ...mensagem } = montarBoasVindas({
       nome, papel, matricula, cpf, senhaProvisoria, nomeFarmacia, cadastradoPor,
       urlLogin: `${front}/login?perfil=${encodeURIComponent(papel)}`,
     });
-    if (PALETA.provisoria) {
-      console.warn("E-mail com a paleta provisória: troque as cores em services/email/paleta.mjs.");
-    }
-    return await enviarEmail({ para: email, ...mensagem });
+    // sem as imagens o e-mail continua legível (os <img> têm alt)
+    const anexos = await imagensDoEmail(imagens, cor).catch((error) => {
+      console.warn("E-mail sem imagens:", error.message);
+      return [];
+    });
+    return await enviarEmail({ para: email, ...mensagem, anexos });
   } catch (error) {
     console.error(`Falha ao enviar o e-mail de boas-vindas para ${email}:`, error.message);
     return { status: "falhou", para: email, erro: "Não foi possível enviar o e-mail." };
