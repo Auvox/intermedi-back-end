@@ -82,7 +82,7 @@ export function buscarPorId(idRedistribuicao) {
 // Farmácias que têm o remédio (menos a solicitante), da que mais tem sobrando
 // para a que menos tem. disponivel = quantidade - estoque mínimo.
 export function farmaciasComRemedio(idRemedio, idFarmaciaSolicitante) {
-  return db.prepare(/*sql*/ `
+  return db.prepare(`
     SELECT
         f.id_farmacia                          AS idFarmacia,
         f.nome                                 AS nomeFarmacia,

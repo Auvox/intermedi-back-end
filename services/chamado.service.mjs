@@ -43,7 +43,7 @@ function lerPrioridade(valor) {
 
 // Remédios do chamado com o estoque atual da farmácia
 function remediosDoChamado(idChamado, idFarmacia) {
-  return db.prepare(/*sql*/ `
+  return db.prepare(`
     SELECT
         r.id_remedio                    AS idRemedio,
         r.nome                          AS nomeRemedio,
@@ -80,7 +80,7 @@ function situacaoDoItem(statusChamado, pedido) {
 // Monta o chamado completo (é isso que o gerente vai receber na notificação)
 export function buscarPorId(idChamado) {
   processarChegadas();
-  const chamado = db.prepare(/*sql*/ `
+  const chamado = db.prepare(`
     SELECT
         ch.id_chamado    AS idChamado,
         ch.titulo        AS titulo,
@@ -108,7 +108,7 @@ export function buscarPorId(idChamado) {
   if (!chamado) return null;
 
   const pedidos = pedidosDoChamado(chamado.idChamado);
-  const gerentes = db.prepare(/*sql*/ `
+  const gerentes = db.prepare(`
     SELECT id_gerente AS idGerente, nome AS nomeGerente, email AS emailGerente
     FROM gerente WHERE id_farmacia = ? ORDER BY nome
   `).all(chamado.idFarmacia);
@@ -169,7 +169,7 @@ function lerStatus(valor) {
 
 // Pendentes primeiro, depois do mais recente para o mais antigo
 function listar(filtroSql, valor, status) {
-  return db.prepare(/*sql*/ `
+  return db.prepare(`
     SELECT id_chamado FROM chamado
     WHERE ${filtroSql} = ? AND (? IS NULL OR status = ?)
     ORDER BY status = 'pendente' DESC, data_abertura DESC, id_chamado DESC
@@ -258,7 +258,7 @@ function chamadoDoGerente(idChamado, idGerenteValor) {
 // Antes de aceitar: quais farmácias da rede têm cada remédio do chamado
 export function disponibilidade(idChamado, idGerente) {
   const chamado = chamadoDoGerente(idChamado, idGerente);
-  const itens = db.prepare(/*sql*/ `
+  const itens = db.prepare(`
     SELECT cr.id_remedio AS idRemedio, r.nome AS nomeRemedio, r.dosagem AS dosagemRemedio,
            cr.quantidade AS quantidadeSolicitada
     FROM chamado_remedio cr INNER JOIN remedio r ON r.id_remedio = cr.id_remedio
