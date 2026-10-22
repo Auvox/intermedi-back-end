@@ -43,7 +43,7 @@ const server = createServer(async (req, res) => {
     "Access-Control-Allow-Methods",
     "GET, POST, OPTIONS, PUT, DELETE",
   );
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Intermedi-Plataforma");
 
   if (req.method === "OPTIONS") {
     res.writeHead(204);
