@@ -2,7 +2,7 @@ import * as serviceAuth from "../services/auth.service.mjs";
 import { sessaoOpcional } from "../services/acesso.service.mjs";
 import { enviarErro, enviarJson, lerJson } from "../utils/http.mjs";
 
-// login da equipe: { cpf, matricula, senha } -> { token, expiraEm, usuario }
+// login da equipe: { cpf ou email, matricula, senha } -> { token, expiraEm, usuario }
 export async function entrar(req, res) {
   try {
     const data = await lerJson(req, 16 * 1024);

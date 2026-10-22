@@ -4,7 +4,7 @@ import { erro } from "../utils/http.mjs";
 import { assinarJwt, verificarJwt } from "../utils/jwt.mjs";
 import { verificarSenha } from "../utils/senha.mjs";
 
-// Login da equipe (admin, gerente e funcionário): CPF + matrícula + senha.
+// Login da equipe (admin, gerente e funcionário): CPF (ou e-mail) + matrícula + senha.
 // O login devolve um JWT; o jti do token aponta para uma linha de
 // sessao_usuario, que o logout encerra.
 
@@ -85,6 +85,20 @@ function buscarPorCredencial(cpf, matricula) {
   return null;
 }
 
+function buscarPorEmail(email, matricula) {
+  for (const papel of PAPEIS) {
+    const { select, alias } = PESSOAS[papel];
+    const linha = db.prepare(/*sql*/ `
+      ${select}
+      WHERE upper(${alias}.matricula) = ? AND lower(trim(${alias}.email)) = ?
+    `).get(matricula, email);
+    if (linha) return { papel, linha };
+  }
+  return null;
+}
+
+const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // ---------------------------------------------------------------------
 // Limite de tentativas (em memória): 10 erros em 15 min por IP e por CPF
 // ---------------------------------------------------------------------
@@ -107,31 +121,48 @@ function registrarErro(chave, agora) {
   }
 }
 
-export function entrar({ cpf, matricula, senha } = {}, ip = "") {
-  if (typeof cpf !== "string" || typeof matricula !== "string" || typeof senha !== "string") {
-    throw erro(400, "Informe CPF, matrícula e senha.");
+// Entra com CPF + matrícula + senha ou, no lugar do CPF, com o e-mail
+// (o gerente entra com e-mail + matrícula + senha).
+export function entrar({ cpf, email, matricula, senha } = {}, ip = "") {
+  const porEmail = cpf === undefined && email !== undefined;
+  const identificador = porEmail ? email : cpf;
+  if (typeof identificador !== "string" || typeof matricula !== "string" || typeof senha !== "string") {
+    throw erro(400, "Informe CPF ou e-mail, matrícula e senha.");
   }
-  const cpfDigitos = somenteDigitos(cpf);
   const matriculaNormalizada = matricula.trim().toUpperCase();
-  if (cpfDigitos.length !== 11 || !matriculaNormalizada || !senha) {
-    throw erro(400, "Informe CPF (11 dígitos), matrícula e senha.");
+  let chavePessoa;
+  let buscar;
+  if (porEmail) {
+    const emailNormalizado = email.trim().toLowerCase();
+    if (!EMAIL_VALIDO.test(emailNormalizado) || !matriculaNormalizada || !senha) {
+      throw erro(400, "Informe um e-mail válido, a matrícula e a senha.");
+    }
+    chavePessoa = `email:${emailNormalizado}`;
+    buscar = () => buscarPorEmail(emailNormalizado, matriculaNormalizada);
+  } else {
+    const cpfDigitos = somenteDigitos(cpf);
+    if (cpfDigitos.length !== 11 || !matriculaNormalizada || !senha) {
+      throw erro(400, "Informe CPF (11 dígitos), matrícula e senha.");
+    }
+    chavePessoa = `cpf:${cpfDigitos}`;
+    buscar = () => buscarPorCredencial(cpfDigitos, matriculaNormalizada);
   }
 
   const agora = Date.now();
-  const chaves = [`ip:${ip}`, `cpf:${cpfDigitos}`];
+  const chaves = [`ip:${ip}`, chavePessoa];
   if (chaves.some((chave) => bloqueado(chave, agora))) {
     throw erro(429, "Muitas tentativas de login. Aguarde 15 minutos e tente de novo.");
   }
 
-  const achado = buscarPorCredencial(cpfDigitos, matriculaNormalizada);
+  const pessoa = buscar();
   // verificarSenha usa um hash falso quando não achou ninguém: mesmo tempo nos dois casos
-  if (!verificarSenha(senha, achado?.linha.senha_hash)) {
+  if (!verificarSenha(senha, pessoa?.linha.senha_hash)) {
     chaves.forEach((chave) => registrarErro(chave, agora));
-    throw erro(401, "CPF, matrícula ou senha incorretos.");
+    throw erro(401, porEmail ? "E-mail, matrícula ou senha incorretos." : "CPF, matrícula ou senha incorretos.");
   }
-  tentativas.delete(`cpf:${cpfDigitos}`);
+  tentativas.delete(chavePessoa);
 
-  return criarSessao(achado.papel, achado.linha, agora);
+  return criarSessao(pessoa.papel, pessoa.linha, agora);
 }
 
 function criarSessao(papel, linha, agora) {

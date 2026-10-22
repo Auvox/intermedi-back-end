@@ -174,7 +174,7 @@ rodar `npm install` depois de receber esta alteração.
 
 | Recurso | Rotas |
 | --- | --- |
-| Login da equipe | `POST /auth/login` `{ cpf, matricula, senha }` · `GET /auth/me` · `POST /auth/logout` |
+| Login da equipe | `POST /auth/login` `{ cpf, matricula, senha }` ou `{ email, matricula, senha }` · `GET /auth/me` · `POST /auth/logout` |
 | Farmácia | `GET/POST /farmacia` · `GET/PUT/DELETE /farmacia/:id` |
 | Gerente | `GET/POST /gerente` · `GET/PUT/DELETE /gerente/:id` |
 | Funcionário | `GET/POST /funcionario` · `GET/PUT/DELETE /funcionario/:id` |
