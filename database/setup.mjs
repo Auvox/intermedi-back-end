@@ -54,6 +54,10 @@ export function aplicarSchema(db) {
   }
   migrarRedistribuicao(db);
   migrarLoginAdmin(db, temColuna);
+  // tempo logado: bancos de antes do sinal de presença ganham a coluna
+  if (!temColuna("sessao_usuario", "ultimo_sinal_em")) {
+    db.exec("ALTER TABLE sessao_usuario ADD COLUMN ultimo_sinal_em INTEGER");
+  }
 }
 
 // Bancos criados antes do login por matrícula: o admin ganha cpf e matricula

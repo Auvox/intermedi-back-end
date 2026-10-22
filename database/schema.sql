@@ -411,7 +411,8 @@ CREATE TABLE IF NOT EXISTS sessao_usuario (
     senha_fingerprint TEXT    NOT NULL,      -- muda quando a senha muda -> derruba a sessão
     criada_em         INTEGER NOT NULL,      -- timestamp em ms
     expira_em         INTEGER NOT NULL,      -- timestamp em ms
-    encerrada_em      INTEGER                -- preenchido no logout
+    encerrada_em      INTEGER,               -- preenchido no logout
+    ultimo_sinal_em   INTEGER                -- o front avisa a cada minuto que a pessoa está na plataforma
 );
 
 

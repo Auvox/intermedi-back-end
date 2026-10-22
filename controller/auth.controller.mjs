@@ -30,3 +30,29 @@ export function sair(req, res) {
     enviarErro(res, error);
   }
 }
+
+// sinal de "ainda estou aqui" (o front manda a cada minuto); conta o tempo logado
+export function presenca(req, res) {
+  try {
+    const sessao = sessaoOpcional(req);
+    if (!sessao) return enviarJson(res, 401, { error: "Sessão encerrada. Faça login de novo." });
+    serviceAuth.registrarPresenca(sessao.jti);
+    res.setHeader("Cache-Control", "no-store");
+    enviarJson(res, 200, { ok: true });
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+// tempo logado: GET /funcionario/:id/acessos e /gerente/:id/acessos (?dias=7)
+const acessosDe = (papel) => (req, res) => {
+  try {
+    const dias = new URL(req.url, "http://localhost").searchParams.get("dias") ?? 7;
+    res.setHeader("Cache-Control", "no-store");
+    enviarJson(res, 200, serviceAuth.listarAcessos(papel, req.params?.id, { dias }));
+  } catch (error) {
+    enviarErro(res, error);
+  }
+};
+export const acessosDoFuncionario = acessosDe("funcionario");
+export const acessosDoGerente = acessosDe("gerente");

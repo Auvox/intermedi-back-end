@@ -139,11 +139,12 @@ function criarSessao(papel, linha, agora) {
   const jti = randomUUID();
   const usuario = usuarioPublico(papel, linha);
 
-  db.prepare("DELETE FROM sessao_usuario WHERE expira_em <= ?").run(agora);
+  // as sessões ficam 90 dias: são o histórico de "logado de 8h até 18h"
+  db.prepare("DELETE FROM sessao_usuario WHERE criada_em <= ?").run(agora - HISTORICO_MS);
   db.prepare(/*sql*/ `
-    INSERT INTO sessao_usuario (jti, papel, id_usuario, senha_fingerprint, criada_em, expira_em)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(jti, papel, usuario.id, fingerprint(linha.senha_hash), agora, expiraEm);
+    INSERT INTO sessao_usuario (jti, papel, id_usuario, senha_fingerprint, criada_em, expira_em, ultimo_sinal_em)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(jti, papel, usuario.id, fingerprint(linha.senha_hash), agora, expiraEm, agora);
 
   const token = assinarJwt({
     sub: `${papel}:${usuario.id}`,
@@ -187,4 +188,48 @@ export function autenticar(token) {
 export function encerrarSessao(jti) {
   db.prepare("UPDATE sessao_usuario SET encerrada_em = ? WHERE jti = ? AND encerrada_em IS NULL")
     .run(Date.now(), jti);
+}
+
+// --- Tempo logado --------------------------------------------------------
+// O front manda um sinal a cada minuto enquanto a pessoa está na plataforma.
+// Quem fecha a aba sem clicar em Sair fica com a saída no último sinal.
+const HISTORICO_MS = 90 * 24 * 60 * 60 * 1000;
+const ONLINE_MS = 3 * 60 * 1000; // sem sinal há mais que isso = saiu
+
+export function registrarPresenca(jti) {
+  db.prepare("UPDATE sessao_usuario SET ultimo_sinal_em = ? WHERE jti = ? AND encerrada_em IS NULL")
+    .run(Date.now(), jti);
+}
+
+// Sessões da pessoa nos últimos `dias`, da mais recente para a mais antiga:
+// { entrada, saida, duracaoMs, online } (datas em ISO; saida null se online)
+export function listarAcessos(papel, idUsuario, { dias = 7 } = {}) {
+  if (!["gerente", "funcionario"].includes(papel)) throw erro(400, "Perfil inválido.");
+  const id = Number(idUsuario);
+  if (!Number.isSafeInteger(id) || id <= 0) throw erro(400, "Identificador inválido.");
+  const periodo = Math.min(Math.max(Math.trunc(Number(dias)) || 7, 1), 90);
+  const agora = Date.now();
+  const linhas = db.prepare(/*sql*/ `
+    SELECT criada_em, encerrada_em, expira_em, ultimo_sinal_em FROM sessao_usuario
+    WHERE papel = ? AND id_usuario = ? AND criada_em >= ?
+    ORDER BY criada_em DESC LIMIT 200
+  `).all(papel, id, agora - periodo * 24 * 60 * 60 * 1000);
+
+  const sessoes = linhas.map((s) => {
+    const sinal = s.ultimo_sinal_em ?? s.criada_em;
+    const online = s.encerrada_em == null && s.expira_em > agora && agora - sinal <= ONLINE_MS;
+    const saida = online ? null : Math.min(s.encerrada_em ?? sinal, s.expira_em);
+    return {
+      entrada: new Date(s.criada_em).toISOString(),
+      saida: saida == null ? null : new Date(saida).toISOString(),
+      duracaoMs: Math.max(0, (saida ?? agora) - s.criada_em),
+      online,
+    };
+  });
+  return {
+    dias: periodo,
+    online: sessoes.some((s) => s.online),
+    totalMs: sessoes.reduce((soma, s) => soma + s.duracaoMs, 0),
+    sessoes,
+  };
 }

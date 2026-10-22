@@ -68,6 +68,10 @@ const REGRAS = {
   // login da equipe
   "POST /auth/login": PUBLICO,
   "POST /auth/logout": PUBLICO, // encerra a sessão do token, se ele for válido
+  "POST /auth/presenca": PUBLICO, // o controller exige um token válido
+  // tempo logado: a própria pessoa, o gerente da equipe e o admin
+  "GET /funcionario/:id/acessos": alguma(eu("funcionario"), gerenteDaFarmacia("funcionario")),
+  "GET /gerente/:id/acessos": eu("gerente"),
   "GET /auth/me": logado,
 
   // app do paciente: tem o próprio login (routes/app.routes.mjs)
@@ -184,8 +188,9 @@ const REGRAS = {
   "GET /uploads/telas/:arquivo": PUBLICO,
 };
 
-// Dados de uso e saúde do sistema: só o admin, MESMO com o login desligado
-// (INTERMEDI_EXIGIR_LOGIN). O front pede o login do admin na própria aba.
+// Dados de uso e saúde do sistema: só o admin. Com o login desligado
+// (INTERMEDI_EXIGIR_LOGIN, padrão) abrem sem token, como as outras rotas;
+// um token de gerente ou funcionário continua barrado.
 const SO_ADMIN = new Set([
   "GET /analytics/cliques",
   "GET /analytics/rotas",
@@ -227,14 +232,21 @@ export function autorizar(req, chave, params = {}) {
     return;
   }
 
-  const sessao = SO_ADMIN.has(chave) ? sessaoDoAdmin(req, chave) : autenticar(tokenDaRequisicao(req));
+  const soAdmin = SO_ADMIN.has(chave);
+  // token inválido ou vencido vira "sem sessão" (null); erro aqui é o banco
+  const sessao = soAdmin ? sessaoDoAdmin(req, chave) : autenticar(tokenDaRequisicao(req));
   if (sessao) {
     req.usuario = sessao.usuario;
     req.sessao = { jti: sessao.jti };
   }
 
-  if (SO_ADMIN.has(chave)) {
-    if (!sessao) throw erro(401, "Entre como admin para ver o desempenho do sistema.");
+  if (soAdmin) {
+    // com o login desligado (padrão) a aba Desempenho abre sem login;
+    // só barra quem entrou com outro perfil
+    if (!sessao) {
+      if (loginExigido()) throw erro(401, "Entre como admin para ver o desempenho do sistema.");
+      return;
+    }
     if (sessao.usuario.papel !== "admin") throw erro(403, "Só o admin vê o desempenho do sistema.");
     return;
   }
