@@ -43,6 +43,22 @@ function validar(dados) {
   }
 }
 
+// Coordenadas são um par. Valores ausentes não viram o ponto (0, 0).
+function lerCoordenadas(data, atual, enderecoMudou = false) {
+  const temLatitude = Object.hasOwn(data, "latitude");
+  const temLongitude = Object.hasOwn(data, "longitude");
+  if (!temLatitude && !temLongitude) return enderecoMudou ? [null, null] : [atual?.latitude ?? null, atual?.longitude ?? null];
+  if (!temLatitude || !temLongitude) throw erro(400, "Informe latitude e longitude juntas.");
+  if (data.latitude === null && data.longitude === null) return [null, null];
+  const numero = valor => (typeof valor === "number" || (typeof valor === "string" && valor.trim())) ? Number(valor) : NaN;
+  const latitude = numero(data.latitude), longitude = numero(data.longitude);
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+      !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    throw erro(400, "Latitude ou longitude inválida.");
+  }
+  return [latitude, longitude];
+}
+
 // O vínculo fica em gerente/funcionario.id_farmacia, sempre com um ID real.
 export function farmaciaDoPayload(data, idAtual = null) {
   const idFarmacia = idOuNull(data.fkIdFarmacia ?? data.idFarmacia ?? idAtual);
@@ -63,7 +79,12 @@ export function farmaciaDoPayload(data, idAtual = null) {
 export async function cadastrar(data) {
   validar(data);
   const endereco = lerEndereco(data, CAMPOS_ENDERECO);
-  const coordenadas = endereco ? await geocodificarEndereco(endereco) : null;
+  const pontoExplicito = Object.hasOwn(data, "latitude") || Object.hasOwn(data, "longitude");
+  const par = lerCoordenadas(data);
+  if (pontoExplicito && !endereco && par[0] !== null) throw erro(400, "Informe o endereço da farmácia para salvar as coordenadas.");
+  const coordenadas = pontoExplicito
+    ? { latitude: par[0], longitude: par[1] }
+    : endereco ? await geocodificarEndereco(endereco) : null;
 
   return emTransacao(() => {
     const idEndereco = salvarEndereco(null, endereco, coordenadas);
@@ -106,9 +127,12 @@ export async function editar(id, data) {
   const mudouEndereco = camposLocalizacao.some((campo) =>
     endereco?.[campo] !== enderecoAnterior?.[campo]);
   // Complemento, nome e telefone não exigem uma nova consulta.
-  const coordenadas = mudouEndereco
-    ? (endereco ? await geocodificarEndereco(endereco) : null)
-    : undefined;
+  const pontoExplicito = Object.hasOwn(data, "latitude") || Object.hasOwn(data, "longitude");
+  const par = lerCoordenadas(data, atual, mudouEndereco);
+  if (pontoExplicito && !endereco && par[0] !== null) throw erro(400, "Informe o endereço da farmácia para salvar as coordenadas.");
+  const coordenadas = pontoExplicito
+    ? { latitude: par[0], longitude: par[1] }
+    : mudouEndereco ? (endereco ? await geocodificarEndereco(endereco) : null) : undefined;
 
   return emTransacao(() => {
     const idEndereco = salvarEndereco(atual.idEndereco, endereco, coordenadas);

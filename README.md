@@ -232,3 +232,28 @@ Bancos criados antes desse status são atualizados ao subir o servidor: a tabela
 
 Copie `.env.example` para `.env` se quiser mudar a porta ou o caminho do banco.
 O `.env` não vai para o Git.
+
+### Farmácias e mapa para a apresentação
+
+Após baixar o backend (`main`), execute:
+
+```cmd
+npm install
+npm run db:init
+npm run db:farmacias
+npm start
+```
+
+`db:farmacias` faz backup do banco ativo e aplica os sete cadastros públicos
+corrigidos, incluindo coordenadas na tabela `endereco` (a mesma consultada pela
+API). Mantém os IDs dos exemplos reconhecidos, estoques e demais cadastros;
+não altera farmácias desconhecidas. Pode ser repetido sem duplicar registros.
+Não exige `db:reset` nem `db:sync`. Na main o banco padrão é `intermedi.main.db`;
+`INTERMEDI_DB_PATH` no `.env`, se definido, tem prioridade. O arquivo público
+`database/farmacias-publicas.json` acompanha o código sem pacientes ou senhas.
+Estoques são de demonstração, não estoques oficiais das unidades.
+
+No app, use a branch `Reformulando-Telas-Novo-Design`, rode `npm install` e
+`npm start`, e pressione `w` para abrir no navegador. Mantenha o backend rodando
+na porta 3000. As fotos dos medicamentos são opcionais e não fazem parte deste
+procedimento.

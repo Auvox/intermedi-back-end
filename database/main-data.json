@@ -133,6 +133,102 @@
         "cep": "01024-000",
         "latitude": null,
         "longitude": null
+      },
+      {
+        "id_endereco": 13,
+        "logradouro": "Rua Catu",
+        "numero": "38",
+        "complemento": null,
+        "bairro": "Guaianases",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "08440330",
+        "latitude": null,
+        "longitude": null
+      },
+      {
+        "id_endereco": 14,
+        "logradouro": "Rua Comandante Carlos Ruhl",
+        "numero": "189",
+        "complemento": null,
+        "bairro": "Guaianases",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "08410-120",
+        "latitude": -23.54548,
+        "longitude": -46.41554
+      },
+      {
+        "id_endereco": 15,
+        "logradouro": "Rua Professor Cosme Deodato Tadeu",
+        "numero": "90",
+        "complemento": null,
+        "bairro": "Guaianases",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "08450-380",
+        "latitude": -23.54346,
+        "longitude": -46.40936
+      },
+      {
+        "id_endereco": 16,
+        "logradouro": "Avenida Claudio da Costa",
+        "numero": "54",
+        "complemento": null,
+        "bairro": "Guaianases",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "08431-160",
+        "latitude": -23.53657,
+        "longitude": -46.41752
+      },
+      {
+        "id_endereco": 17,
+        "logradouro": "Rua Pacheco Aranha",
+        "numero": "4",
+        "complemento": null,
+        "bairro": "Guaianases",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "08451-410",
+        "latitude": -23.54343,
+        "longitude": -46.39248
+      },
+      {
+        "id_endereco": 18,
+        "logradouro": "Rua Feliciano de Mendonça",
+        "numero": "496",
+        "complemento": null,
+        "bairro": "Jardim Soares",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "08460-365",
+        "latitude": -23.55371,
+        "longitude": -46.39838
+      },
+      {
+        "id_endereco": 19,
+        "logradouro": "Rua Salvador Gianetti",
+        "numero": "570",
+        "complemento": null,
+        "bairro": "Guaianases",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "08410-000",
+        "latitude": -23.5426007,
+        "longitude": -46.416915
+      },
+      {
+        "id_endereco": 20,
+        "logradouro": "Estrada Itaquera-Guaianases",
+        "numero": "2542",
+        "complemento": "Térreo, 2546 e 2548",
+        "bairro": "Jardim Helena",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "08420-000",
+        "latitude": -23.5424037,
+        "longitude": -46.4251393
       }
     ],
     "admin": [
@@ -143,50 +239,80 @@
         "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
         "telefone": null,
         "id_endereco": null,
-        "cpf": "999.999.999-99",
-        "matricula": "A000001"
+        "cpf": null,
+        "matricula": null
       }
     ],
     "farmacia": [
       {
         "id_farmacia": 1,
-        "nome": "Farmácia Pedro João Neto",
+        "nome": "UBS Guaianases II",
         "email": "pjn@intermedi.com",
-        "telefone": "1111-1111",
-        "cnes": "1234567",
-        "id_endereco": 1,
+        "telefone": "(11) 5237-1665",
+        "cnes": "4050010",
+        "id_endereco": 14,
         "foto": null,
         "created_at": "2026-09-30 20:47:54"
       },
       {
         "id_farmacia": 2,
-        "nome": "Farmácia Vida",
+        "nome": "UBS Guaianazes",
         "email": "vida@intermedi.com",
-        "telefone": "2222-2222",
-        "cnes": "7654321",
-        "id_endereco": 2,
+        "telefone": "(11) 5237-1545",
+        "cnes": "2787083",
+        "id_endereco": 15,
         "foto": null,
         "created_at": "2026-09-30 20:47:54"
       },
       {
         "id_farmacia": 3,
-        "nome": "Farmácia Saúde Leste",
+        "nome": "UBS Jardim Aurora",
         "email": "saudeleste@intermedi.com",
-        "telefone": "3333-3333",
-        "cnes": "2345678",
-        "id_endereco": 3,
+        "telefone": "(11) 5237-1800",
+        "cnes": "2787202",
+        "id_endereco": 16,
         "foto": null,
         "created_at": "2026-09-30 20:47:54"
       },
       {
         "id_farmacia": 4,
-        "nome": "Drogaria Bem Estar",
+        "nome": "UBS Jardim Bandeirantes",
         "email": "bemestar@intermedi.com",
-        "telefone": "4444-4444",
-        "cnes": "8765432",
-        "id_endereco": 4,
+        "telefone": "(11) 5237-2040",
+        "cnes": "3016935",
+        "id_endereco": 17,
         "foto": null,
         "created_at": "2026-09-30 20:47:54"
+      },
+      {
+        "id_farmacia": 5,
+        "nome": "UBS Jardim Soares",
+        "email": null,
+        "telefone": "(11) 5178-1204",
+        "cnes": "4050045",
+        "id_endereco": 18,
+        "foto": null,
+        "created_at": "2026-10-22 12:11:08"
+      },
+      {
+        "id_farmacia": 6,
+        "nome": "Drogalis Guaianazes",
+        "email": null,
+        "telefone": "(11) 4652-3945",
+        "cnes": "4741730",
+        "id_endereco": 19,
+        "foto": null,
+        "created_at": "2026-10-22 12:11:08"
+      },
+      {
+        "id_farmacia": 7,
+        "nome": "Drogaria São Paulo — Guaianases",
+        "email": null,
+        "telefone": "1132747400",
+        "cnes": "4173686",
+        "id_endereco": 20,
+        "foto": null,
+        "created_at": "2026-10-22 12:11:08"
       }
     ],
     "categoria": [
@@ -385,6 +511,21 @@
         "id_endereco": 7,
         "foto": null,
         "created_at": "2026-09-30 18:45:49"
+      },
+      {
+        "id_gerente": 7,
+        "nome": "Andre Santos",
+        "cpf": "12345678956",
+        "email": "matheusbfcss1@gmail.com",
+        "senha_hash": "scrypt$8c67a7116d8ee8dfa616c7703781d06b$ba5fe732596a5261be546ffc1ae7d3170be38f70445f61d92a11f22077fa63f9fbf7c2511ca6422244b4292024d10193bd2210457e917f9fc8bfd7a56a90370a",
+        "crf": "789654",
+        "matricula": "G286706",
+        "telefone": null,
+        "id_farmacia": 4,
+        "id_admin_cadastro": null,
+        "id_endereco": 13,
+        "foto": null,
+        "created_at": "2026-10-22 12:00:15"
       }
     ],
     "funcionario": [
