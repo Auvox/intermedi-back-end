@@ -177,6 +177,7 @@ test("banco travado por outro programa: o alerta aparece mesmo sem conseguir gra
     assert.ok(travado.alertas.some((a) => a.id === jaExistia.id), "o alerta que já existia continua na lista");
 
     // o admin continua vendo os alertas (a sessão não dá pra conferir, vale a assinatura)
+    process.env.INTERMEDI_EXIGIR_LOGIN = "true";
     const token = (papel) => ({ headers: { authorization: `Bearer ${assinarJwt({ papel, id: 1, jti: "teste", exp: Math.floor(Date.now() / 1000) + 60 })}` } });
     assert.doesNotThrow(() => autorizar(token("admin"), "GET /alertas"));
     assert.doesNotThrow(() => autorizar(token("admin"), "GET /saude"));
@@ -185,6 +186,7 @@ test("banco travado por outro programa: o alerta aparece mesmo sem conseguir gra
     assert.throws(() => autorizar(token("admin"), "PUT /alertas/:id/resolver"), /locked/);
     assert.throws(() => autorizar(token("admin"), "GET /analytics/resumo"), /locked/);
   } finally {
+    delete process.env.INTERMEDI_EXIGIR_LOGIN;
     outroPrograma.exec("ROLLBACK");
     outroPrograma.close();
   }
@@ -193,14 +195,22 @@ test("banco travado por outro programa: o alerta aparece mesmo sem conseguir gra
   assert.ok(db.prepare("SELECT 1 FROM alerta WHERE tipo = 'banco' AND status = 'ativo'").get());
 });
 
-test("só o admin vê o desempenho, mesmo com o login desligado; os cliques continuam públicos", () => {
+test("desempenho abre sem login com o login desligado; com o login exigido, só o admin", () => {
   delete process.env.INTERMEDI_EXIGIR_LOGIN;
-  const req = { headers: {} };
-  assert.throws(() => autorizar(req, "GET /analytics/rotas"), { status: 401 });
-  assert.throws(() => autorizar({ headers: {} }, "GET /alertas"), { status: 401 });
-  assert.throws(() => autorizar({ headers: { authorization: "Bearer falso" } }, "GET /saude"), { status: 401 });
+  assert.doesNotThrow(() => autorizar({ headers: {} }, "GET /analytics/rotas"));
+  assert.doesNotThrow(() => autorizar({ headers: {} }, "GET /alertas"));
   assert.doesNotThrow(() => autorizar({ headers: {} }, "POST /analytics/cliques"));
   assert.doesNotThrow(() => autorizar({ headers: {} }, "GET /remedios"));
+
+  process.env.INTERMEDI_EXIGIR_LOGIN = "true";
+  try {
+    assert.throws(() => autorizar({ headers: {} }, "GET /analytics/rotas"), { status: 401 });
+    assert.throws(() => autorizar({ headers: {} }, "GET /alertas"), { status: 401 });
+    assert.throws(() => autorizar({ headers: { authorization: "Bearer falso" } }, "GET /saude"), { status: 401 });
+    assert.doesNotThrow(() => autorizar({ headers: {} }, "POST /analytics/cliques"));
+  } finally {
+    delete process.env.INTERMEDI_EXIGIR_LOGIN;
+  }
 });
 
 test("os resumos ficam 15 s em cache e um lote novo de cliques limpa o cache", () => {

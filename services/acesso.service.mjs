@@ -184,8 +184,9 @@ const REGRAS = {
   "GET /uploads/telas/:arquivo": PUBLICO,
 };
 
-// Dados de uso e saúde do sistema: só o admin, MESMO com o login desligado
-// (INTERMEDI_EXIGIR_LOGIN). O front pede o login do admin na própria aba.
+// Dados de uso e saúde do sistema: só o admin quando o login é exigido
+// (INTERMEDI_EXIGIR_LOGIN). Desligado, a aba Desempenho abre sem login, como o
+// resto da área do admin.
 const SO_ADMIN = new Set([
   "GET /analytics/cliques",
   "GET /analytics/rotas",
@@ -234,6 +235,7 @@ export function autorizar(req, chave, params = {}) {
   }
 
   if (SO_ADMIN.has(chave)) {
+    if (!loginExigido()) return;
     if (!sessao) throw erro(401, "Entre como admin para ver o desempenho do sistema.");
     if (sessao.usuario.papel !== "admin") throw erro(403, "Só o admin vê o desempenho do sistema.");
     return;
