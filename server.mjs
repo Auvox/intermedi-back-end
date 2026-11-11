@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import { Router } from "./router.mjs";
 
+import { registrarRotasAdmin } from "./routes/admin.routes.mjs";
 import remedioRoutes from "./routes/remedio.routes.mjs";
 import farmaciaRoutes from "./routes/farmacia.routes.mjs";
 import funcionarioRoutes from "./routes/funcionario.routes.mjs";
@@ -18,7 +19,7 @@ import rotaRoutes from "./sistema-rota/rota.routes.mjs";
 import ocrRoutes from "./sistema-foto/ocr.routes.mjs";
 
 const router = new Router();
-
+registrarRotasAdmin(router);
 remedioRoutes(router);
 farmaciaRoutes(router);
 funcionarioRoutes(router);
