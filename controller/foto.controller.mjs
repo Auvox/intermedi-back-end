@@ -18,7 +18,7 @@ async function enviar(req, res, tabela, rotulo) {
     const id = idDaUrl(req, rotulo);
     if (!serviceFoto.existe(tabela, id)) throw erro(404, `${rotulo} não encontrado`);
 
-    const arquivo = await salvarFoto(req, PASTA_FOTOS);
+    const arquivo = await salvarFoto(req, PASTA_FOTOS, { reduzir: true });
     const url = URL_FOTOS + arquivo;
     let antiga;
     try {

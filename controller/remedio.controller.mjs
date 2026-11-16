@@ -104,7 +104,7 @@ export async function enviarFotoRemedio(req, res) {
     const id = idDaUrl(req, "Remedio");
     if (!serviceRemedio.buscarPorId(id)) throw erro(404, "Remedio não encontrado");
 
-    const arquivo = await salvarFoto(req, PASTA_FOTOS);
+    const arquivo = await salvarFoto(req, PASTA_FOTOS, { reduzir: true });
     let fotoAntiga;
     try {
       fotoAntiga = serviceRemedio.atualizarFoto(id, URL_FOTOS + arquivo);

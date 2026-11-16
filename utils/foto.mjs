@@ -9,6 +9,10 @@ import { erro } from "./http.mjs";
 const LIMITE = 5 * 1024 * 1024;
 const MIME = { jpg: "image/jpeg", png: "image/png", webp: "image/webp" };
 const NOME_VALIDO = /^[a-f0-9]{48}\.(jpg|png|webp)$/;
+// Fotos que aparecem pequenas no site (pessoas, farmácias, remédios): a foto do
+// celular chega com 3 a 5 MB e 4000 px; guardada com no máximo 1280 px, em WebP,
+// fica com uns 100 KB e as listas carregam na hora.
+const LADO_MAXIMO = 1280;
 
 function extensao(buffer) {
   if (buffer.subarray(0, 3).equals(Buffer.from([255, 216, 255]))) return "jpg";
@@ -17,8 +21,27 @@ function extensao(buffer) {
   return null;
 }
 
+// Reduz e converte para WebP (gira conforme o EXIF do celular). Se o sharp
+// faltar ou não der conta da imagem, devolve null e a foto vai como chegou.
+async function reduzirFoto(buffer) {
+  try {
+    const { default: sharp } = await import("sharp");
+    const menor = await sharp(buffer)
+      .rotate()
+      .resize({ width: LADO_MAXIMO, height: LADO_MAXIMO, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+    return menor.length < buffer.length ? menor : null;
+  } catch (error) {
+    console.warn("Foto salva sem reduzir:", error.message);
+    return null;
+  }
+}
+
 // Lê a foto da requisição e salva em "pasta". Retorna o nome do arquivo.
-export async function salvarFoto(req, pasta) {
+//   reduzir: true  → no máximo 1280 px, em WebP (fotos de exibição). Sem essa
+//                    opção a imagem vai intacta (leitura de texto, capturas).
+export async function salvarFoto(req, pasta, { reduzir = false } = {}) {
   const partes = [];
   let tamanho = 0;
   for await (const parte of req) {
@@ -42,9 +65,16 @@ export async function salvarFoto(req, pasta) {
   if (!arquivo || typeof arquivo === "string" || !arquivo.size) throw erro(400, "Selecione uma foto.");
   if (arquivo.size > LIMITE) throw erro(413, "A foto deve ter no máximo 5 MB.");
 
-  const buffer = Buffer.from(await arquivo.arrayBuffer());
-  const ext = extensao(buffer);
+  let buffer = Buffer.from(await arquivo.arrayBuffer());
+  let ext = extensao(buffer);
   if (!ext) throw erro(400, "Use uma imagem JPEG, PNG ou WebP.");
+  if (reduzir) {
+    const menor = await reduzirFoto(buffer);
+    if (menor) {
+      buffer = menor;
+      ext = "webp";
+    }
+  }
 
   const nome = `${randomBytes(24).toString("hex")}.${ext}`;
   await mkdir(pasta, { recursive: true });
