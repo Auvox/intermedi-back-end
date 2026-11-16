@@ -3,6 +3,7 @@ import {
   pontosDoMapa,
   rankingRotas,
   resumoGeral,
+  mapaRede,
   listarCapturas,
   enviarCaptura,
   exibirCaptura,
@@ -29,6 +30,9 @@ export default function analyticsRoutes(router) {
   router.get("/analytics/telas", listarCapturas);
   router.post("/analytics/telas", enviarCaptura);
   router.get("/uploads/telas/:arquivo", exibirCaptura);
+
+  // aba "Simulação em tempo real": farmácias e pedidos entre elas, com horários
+  router.get("/analytics/rede", mapaRede);
 
   // saúde do sistema e alertas
   router.get("/saude", painelSaude);

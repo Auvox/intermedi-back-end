@@ -192,6 +192,7 @@ const SO_ADMIN = new Set([
   "GET /analytics/rotas",
   "GET /analytics/resumo",
   "GET /analytics/telas",
+  "GET /analytics/rede",
   "GET /saude",
   "GET /alertas",
   "PUT /alertas/:id/resolver",

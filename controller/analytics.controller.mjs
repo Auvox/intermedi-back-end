@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 import * as serviceAnalytics from "../services/analytics.service.mjs";
+import { mapaDaRede } from "../services/rede.service.mjs";
 import { lerFiltros } from "../utils/periodo-desempenho.mjs";
 import { enviarErro, enviarJson, erro, lerJson } from "../utils/http.mjs";
 import { enviarFoto, removerFoto, salvarFoto } from "../utils/foto.mjs";
@@ -47,6 +48,16 @@ export async function rankingRotas(req, res) {
 export async function resumoGeral(req, res) {
   try {
     enviarJson(res, 200, serviceAnalytics.resumoGeral(lerFiltros(urlDe(req))));
+  } catch (error) {
+    enviarErro(res, error);
+  }
+}
+
+// farmácias e pedidos entre elas com os horários (?dias=1..365, padrão 30)
+export async function mapaRede(req, res) {
+  try {
+    const dias = urlDe(req).searchParams.get("dias");
+    enviarJson(res, 200, mapaDaRede({ dias: dias === null ? undefined : Number(dias) }));
   } catch (error) {
     enviarErro(res, error);
   }
