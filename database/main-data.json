@@ -466,66 +466,6 @@
         "id_endereco": null,
         "foto": null,
         "created_at": "2026-09-30 18:45:49"
-      },
-      {
-        "id_gerente": 3,
-        "nome": "Beatriz Rocha",
-        "cpf": "666.666.666-66",
-        "email": "beatriz@intermedi.com",
-        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
-        "crf": "CRF-SP 1003",
-        "matricula": "G000003",
-        "telefone": "11977776666",
-        "id_farmacia": 3,
-        "id_admin_cadastro": 1,
-        "id_endereco": 5,
-        "foto": null,
-        "created_at": "2026-09-30 18:45:49"
-      },
-      {
-        "id_gerente": 4,
-        "nome": "Rafael Martins",
-        "cpf": "777.777.777-77",
-        "email": "rafael@intermedi.com",
-        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
-        "crf": "CRF-SP 1004",
-        "matricula": "G000004",
-        "telefone": "11966665555",
-        "id_farmacia": 4,
-        "id_admin_cadastro": 1,
-        "id_endereco": 6,
-        "foto": null,
-        "created_at": "2026-09-30 18:45:49"
-      },
-      {
-        "id_gerente": 5,
-        "nome": "Fernanda Costa",
-        "cpf": "888.888.888-88",
-        "email": "fernanda@intermedi.com",
-        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
-        "crf": "CRF-SP 1005",
-        "matricula": "G000005",
-        "telefone": "11955554444",
-        "id_farmacia": 1,
-        "id_admin_cadastro": 1,
-        "id_endereco": 7,
-        "foto": null,
-        "created_at": "2026-09-30 18:45:49"
-      },
-      {
-        "id_gerente": 7,
-        "nome": "Andre Santos",
-        "cpf": "12345678956",
-        "email": "matheusbfcss1@gmail.com",
-        "senha_hash": "scrypt$8c67a7116d8ee8dfa616c7703781d06b$ba5fe732596a5261be546ffc1ae7d3170be38f70445f61d92a11f22077fa63f9fbf7c2511ca6422244b4292024d10193bd2210457e917f9fc8bfd7a56a90370a",
-        "crf": "789654",
-        "matricula": "G286706",
-        "telefone": null,
-        "id_farmacia": 4,
-        "id_admin_cadastro": null,
-        "id_endereco": 13,
-        "foto": null,
-        "created_at": "2026-10-22 12:00:15"
       }
     ],
     "funcionario": [
@@ -541,134 +481,6 @@
         "telefone": null,
         "id_farmacia": 1,
         "id_gerente_cadastro": 1,
-        "id_endereco": null,
-        "foto": null,
-        "created_at": "2026-09-30 18:45:49"
-      },
-      {
-        "id_funcionario": 2,
-        "nome": "Julia Alves",
-        "cpf": "444.444.444-44",
-        "email": "julia@intermedi.com",
-        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
-        "matricula": "000002",
-        "turno": "tarde",
-        "cargo": "Atendente",
-        "telefone": null,
-        "id_farmacia": 2,
-        "id_gerente_cadastro": 2,
-        "id_endereco": null,
-        "foto": null,
-        "created_at": "2026-09-30 18:45:49"
-      },
-      {
-        "id_funcionario": 3,
-        "nome": "Pedro Henrique Silva",
-        "cpf": "101.202.303-40",
-        "email": "pedro@intermedi.com",
-        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
-        "matricula": "000003",
-        "turno": "noite",
-        "cargo": "Farmacêutico",
-        "telefone": "11944443333",
-        "id_farmacia": 1,
-        "id_gerente_cadastro": 1,
-        "id_endereco": 8,
-        "foto": null,
-        "created_at": "2026-09-30 18:45:49"
-      },
-      {
-        "id_funcionario": 4,
-        "nome": "Mariana Costa",
-        "cpf": "202.303.404-50",
-        "email": "mariana@intermedi.com",
-        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
-        "matricula": "000004",
-        "turno": "integral",
-        "cargo": "Caixa",
-        "telefone": "11933332222",
-        "id_farmacia": 1,
-        "id_gerente_cadastro": 5,
-        "id_endereco": null,
-        "foto": null,
-        "created_at": "2026-09-30 18:45:49"
-      },
-      {
-        "id_funcionario": 5,
-        "nome": "Thiago Almeida",
-        "cpf": "303.404.505-60",
-        "email": "thiago@intermedi.com",
-        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
-        "matricula": "000005",
-        "turno": "manha",
-        "cargo": "Estoquista",
-        "telefone": "11922221111",
-        "id_farmacia": 2,
-        "id_gerente_cadastro": 2,
-        "id_endereco": null,
-        "foto": null,
-        "created_at": "2026-09-30 18:45:49"
-      },
-      {
-        "id_funcionario": 6,
-        "nome": "Larissa Mendes",
-        "cpf": "404.505.606-70",
-        "email": "larissa@intermedi.com",
-        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
-        "matricula": "000006",
-        "turno": "manha",
-        "cargo": "Atendente",
-        "telefone": "11911110000",
-        "id_farmacia": 3,
-        "id_gerente_cadastro": 3,
-        "id_endereco": null,
-        "foto": null,
-        "created_at": "2026-09-30 18:45:49"
-      },
-      {
-        "id_funcionario": 7,
-        "nome": "Bruno Carvalho",
-        "cpf": "505.606.707-80",
-        "email": "bruno@intermedi.com",
-        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
-        "matricula": "000007",
-        "turno": "tarde",
-        "cargo": "Farmacêutico",
-        "telefone": "11900009999",
-        "id_farmacia": 3,
-        "id_gerente_cadastro": 3,
-        "id_endereco": null,
-        "foto": null,
-        "created_at": "2026-09-30 18:45:49"
-      },
-      {
-        "id_funcionario": 8,
-        "nome": "Aline Barbosa",
-        "cpf": "606.707.808-90",
-        "email": "aline@intermedi.com",
-        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
-        "matricula": "000008",
-        "turno": "integral",
-        "cargo": "Atendente",
-        "telefone": "11988880000",
-        "id_farmacia": 4,
-        "id_gerente_cadastro": 4,
-        "id_endereco": null,
-        "foto": null,
-        "created_at": "2026-09-30 18:45:49"
-      },
-      {
-        "id_funcionario": 9,
-        "nome": "Diego Rocha",
-        "cpf": "707.808.909-01",
-        "email": "diego@intermedi.com",
-        "senha_hash": "scrypt$0d2009f9fe0d4248c2f0fcc8fdc371ee$d0b8fdefd3374bbf9d386f4801e12b3b31620f3fbbef2eb5b72c897cd486a629d4e3ef8d8ac9d81d815617d64a3a89c6b27ca1bb4be3578eb9ad08f58ab30d26",
-        "matricula": "000009",
-        "turno": "noite",
-        "cargo": "Estoquista",
-        "telefone": "11977770000",
-        "id_farmacia": 4,
-        "id_gerente_cadastro": 4,
         "id_endereco": null,
         "foto": null,
         "created_at": "2026-09-30 18:45:49"
@@ -1207,7 +1019,7 @@
         "estoque_minimo": 50,
         "lote": "L-A3",
         "validade": "2027-07-31",
-        "id_gerente_cadastro": 3,
+        "id_gerente_cadastro": null,
         "created_at": "2026-09-30 18:45:49",
         "updated_at": "2026-09-30 20:24:24"
       },
@@ -1219,7 +1031,7 @@
         "estoque_minimo": 50,
         "lote": "L-B3",
         "validade": "2027-05-31",
-        "id_gerente_cadastro": 3,
+        "id_gerente_cadastro": null,
         "created_at": "2026-09-30 18:45:49",
         "updated_at": "2026-09-30 21:52:06"
       },
@@ -1231,7 +1043,7 @@
         "estoque_minimo": 20,
         "lote": "L-E3",
         "validade": "2026-12-31",
-        "id_gerente_cadastro": 3,
+        "id_gerente_cadastro": null,
         "created_at": "2026-09-30 18:45:49",
         "updated_at": "2026-09-30 19:05:09"
       },
@@ -1243,7 +1055,7 @@
         "estoque_minimo": 20,
         "lote": "L-I1",
         "validade": "2027-03-31",
-        "id_gerente_cadastro": 3,
+        "id_gerente_cadastro": null,
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -1255,7 +1067,7 @@
         "estoque_minimo": 20,
         "lote": "L-J1",
         "validade": "2027-01-31",
-        "id_gerente_cadastro": 3,
+        "id_gerente_cadastro": null,
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -1267,7 +1079,7 @@
         "estoque_minimo": 30,
         "lote": "L-L1",
         "validade": "2027-10-31",
-        "id_gerente_cadastro": 3,
+        "id_gerente_cadastro": null,
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -1279,7 +1091,7 @@
         "estoque_minimo": 20,
         "lote": "L-D4",
         "validade": "2027-02-28",
-        "id_gerente_cadastro": 4,
+        "id_gerente_cadastro": null,
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -1291,7 +1103,7 @@
         "estoque_minimo": 30,
         "lote": "L-F4",
         "validade": "2027-06-30",
-        "id_gerente_cadastro": 4,
+        "id_gerente_cadastro": null,
         "created_at": "2026-09-30 18:45:49",
         "updated_at": "2026-09-30 20:33:58"
       },
@@ -1303,7 +1115,7 @@
         "estoque_minimo": 30,
         "lote": "L-G4",
         "validade": "2027-04-30",
-        "id_gerente_cadastro": 4,
+        "id_gerente_cadastro": null,
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -1315,7 +1127,7 @@
         "estoque_minimo": 30,
         "lote": "L-H4",
         "validade": "2027-08-31",
-        "id_gerente_cadastro": 4,
+        "id_gerente_cadastro": null,
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -1327,7 +1139,7 @@
         "estoque_minimo": 20,
         "lote": "L-O1",
         "validade": "2027-01-31",
-        "id_gerente_cadastro": 4,
+        "id_gerente_cadastro": null,
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -1339,7 +1151,7 @@
         "estoque_minimo": 20,
         "lote": "L-M4",
         "validade": "2026-08-31",
-        "id_gerente_cadastro": 4,
+        "id_gerente_cadastro": null,
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -1419,65 +1231,13 @@
         "resposta_gerente": null
       },
       {
-        "id_chamado": 2,
-        "titulo": "Reposição de amoxicilina",
-        "descricao": "Restam apenas 8 unidades no lote L-E3",
-        "status": "em_andamento",
-        "prioridade": "urgente",
-        "data_abertura": "2026-09-22 14:30:00",
-        "id_funcionario": 6,
-        "id_farmacia": 3,
-        "id_gerente_resposta": 3,
-        "data_resposta": "2026-09-22 15:00:00",
-        "resposta_gerente": "Pedido feito ao distribuidor"
-      },
-      {
-        "id_chamado": 3,
-        "titulo": "Dipirona acabando",
-        "descricao": "Lote L-A2 com 15 unidades, alta procura na semana",
-        "status": "aceito",
-        "prioridade": "media",
-        "data_abertura": "2026-09-24 10:00:00",
-        "id_funcionario": 2,
-        "id_farmacia": 2,
-        "id_gerente_resposta": 2,
-        "data_resposta": "2026-09-24 11:30:00",
-        "resposta_gerente": null
-      },
-      {
-        "id_chamado": 4,
-        "titulo": "Pedido de losartana",
-        "descricao": "Clientes hipertensos sem o remédio no fim de semana",
-        "status": "resolvido",
-        "prioridade": "alta",
-        "data_abertura": "2026-09-10 08:45:00",
-        "id_funcionario": 8,
-        "id_farmacia": 4,
-        "id_gerente_resposta": 4,
-        "data_resposta": "2026-09-10 09:10:00",
-        "resposta_gerente": "Redistribuição da farmácia 1"
-      },
-      {
-        "id_chamado": 5,
-        "titulo": "Simeticona zerada",
-        "descricao": "Lote L-N1 sem unidades",
-        "status": "pendente",
-        "prioridade": "baixa",
-        "data_abertura": "2026-09-25 16:20:00",
-        "id_funcionario": 5,
-        "id_farmacia": 2,
-        "id_gerente_resposta": null,
-        "data_resposta": null,
-        "resposta_gerente": null
-      },
-      {
         "id_chamado": 6,
         "titulo": "Leitor de código de barras com defeito",
         "descricao": "Caixa 2 não lê as embalagens",
         "status": "cancelado",
         "prioridade": "baixa",
         "data_abertura": "2026-09-05 11:00:00",
-        "id_funcionario": 4,
+        "id_funcionario": 1,
         "id_farmacia": 1,
         "id_gerente_resposta": null,
         "data_resposta": null,
@@ -1490,76 +1250,11 @@
         "status": "recusado",
         "prioridade": "baixa",
         "data_abertura": "2026-09-12 13:00:00",
-        "id_funcionario": 3,
+        "id_funcionario": 1,
         "id_farmacia": 1,
         "id_gerente_resposta": 1,
         "data_resposta": "2026-09-12 17:00:00",
         "resposta_gerente": "Estoque atual ainda atende a demanda"
-      },
-      {
-        "id_chamado": 8,
-        "titulo": "Reposição: Losartana Potássica",
-        "descricao": null,
-        "status": "aceito",
-        "prioridade": "alta",
-        "data_abertura": "2026-09-30 19:06:14",
-        "id_funcionario": 8,
-        "id_farmacia": 4,
-        "id_gerente_resposta": 4,
-        "data_resposta": "2026-09-30 19:06:45",
-        "resposta_gerente": null
-      },
-      {
-        "id_chamado": 9,
-        "titulo": "Reposição: Dipirona",
-        "descricao": "Preciso desse remediozinhos",
-        "status": "resolvido",
-        "prioridade": "alta",
-        "data_abertura": "2026-09-30 20:21:16",
-        "id_funcionario": 8,
-        "id_farmacia": 4,
-        "id_gerente_resposta": 4,
-        "data_resposta": "2026-09-30 20:23:10",
-        "resposta_gerente": "Galera, quem puder ajudar aí, da um salve"
-      },
-      {
-        "id_chamado": 10,
-        "titulo": "Reposição: Losartana Potássica",
-        "descricao": null,
-        "status": "resolvido",
-        "prioridade": "urgente",
-        "data_abertura": "2026-09-30 20:29:36",
-        "id_funcionario": 8,
-        "id_farmacia": 4,
-        "id_gerente_resposta": 4,
-        "data_resposta": "2026-09-30 20:30:35",
-        "resposta_gerente": "eu preciso meu parceiro"
-      },
-      {
-        "id_chamado": 11,
-        "titulo": "Reposição: Amoxicilina",
-        "descricao": null,
-        "status": "resolvido",
-        "prioridade": "media",
-        "data_abertura": "2026-09-30 20:48:15",
-        "id_funcionario": 8,
-        "id_farmacia": 4,
-        "id_gerente_resposta": 4,
-        "data_resposta": "2026-09-30 20:48:35",
-        "resposta_gerente": null
-      },
-      {
-        "id_chamado": 12,
-        "titulo": "Reposição: Omeprazol, Paracetamol, Enalapril",
-        "descricao": null,
-        "status": "em_andamento",
-        "prioridade": "baixa",
-        "data_abertura": "2026-09-30 21:48:32",
-        "id_funcionario": 9,
-        "id_farmacia": 4,
-        "id_gerente_resposta": 4,
-        "data_resposta": "2026-09-30 21:49:59",
-        "resposta_gerente": "foi apenas o paracetomol paizao"
       }
     ],
     "chamado_remedio": [
@@ -1569,64 +1264,9 @@
         "quantidade": 50
       },
       {
-        "id_chamado": 2,
-        "id_remedio": 5,
-        "quantidade": 100
-      },
-      {
-        "id_chamado": 3,
-        "id_remedio": 1,
-        "quantidade": 60
-      },
-      {
-        "id_chamado": 4,
-        "id_remedio": 6,
-        "quantidade": 80
-      },
-      {
-        "id_chamado": 5,
-        "id_remedio": 14,
-        "quantidade": 40
-      },
-      {
         "id_chamado": 7,
         "id_remedio": 13,
         "quantidade": 50
-      },
-      {
-        "id_chamado": 8,
-        "id_remedio": 6,
-        "quantidade": 48
-      },
-      {
-        "id_chamado": 9,
-        "id_remedio": 1,
-        "quantidade": 40
-      },
-      {
-        "id_chamado": 10,
-        "id_remedio": 6,
-        "quantidade": 60
-      },
-      {
-        "id_chamado": 11,
-        "id_remedio": 5,
-        "quantidade": 5
-      },
-      {
-        "id_chamado": 12,
-        "id_remedio": 2,
-        "quantidade": 95
-      },
-      {
-        "id_chamado": 12,
-        "id_remedio": 8,
-        "quantidade": 58
-      },
-      {
-        "id_chamado": 12,
-        "id_remedio": 12,
-        "quantidade": 2000
       }
     ],
     "servico": [
@@ -1639,44 +1279,12 @@
         "data_servico": "2026-09-18 10:05:00"
       },
       {
-        "id_servico": 2,
-        "id_funcionario": 2,
-        "id_paciente": 2,
-        "id_farmacia": 2,
-        "observacao": "Retirada mensal",
-        "data_servico": "2026-09-19 15:40:00"
-      },
-      {
-        "id_servico": 3,
-        "id_funcionario": 6,
-        "id_paciente": 3,
-        "id_farmacia": 3,
-        "observacao": "Crise alérgica, orientada a voltar se piorar",
-        "data_servico": "2026-09-21 09:30:00"
-      },
-      {
-        "id_servico": 4,
-        "id_funcionario": 8,
-        "id_paciente": 4,
-        "id_farmacia": 4,
-        "observacao": "Uso contínuo",
-        "data_servico": "2026-09-23 18:10:00"
-      },
-      {
         "id_servico": 5,
-        "id_funcionario": 3,
+        "id_funcionario": 1,
         "id_paciente": 5,
         "id_farmacia": 1,
         "observacao": "Atendimento no balcão",
         "data_servico": "2026-09-24 21:00:00"
-      },
-      {
-        "id_servico": 6,
-        "id_funcionario": 7,
-        "id_paciente": 6,
-        "id_farmacia": 3,
-        "observacao": "Receita de antibiótico retida",
-        "data_servico": "2026-09-26 14:15:00"
       },
       {
         "id_servico": 7,
@@ -1685,22 +1293,6 @@
         "id_farmacia": 1,
         "observacao": null,
         "data_servico": "2026-09-27 08:50:00"
-      },
-      {
-        "id_servico": 8,
-        "id_funcionario": 8,
-        "id_paciente": 2,
-        "id_farmacia": 4,
-        "observacao": "okk",
-        "data_servico": "2026-09-30 20:29:15"
-      },
-      {
-        "id_servico": 9,
-        "id_funcionario": 9,
-        "id_paciente": 1,
-        "id_farmacia": 4,
-        "observacao": "Muito obrigado",
-        "data_servico": "2026-09-30 21:56:59"
       }
     ],
     "servico_remedio": [
@@ -1715,26 +1307,6 @@
         "quantidade": 1
       },
       {
-        "id_servico": 2,
-        "id_remedio": 6,
-        "quantidade": 2
-      },
-      {
-        "id_servico": 3,
-        "id_remedio": 3,
-        "quantidade": 1
-      },
-      {
-        "id_servico": 3,
-        "id_remedio": 11,
-        "quantidade": 1
-      },
-      {
-        "id_servico": 4,
-        "id_remedio": 7,
-        "quantidade": 3
-      },
-      {
         "id_servico": 5,
         "id_remedio": 4,
         "quantidade": 1
@@ -1742,11 +1314,6 @@
       {
         "id_servico": 5,
         "id_remedio": 8,
-        "quantidade": 1
-      },
-      {
-        "id_servico": 6,
-        "id_remedio": 9,
         "quantidade": 1
       },
       {
@@ -1758,16 +1325,6 @@
         "id_servico": 7,
         "id_remedio": 13,
         "quantidade": 1
-      },
-      {
-        "id_servico": 8,
-        "id_remedio": 6,
-        "quantidade": 12
-      },
-      {
-        "id_servico": 9,
-        "id_remedio": 2,
-        "quantidade": 40
       }
     ],
     "redistribuicao": [
@@ -1868,13 +1425,13 @@
       },
       {
         "id_redistribuicao": 6,
-        "id_chamado": 9,
+        "id_chamado": null,
         "id_remedio": 1,
         "id_farmacia_origem": 3,
         "id_farmacia_destino": 4,
         "quantidade": 40,
         "status": "recebida",
-        "id_gerente_resposta": 3,
+        "id_gerente_resposta": null,
         "motivo_recusa": null,
         "data_solicitacao": "2026-09-30 20:23:10",
         "data_aprovacao": "2026-09-30 20:24:25",
@@ -1887,7 +1444,7 @@
       },
       {
         "id_redistribuicao": 7,
-        "id_chamado": 10,
+        "id_chamado": null,
         "id_remedio": 6,
         "id_farmacia_origem": 1,
         "id_farmacia_destino": 4,
@@ -1906,7 +1463,7 @@
       },
       {
         "id_redistribuicao": 8,
-        "id_chamado": 11,
+        "id_chamado": null,
         "id_remedio": 5,
         "id_farmacia_origem": 2,
         "id_farmacia_destino": 4,
@@ -1925,13 +1482,13 @@
       },
       {
         "id_redistribuicao": 9,
-        "id_chamado": 12,
+        "id_chamado": null,
         "id_remedio": 2,
         "id_farmacia_origem": 3,
         "id_farmacia_destino": 4,
         "quantidade": 95,
         "status": "recebida",
-        "id_gerente_resposta": 3,
+        "id_gerente_resposta": null,
         "motivo_recusa": null,
         "data_solicitacao": "2026-09-30 21:49:59",
         "data_aprovacao": "2026-09-30 21:52:06",
@@ -1944,7 +1501,7 @@
       },
       {
         "id_redistribuicao": 10,
-        "id_chamado": 12,
+        "id_chamado": null,
         "id_remedio": 12,
         "id_farmacia_origem": 2,
         "id_farmacia_destino": 4,
