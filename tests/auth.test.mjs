@@ -155,17 +155,17 @@ test("login por CPF + matrícula + senha, permissões por perfil e farmácia, ca
   const detalhe = (await api(`/funcionario/${criado.dados.recebido.idFuncionario}`, { token: ana.dados.token })).dados.resultado;
   assert.equal(detalhe.idGerenteCadastro, ana.dados.usuario.id);
 
-  // o e-mail traz a marca, a matrícula e a senha provisória; com ela o funcionário entra
+  // o e-mail traz as logos e o crachá com a matrícula; com o CPF e ela o funcionário entra (sem senha)
   const emails = await readdir(pastaEmails);
   const arquivo = emails.find((nome) => nome.includes("func.novo"));
   assert.ok(arquivo, `e-mail salvo em ${pastaEmails}`);
   const html = await readFile(path.join(pastaEmails, arquivo), "utf8");
-  assert.ok(html.includes("Auvox") && html.includes(criado.dados.matricula));
-  assert.ok(html.includes("Bem-vindo(a) à equipe") && html.includes("#0071e3"), "boas-vindas na cor do funcionário (azul)");
-  assert.ok(html.includes("data:image/png;base64,"), "marcas e ícones embutidos no .html de teste");
-  const senhaProvisoria = html.match(/data-campo="senha"[^>]*>([^<]+)</)?.[1];
-  assert.ok(senhaProvisoria);
-  const novo = await entrar("98765432100", criado.dados.matricula, senhaProvisoria);
+  assert.ok(html.includes('alt="Intermedi"') && html.includes('alt="Auvox"'), "logos da Intermedi e da Auvox");
+  assert.ok(html.includes("Boas-vindas à equipe, Func.") && html.includes("#0071e3"), "boas-vindas na cor do funcionário (azul)");
+  assert.ok(html.includes("data:image/png;base64,"), "logos embutidas no .html de teste");
+  assert.equal(html.match(/data-campo="matricula"[^>]*>([^<]+)</)?.[1], criado.dados.matricula);
+  assert.ok(!html.includes('data-campo="senha"'), "gerente e funcionário entram sem senha: o e-mail não manda senha");
+  const novo = await entrar("98765432100", criado.dados.matricula, "");
   assert.equal(novo.status, 200);
   assert.equal(novo.dados.usuario.idFarmacia, 1);
 

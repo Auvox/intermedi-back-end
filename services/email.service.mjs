@@ -74,12 +74,12 @@ export async function enviarBoasVindas({ papel, nome, email, cpf, matricula, sen
       ? db.prepare("SELECT nome FROM farmacia WHERE id_farmacia = ?").get(idFarmacia)?.nome
       : null;
     const front = (process.env.INTERMEDI_FRONT_URL || "http://localhost:5173").replace(/\/$/, "");
-    const { imagens, cor, ...mensagem } = montarBoasVindas({
+    const { imagens, ...mensagem } = montarBoasVindas({
       nome, papel, matricula, cpf, senhaProvisoria, nomeFarmacia, cadastradoPor,
       urlLogin: `${front}/login?perfil=${encodeURIComponent(papel)}`,
     });
     // sem as imagens o e-mail continua legível (os <img> têm alt)
-    const anexos = await imagensDoEmail(imagens, cor).catch((error) => {
+    const anexos = await imagensDoEmail(imagens).catch((error) => {
       console.warn("E-mail sem imagens:", error.message);
       return [];
     });
