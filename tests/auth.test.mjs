@@ -68,9 +68,32 @@ test("login por CPF + matrícula + senha, permissões por perfil e farmácia, ca
   const julia = await entrar("444.444.444-44", "000002"); // funcionária da farmácia 2
   assert.equal(julia.status, 200);
 
-  assert.equal((await entrar("111.111.111-11", "G000001", "errada")).status, 401);
   assert.equal((await entrar("111.111.111-11", "G000002")).status, 401, "matrícula de outra pessoa");
   assert.equal((await api("/auth/login", { method: "POST", corpo: { cpf: "111", matricula: "G000001" } })).status, 400);
+
+  // Funcionário e gerente entram só com CPF + matrícula; o admin continua com senha.
+  const semSenha = (cpf, matricula) => api("/auth/login", { method: "POST", corpo: { cpf, matricula } });
+  const funcionarioSemSenha = await semSenha("33333333333", "000001");
+  assert.equal(funcionarioSemSenha.status, 200);
+  assert.equal(funcionarioSemSenha.dados.usuario.papel, "funcionario");
+  assert.equal((await api("/auth/me", { token: funcionarioSemSenha.dados.token })).status, 200);
+  const gerenteSemSenha = await semSenha("111.111.111-11", "G000001");
+  assert.equal(gerenteSemSenha.status, 200);
+  assert.equal(gerenteSemSenha.dados.usuario.papel, "gerente");
+  assert.equal((await api("/auth/me", { token: gerenteSemSenha.dados.token })).status, 200);
+  assert.equal((await semSenha("33333333333", "000002")).status, 401);
+  assert.equal((await semSenha("11111111111", "G000002")).status, 401);
+  assert.equal((await semSenha("99999999999", "A000001")).status, 401);
+
+  // Admin usa CPF e senha, sem matrícula.
+  const adminPorCpf = (cpf, senha) => api("/auth/login", { method: "POST", corpo: { cpf, senha } });
+  const adminSemMatricula = await adminPorCpf("999.999.999-99", "senha123");
+  assert.equal(adminSemMatricula.status, 200);
+  assert.equal(adminSemMatricula.dados.usuario.papel, "admin");
+  assert.equal((await adminPorCpf("99999999999", "errada")).status, 401);
+  assert.equal((await adminPorCpf("99999999999")).status, 401);
+  assert.equal((await adminPorCpf("33333333333", "senha123")).status, 401);
+  assert.equal((await adminPorCpf("11111111111", "senha123")).status, 401);
 
   // --- sem login, token inválido ou adulterado: 401
   assert.equal((await api("/funcionario")).status, 401);

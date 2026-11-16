@@ -4,7 +4,7 @@ import { erro } from "../utils/http.mjs";
 import { assinarJwt, verificarJwt } from "../utils/jwt.mjs";
 import { verificarSenha } from "../utils/senha.mjs";
 
-// Login da equipe (admin, gerente e funcionário): CPF (ou e-mail) + matrícula + senha.
+// Gerente e funcionário: CPF + matrícula. Admin: CPF + senha.
 // O login devolve um JWT; o jti do token aponta para uma linha de
 // sessao_usuario, que o logout encerra.
 
@@ -126,10 +126,10 @@ function registrarErro(chave, agora) {
 export function entrar({ cpf, email, matricula, senha } = {}, ip = "") {
   const porEmail = cpf === undefined && email !== undefined;
   const identificador = porEmail ? email : cpf;
-  if (typeof identificador !== "string" || typeof matricula !== "string" || typeof senha !== "string") {
+  if (typeof identificador !== "string" || (matricula !== undefined && typeof matricula !== "string") || (senha !== undefined && typeof senha !== "string")) {
     throw erro(400, "Informe CPF ou e-mail, matrícula e senha.");
   }
-  const matriculaNormalizada = matricula.trim().toUpperCase();
+  const matriculaNormalizada = (matricula ?? "").trim().toUpperCase();
   let chavePessoa;
   let buscar;
   if (porEmail) {
@@ -141,11 +141,16 @@ export function entrar({ cpf, email, matricula, senha } = {}, ip = "") {
     buscar = () => buscarPorEmail(emailNormalizado, matriculaNormalizada);
   } else {
     const cpfDigitos = somenteDigitos(cpf);
-    if (cpfDigitos.length !== 11 || !matriculaNormalizada || !senha) {
+    if (cpfDigitos.length !== 11) {
       throw erro(400, "Informe CPF (11 dígitos), matrícula e senha.");
     }
     chavePessoa = `cpf:${cpfDigitos}`;
-    buscar = () => buscarPorCredencial(cpfDigitos, matriculaNormalizada);
+    buscar = () => {
+      if (matriculaNormalizada) return buscarPorCredencial(cpfDigitos, matriculaNormalizada);
+      // Sem matrícula, somente contas de administrador podem autenticar.
+      const linha = db.prepare(`${PESSOAS.admin.select} WHERE ${cpfSemMascara("a.cpf")} = ?`).get(cpfDigitos);
+      return linha ? { papel: "admin", linha } : null;
+    };
   }
 
   const agora = Date.now();
@@ -156,7 +161,9 @@ export function entrar({ cpf, email, matricula, senha } = {}, ip = "") {
 
   const pessoa = buscar();
   // verificarSenha usa um hash falso quando não achou ninguém: mesmo tempo nos dois casos
-  if (!verificarSenha(senha, pessoa?.linha.senha_hash)) {
+  // gerente e funcionário entram só com CPF + matrícula, sem senha
+  const semSenha = !porEmail && (pessoa?.papel === "funcionario" || pessoa?.papel === "gerente");
+  if (!semSenha && !verificarSenha(senha ?? "", pessoa?.linha.senha_hash)) {
     chaves.forEach((chave) => registrarErro(chave, agora));
     throw erro(401, porEmail ? "E-mail, matrícula ou senha incorretos." : "CPF, matrícula ou senha incorretos.");
   }
