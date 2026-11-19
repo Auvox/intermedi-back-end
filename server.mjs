@@ -17,6 +17,7 @@ import resumoRoutes from "./routes/resumo.routes.mjs";
 import fotoRoutes from "./routes/foto.routes.mjs";
 import authRoutes from "./routes/auth.routes.mjs";
 import analyticsRoutes from "./routes/analytics.routes.mjs";
+import ativacaoRoutes from "./routes/ativacao.routes.mjs";
 import { iniciarEntregas } from "./services/redistribuicao.service.mjs";
 import { autorizar } from "./services/acesso.service.mjs";
 import { iniciarMonitor, plataformaDaRequisicao, registrarErro, registrarRequisicao } from "./services/monitor.service.mjs";
@@ -48,6 +49,8 @@ fotoRoutes(router);
 rotaRoutes(router);
 ocrRoutes(router);
 analyticsRoutes(router);
+// por último: troca o DELETE de farmácia/gerente/funcionário/paciente por "desativar"
+ativacaoRoutes(router);
 
 // confere a cada 5s os remédios que já chegaram (tempo de entrega das redistribuições)
 iniciarEntregas();

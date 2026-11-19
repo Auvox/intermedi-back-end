@@ -25,7 +25,8 @@ const PESSOAS = {
   admin: {
     select: /*sql*/ `
       SELECT a.id_admin AS id, a.nome, a.email, a.cpf, a.matricula, a.senha_hash,
-             NULL AS idFarmacia, NULL AS nomeFarmacia, NULL AS foto, NULL AS cargo
+             NULL AS idFarmacia, NULL AS nomeFarmacia, NULL AS foto, NULL AS cargo,
+             1 AS ativo, 1 AS farmaciaAtiva
       FROM admin a`,
     alias: "a",
     id: "a.id_admin",
@@ -33,7 +34,8 @@ const PESSOAS = {
   gerente: {
     select: /*sql*/ `
       SELECT g.id_gerente AS id, g.nome, g.email, g.cpf, g.matricula, g.senha_hash,
-             g.id_farmacia AS idFarmacia, f.nome AS nomeFarmacia, g.foto, NULL AS cargo
+             g.id_farmacia AS idFarmacia, f.nome AS nomeFarmacia, g.foto, NULL AS cargo,
+             g.ativo, f.ativo AS farmaciaAtiva
       FROM gerente g
       INNER JOIN farmacia f ON f.id_farmacia = g.id_farmacia`,
     alias: "g",
@@ -42,7 +44,8 @@ const PESSOAS = {
   funcionario: {
     select: /*sql*/ `
       SELECT fu.id_funcionario AS id, fu.nome, fu.email, fu.cpf, fu.matricula, fu.senha_hash,
-             fu.id_farmacia AS idFarmacia, f.nome AS nomeFarmacia, fu.foto, fu.cargo
+             fu.id_farmacia AS idFarmacia, f.nome AS nomeFarmacia, fu.foto, fu.cargo,
+             fu.ativo, f.ativo AS farmaciaAtiva
       FROM funcionario fu
       INNER JOIN farmacia f ON f.id_farmacia = fu.id_farmacia`,
     alias: "fu",
@@ -63,6 +66,7 @@ function usuarioPublico(papel, linha) {
     nomeFarmacia: linha.nomeFarmacia ?? null,
     foto: linha.foto ?? null,
     cargo: linha.cargo ?? null,
+    farmaciaAtiva: linha.farmaciaAtiva !== 0,
   };
 }
 
@@ -168,8 +172,26 @@ export function entrar({ cpf, email, matricula, senha } = {}, ip = "") {
     throw erro(401, porEmail ? "E-mail, matrícula ou senha incorretos." : "CPF, matrícula ou senha incorretos.");
   }
   tentativas.delete(chavePessoa);
+  barrarDesativado(pessoa.linha);
 
   return criarSessao(pessoa.papel, pessoa.linha, agora);
+}
+
+// Credencial certa, mas o cadastro (ou a farmácia dele) foi desativado pelo
+// admin: o front mostra a tela "farmácia desativada" pelo código do erro.
+function barrarDesativado(linha) {
+  if (linha.farmaciaAtiva === 0) {
+    throw erro(423, "Esta farmácia foi desativada pela administração da rede Intermedi.", {
+      codigo: "FARMACIA_DESATIVADA",
+      nomeFarmacia: linha.nomeFarmacia ?? null,
+    });
+  }
+  if (linha.ativo === 0) {
+    throw erro(423, "Seu acesso foi desativado. Procure a administração da sua unidade.", {
+      codigo: "CONTA_DESATIVADA",
+      nomeFarmacia: linha.nomeFarmacia ?? null,
+    });
+  }
 }
 
 function criarSessao(papel, linha, agora) {
@@ -218,6 +240,7 @@ export function autenticar(token) {
   const { select, id } = PESSOAS[dados.papel];
   const linha = db.prepare(`${select} WHERE ${id} = ?`).get(dados.id);
   if (!linha || fingerprint(linha.senha_hash) !== sessao.senha_fingerprint) return null;
+  if (linha.ativo === 0 || linha.farmaciaAtiva === 0) return null;
 
   return { usuario: usuarioPublico(dados.papel, linha), jti: dados.jti };
 }

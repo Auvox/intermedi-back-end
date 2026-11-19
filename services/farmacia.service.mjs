@@ -25,6 +25,8 @@ const SELECT_FARMACIA = /*sql*/ `
       f.cnes        AS cnesFarmacia,
       f.foto        AS fotoFarmacia,
       f.created_at  AS createdAtFarmacia,
+      f.ativo       AS ativo,
+      f.desativado_em AS desativadoEm,
       f.id_endereco AS idEndereco,
       e.latitude AS latitude,
       e.longitude AS longitude,

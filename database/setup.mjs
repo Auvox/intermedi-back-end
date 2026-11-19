@@ -1,7 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { caminhoLocal } from "./shared-data.mjs";
+import { caminhoLocal, migrarMantendoMain } from "./shared-data.mjs";
 
 // Caminho do banco:
 //   • padrão: database/intermedi.db
@@ -54,6 +54,22 @@ export function aplicarSchema(db) {
   }
   migrarRedistribuicao(db);
   migrarLoginAdmin(db, temColuna);
+  migrarDesativacao(db, temColuna);
+}
+
+// Bancos criados antes do "desativar": farmácia, gerente, funcionário e
+// paciente ganham ativo (1 = em uso) e desativado_em. Nada é apagado.
+function migrarDesativacao(db, temColuna) {
+  const tabelas = ["farmacia", "gerente", "funcionario", "paciente"];
+  if (tabelas.every((t) => temColuna(t, "ativo") && temColuna(t, "desativado_em"))) return;
+  migrarMantendoMain(db, () => {
+    for (const tabela of tabelas) {
+      if (!temColuna(tabela, "ativo")) {
+        db.exec(`ALTER TABLE ${tabela} ADD COLUMN ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1))`);
+      }
+      if (!temColuna(tabela, "desativado_em")) db.exec(`ALTER TABLE ${tabela} ADD COLUMN desativado_em TEXT`);
+    }
+  });
 }
 
 // Bancos criados antes do login por matrícula: o admin ganha cpf e matricula

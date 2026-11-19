@@ -25,6 +25,8 @@ const SELECT_PACIENTE = /*sql*/ `
       p.medicamento_frequente AS medicamentoFrequentePaciente,
       p.foto_perfil           AS fotoPerfilPaciente,
       p.created_at            AS createdAtPaciente,
+      p.ativo                 AS ativo,
+      p.desativado_em         AS desativadoEm,
       p.id_endereco           AS idEndereco,
       ${colunasEndereco({
         cep: "cepPaciente", logradouro: "ruaPaciente", numero: "numeroPaciente",

@@ -83,6 +83,7 @@ const REGRAS = {
   "GET /uploads/perfis/:file": PUBLICO,
   "GET /uploads/fotos/:arquivo": PUBLICO,
   "GET /uploads/remedios/:arquivo": PUBLICO,
+  "GET /fotos-padrao/:arquivo": PUBLICO,
 
   // catálogo e farmácias da rede (informação pública)
   "GET /remedios": PUBLICO,
@@ -96,6 +97,11 @@ const REGRAS = {
   "DELETE /farmacia/:id": ADMIN,
   "POST /gerente": ADMIN,
   "DELETE /gerente/:id": ADMIN,
+  // desativar = DELETE; reativar volta o cadastro (só o admin, menos o funcionário)
+  "PUT /farmacia/:id/reativar": ADMIN,
+  "PUT /gerente/:id/reativar": ADMIN,
+  "PUT /paciente/:id/reativar": papel("gerente"),
+  "PUT /funcionario/:id/reativar": gerenteDaFarmacia("funcionario"),
   "POST /remedios": ADMIN,
   "PUT /remedios/:id": ADMIN,
   "DELETE /remedios/:id": ADMIN,

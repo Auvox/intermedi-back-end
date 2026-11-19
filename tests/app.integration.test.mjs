@@ -126,7 +126,14 @@ test('backend unificado: app e contratos do site no mesmo banco isolado', async 
   assert.equal(siteUpdated.data.alterados, 1);
   assert.equal((await request('/api/pacientes/me', 'GET', undefined, beforeSiteEdit)).status, 401);
   const beforeSiteDelete = (await request('/api/auth/login', 'POST', { email: payload.emailPaciente, senha: 'senha-alterada-no-site' })).data.token;
+  // DELETE do site agora DESATIVA: a sessão cai, mas o cadastro continua no banco
   assert.equal((await request(`/paciente/${secondId}`, 'DELETE')).status, 200);
   assert.equal((await request('/api/pacientes/me', 'GET', undefined, beforeSiteDelete)).status, 401);
-  assert.equal((await request('/paciente')).data.paciente.length, 0);
+  const desativados = (await request('/paciente')).data.paciente;
+  assert.equal(desativados.length, 1);
+  assert.equal(desativados[0].ativo, 0);
+  assert.equal((await request('/api/auth/login', 'POST', { email: payload.emailPaciente, senha: 'senha-alterada-no-site' })).status, 423);
+  // reativar devolve o acesso
+  assert.equal((await request(`/paciente/${secondId}/reativar`, 'PUT')).status, 200);
+  assert.equal((await request('/api/auth/login', 'POST', { email: payload.emailPaciente, senha: 'senha-alterada-no-site' })).status, 200);
 });

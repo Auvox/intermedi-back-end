@@ -32,6 +32,9 @@ const SELECT_GERENTE = /*sql*/ `
       g.id_admin_cadastro AS idAdminCadastro,
       g.foto              AS fotoGerente,
       g.created_at        AS createdAtGerente,
+      g.ativo             AS ativo,
+      g.desativado_em     AS desativadoEm,
+      f.ativo             AS farmaciaAtiva,
       g.id_endereco       AS idEndereco,
       ${colunasEndereco({
         cep: "cepGerente", logradouro: "enderecoGerente", numero: "numeroGerente",

@@ -36,6 +36,9 @@ const SELECT_FUNCIONARIO = `
       fu.id_gerente_cadastro AS idGerenteCadastro,
       fu.foto                AS fotoFuncionario,
       fu.created_at          AS createdAtFuncionario,
+      fu.ativo               AS ativo,
+      fu.desativado_em       AS desativadoEm,
+      f.ativo                AS farmaciaAtiva,
       fu.id_endereco         AS idEndereco,
       ${colunasEndereco({
         cep: "cepFuncionario",

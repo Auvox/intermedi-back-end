@@ -50,7 +50,7 @@ function authenticated(req) {
   if (!token) throw fail(401, 'Faça login novamente.');
   const session = db.prepare('SELECT * FROM sessao_paciente WHERE token_hash = ? AND expira_em > ?').get(hash(token), Date.now());
   const user = session && pacientes.buscarPorId(session.id_paciente);
-  if (!user || session.senha_fingerprint !== fingerprint(user.idPaciente)) throw fail(401, 'Sua sessão expirou. Faça login novamente.');
+  if (!user || user.ativo === 0 || session.senha_fingerprint !== fingerprint(user.idPaciente)) throw fail(401, 'Sua sessão expirou. Faça login novamente.');
   if (req.params?.id && Number(req.params.id) !== Number(user.idPaciente)) throw fail(403, 'Acesso não permitido.');
   return user;
 }
@@ -99,6 +99,7 @@ export default function appRoutes(router) {
       throw fail(401, 'E-mail ou senha incorretos.');
     }
     const user = pacientes.buscarPorId(credenciais.idPaciente);
+    if (user.ativo === 0) throw fail(423, 'Sua conta foi desativada. Procure uma farmácia da rede Intermedi.');
     const token = randomBytes(32).toString('hex');
     db.prepare('DELETE FROM sessao_paciente WHERE expira_em <= ?').run(Date.now());
     db.prepare('INSERT INTO sessao_paciente (token_hash, id_paciente, senha_fingerprint, expira_em) VALUES (?, ?, ?, ?)')

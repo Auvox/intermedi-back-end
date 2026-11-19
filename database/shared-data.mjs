@@ -151,6 +151,18 @@ export function sincronizarDados(db, { raiz = raizProjeto, substituir = false, b
   }
 }
 
+// Migração que só acrescenta colunas (com valor padrão) muda o hash dos dados
+// locais. Sem isso, um banco idêntico ao da main passaria a parecer "alterado
+// localmente" e deixaria de receber as próximas publicações.
+export function migrarMantendoMain(db, migracao) {
+  const temControle = db.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = '_dados_main'").get();
+  const anterior = temControle ? db.prepare("SELECT hash FROM _dados_main WHERE id = 1").get()?.hash : null;
+  const igualMain = Boolean(anterior) && hash(lerDados(db)) === anterior;
+  migracao();
+  if (igualMain) db.prepare("UPDATE _dados_main SET hash = ? WHERE id = 1").run(hash(lerDados(db)));
+}
+
 export function sincronizarAoIniciar(db) {
   // Testes e bancos configurados explicitamente não recebem dados da main.
   if (process.env.INTERMEDI_DB_PATH) return "banco-personalizado";

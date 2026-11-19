@@ -86,6 +86,9 @@ CREATE TABLE IF NOT EXISTS farmacia (
     id_endereco  INTEGER,
     foto         TEXT,                     -- URL: /uploads/fotos/<arquivo> (fachada/logo)
     created_at   TEXT    DEFAULT CURRENT_TIMESTAMP,
+    -- desativar não apaga: a farmácia some do uso, mas o admin pode reativar
+    ativo         INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1)),
+    desativado_em TEXT,
     FOREIGN KEY (id_endereco) REFERENCES endereco (id_endereco)
         ON DELETE SET NULL
 );
@@ -118,6 +121,8 @@ CREATE TABLE IF NOT EXISTS paciente (
     foto_perfil            TEXT,
     id_endereco            INTEGER,
     created_at             TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ativo                  INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1)),
+    desativado_em          TEXT,
     FOREIGN KEY (id_endereco) REFERENCES endereco (id_endereco)
         ON DELETE SET NULL
 );
@@ -147,6 +152,8 @@ CREATE TABLE IF NOT EXISTS gerente (
     id_endereco        INTEGER,
     foto               TEXT,               -- URL: /uploads/fotos/<arquivo>
     created_at         TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ativo              INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1)),
+    desativado_em      TEXT,
     FOREIGN KEY (id_farmacia)       REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT,
     FOREIGN KEY (id_admin_cadastro) REFERENCES admin    (id_admin)    ON DELETE SET NULL,
     FOREIGN KEY (id_endereco)       REFERENCES endereco (id_endereco) ON DELETE SET NULL
@@ -172,6 +179,8 @@ CREATE TABLE IF NOT EXISTS funcionario (
     id_endereco          INTEGER,
     foto                 TEXT,             -- URL: /uploads/fotos/<arquivo>
     created_at           TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ativo                INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1)),
+    desativado_em        TEXT,
     FOREIGN KEY (id_farmacia)         REFERENCES farmacia (id_farmacia) ON DELETE RESTRICT,
     FOREIGN KEY (id_gerente_cadastro) REFERENCES gerente  (id_gerente)  ON DELETE SET NULL,
     FOREIGN KEY (id_endereco)         REFERENCES endereco (id_endereco) ON DELETE SET NULL

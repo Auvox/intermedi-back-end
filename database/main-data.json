@@ -83,7 +83,7 @@
         "telefone": "(11) 5237-1665",
         "cnes": "4050010",
         "id_endereco": 14,
-        "foto": null,
+        "foto": "/fotos-padrao/farmacia-ubs-guaianases.webp",
         "created_at": "2026-09-30 20:47:54"
       },
       {
@@ -93,7 +93,7 @@
         "telefone": "(19) 3254-9485",
         "cnes": "2022699",
         "id_endereco": 15,
-        "foto": null,
+        "foto": "/fotos-padrao/farmacia-taquaral.webp",
         "created_at": "2026-09-30 20:47:54"
       }
     ],
@@ -231,7 +231,7 @@
         "id_farmacia": 1,
         "id_admin_cadastro": 1,
         "id_endereco": null,
-        "foto": null,
+        "foto": "/fotos-padrao/gerente-ana-souza.webp",
         "created_at": "2026-09-30 18:45:49"
       },
       {
@@ -264,7 +264,7 @@
         "id_farmacia": 1,
         "id_gerente_cadastro": 1,
         "id_endereco": null,
-        "foto": null,
+        "foto": "/fotos-padrao/funcionario-lucas-pereira.webp",
         "created_at": "2026-09-30 18:45:49"
       }
     ],
@@ -285,7 +285,7 @@
         "indicacoes": "Dor e febre",
         "contraindicacoes": "Alergia à dipirona; gestantes no 3º trimestre",
         "armazenamento": "Temperatura ambiente (15-30 °C)",
-        "foto": null,
+        "foto": "/fotos-padrao/remedio-dipirona.webp",
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -305,7 +305,7 @@
         "indicacoes": "Dor leve a moderada e febre",
         "contraindicacoes": "Doença hepática grave",
         "armazenamento": "Temperatura ambiente (15-30 °C)",
-        "foto": null,
+        "foto": "/fotos-padrao/remedio-paracetamol.webp",
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -325,7 +325,7 @@
         "indicacoes": "Rinite alérgica e urticária",
         "contraindicacoes": "Menores de 2 anos",
         "armazenamento": "Temperatura ambiente (15-30 °C)",
-        "foto": null,
+        "foto": "/fotos-padrao/remedio-loratadina.webp",
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -345,7 +345,7 @@
         "indicacoes": "Dor, inflamação e febre",
         "contraindicacoes": "Úlcera gástrica ativa",
         "armazenamento": "Temperatura ambiente (15-30 °C)",
-        "foto": null,
+        "foto": "/fotos-padrao/remedio-ibuprofeno.webp",
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -365,7 +365,7 @@
         "indicacoes": "Infecções bacterianas",
         "contraindicacoes": "Alergia a penicilinas",
         "armazenamento": "Temperatura ambiente, longe da umidade",
-        "foto": "/uploads/remedios/4435d718d82ebcba5f8d9783155d740857fa4570089feac4.jpg",
+        "foto": "/fotos-padrao/remedio-amoxicilina.webp",
         "created_at": "2026-09-30 18:45:49",
         "updated_at": "2026-09-30 19:03:53"
       },
@@ -385,7 +385,7 @@
         "indicacoes": "Hipertensão arterial",
         "contraindicacoes": "Gravidez",
         "armazenamento": "Temperatura ambiente (15-30 °C)",
-        "foto": null,
+        "foto": "/fotos-padrao/remedio-losartana.webp",
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -405,7 +405,7 @@
         "indicacoes": "Diabetes tipo 2",
         "contraindicacoes": "Insuficiência renal grave",
         "armazenamento": "Temperatura ambiente (15-30 °C)",
-        "foto": null,
+        "foto": "/fotos-padrao/remedio-metformina.webp",
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -425,7 +425,7 @@
         "indicacoes": "Gastrite, úlcera e refluxo",
         "contraindicacoes": "Alergia ao omeprazol",
         "armazenamento": "Temperatura ambiente, longe da umidade",
-        "foto": null,
+        "foto": "/fotos-padrao/remedio-omeprazol.webp",
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -445,7 +445,7 @@
         "indicacoes": "Infecções respiratórias e de pele",
         "contraindicacoes": "Alergia a macrolídeos",
         "armazenamento": "Temperatura ambiente (15-30 °C)",
-        "foto": null,
+        "foto": "/fotos-padrao/remedio-azitromicina.webp",
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -465,7 +465,7 @@
         "indicacoes": "Dor e inflamação",
         "contraindicacoes": "Menores de 12 anos; doença hepática",
         "armazenamento": "Temperatura ambiente (15-30 °C)",
-        "foto": null,
+        "foto": "/fotos-padrao/remedio-nimesulida.webp",
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -505,7 +505,7 @@
         "indicacoes": "Hipertensão e insuficiência cardíaca",
         "contraindicacoes": "Gravidez; histórico de angioedema",
         "armazenamento": "Temperatura ambiente (15-30 °C)",
-        "foto": null,
+        "foto": "/fotos-padrao/remedio-enalapril.webp",
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -525,7 +525,7 @@
         "indicacoes": "Suplementação de vitamina C",
         "contraindicacoes": "Cálculo renal",
         "armazenamento": "Local seco, com o tubo bem fechado",
-        "foto": null,
+        "foto": "/fotos-padrao/remedio-vitamina-c.webp",
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -545,7 +545,7 @@
         "indicacoes": "Excesso de gases",
         "contraindicacoes": "Alergia à simeticona",
         "armazenamento": "Temperatura ambiente (15-30 °C)",
-        "foto": null,
+        "foto": "/fotos-padrao/remedio-simeticona.webp",
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       },
@@ -565,7 +565,7 @@
         "indicacoes": "Alergias, coceira e rinite",
         "contraindicacoes": "Recém-nascidos; lactantes",
         "armazenamento": "Temperatura ambiente (15-30 °C)",
-        "foto": null,
+        "foto": "/fotos-padrao/remedio-dexclorfeniramina.webp",
         "created_at": "2026-09-30 18:45:49",
         "updated_at": null
       }
